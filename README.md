@@ -1,6 +1,6 @@
 # Smart-Services-Booking-System
 
-# Smart Salon Booking Platform
+
 
 A modern booking platform for salons, enabling customers to view services, make appointments, and manage their accounts. Built with React + Vite (frontend), Node/Express (backend), and PostgreSQL (database).
 
