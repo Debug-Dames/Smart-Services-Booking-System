@@ -8,6 +8,36 @@ A modern booking platform for salons, enabling customers to view services, make 
 
 ## 🌍 Environment Strategy
 
+Development
+
+Runs locally
+
+Uses Docker
+
+Uses local PostgreSQL
+
+Debug logging enabled
+
+Testing (CI)
+
+Runs in GitHub Actions
+
+Uses temporary PostgreSQL service
+
+Runs automated tests
+
+No real data
+
+Production
+
+Backend deployed to Render
+
+Frontend deployed to Vercel
+
+Uses production PostgreSQL
+
+Secrets stored in dashboards
+
 ### Branching Model (Gitflow-Based)
 
 This project uses a structured Gitflow branching strategy to ensure proper separation between development and production environments, supporting multiple parallel features.
