@@ -1,6 +1,5 @@
 name: CI/CD
 
-# Triggers
 on:
   push:
     branches:
@@ -44,29 +43,30 @@ jobs:
 
       # 3️⃣ Install frontend dependencies
       - name: Install frontend dependencies
-        working-directory: frontend
+        working-directory: ./frontend   # <-- fixed path
         run: npm install
 
       # 4️⃣ Install backend dependencies
       - name: Install backend dependencies
-        working-directory: backend
+        working-directory: ./backend    # <-- fixed path
         run: npm install
 
       # 5️⃣ Run backend tests
       - name: Run backend tests
-        working-directory: backend
-        run: npm test || echo "Backend tests failed"  # Optional: remove echo in real project
+        working-directory: ./backend
+        run: npm test || echo "Backend tests failed"
 
       # 6️⃣ Run frontend tests
       - name: Run frontend tests
-        working-directory: frontend
+        working-directory: ./frontend
         run: npm test || echo "Frontend tests failed"
 
       # 7️⃣ Build Docker images
       - name: Build Docker images
         run: docker-compose build
 
-      # 8️⃣ Optional: deploy to production
+      # 8️⃣ Optional: Deploy to production
       - name: Deploy (optional)
         if: github.ref == 'refs/heads/main'
         run: echo "Deploy to production server here"
+
