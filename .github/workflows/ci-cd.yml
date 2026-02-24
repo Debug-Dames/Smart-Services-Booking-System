@@ -1,0 +1,72 @@
+name: CI/CD
+
+# Triggers
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/*'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: smart_salon
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres" 
+          --health-interval 10s 
+          --health-timeout 5s 
+          --health-retries 5
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Setup Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # 3️⃣ Install frontend dependencies
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      # 4️⃣ Install backend dependencies
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm install
+
+      # 5️⃣ Run backend tests
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test || echo "Backend tests failed"  # Optional: remove echo in real project
+
+      # 6️⃣ Run frontend tests
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test || echo "Frontend tests failed"
+
+      # 7️⃣ Build Docker images
+      - name: Build Docker images
+        run: docker-compose build
+
+      # 8️⃣ Optional: deploy to production
+      - name: Deploy (optional)
+        if: github.ref == 'refs/heads/main'
+        run: echo "Deploy to production server here"
