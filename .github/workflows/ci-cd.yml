@@ -1,60 +1,29 @@
-name: CI/CD
+name: CI Pipeline
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - 'feature/*'
+    branches: [develop]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [develop]
 
 jobs:
-  build-test:
+  build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: smart_salon
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
 
-      - name: Install backend dependencies
-        working-directory: Backend
-        run: npm install
+    - name: Install dependencies
+      run: npm install
 
-      - name: Wait for Postgres
-        run: sleep 10
+    - name: Run tests
+      run: npm test
 
-      - name: Run backend tests
-        working-directory: Backend
-        env:
-          DATABASE_URL: postgresql://postgres:password@localhost:5432/smart_salon
-        run: npm test
-
-      - name: Build Docker images
-        run: docker compose build
-
-      - name: Deploy (optional)
-        if: github.ref == 'refs/heads/main'
-        run: echo "Deploy to production server here"
+    - name: Build app
+      run: npm run build
