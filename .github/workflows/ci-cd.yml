@@ -40,14 +40,14 @@ jobs:
           node-version: 20
 
       - name: Install backend dependencies
-        working-directory: backend
+        working-directory: Backend
         run: npm install
 
       - name: Wait for Postgres
         run: sleep 10
 
       - name: Run backend tests
-        working-directory: backend
+        working-directory: Backend
         env:
           DATABASE_URL: postgresql://postgres:password@localhost:5432/smart_salon
         run: npm test
