@@ -41,9 +41,9 @@ jobs:
         with:
           node-version: 20
 
-      # 3️⃣ Install backend dependencies
-      - name: Install backend dependencies
-        working-directory: backend
+      # 3️⃣ Install Backend dependencies
+      - name: Install Backend dependencies
+        working-directory: ./Backend
         run: npm install
 
       # 4️⃣ Run backend tests
