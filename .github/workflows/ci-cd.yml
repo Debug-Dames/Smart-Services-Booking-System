@@ -25,39 +25,36 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres" 
-          --health-interval 10s 
-          --health-timeout 5s 
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
           --health-retries 5
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2️⃣ Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
-      # 3️⃣ Install backend dependencies
       - name: Install backend dependencies
         working-directory: backend
         run: npm install
 
-      # 4️⃣ Run backend tests
+      - name: Wait for Postgres
+        run: sleep 10
+
       - name: Run backend tests
         working-directory: backend
-        run: npm test || echo "Backend tests failed"
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/smart_salon
+        run: npm test
 
-      # 5️⃣ Build Docker images
       - name: Build Docker images
-        run: docker-compose build
+        run: docker compose build
 
-      # 6️⃣ Optional: Deploy to production
       - name: Deploy (optional)
         if: github.ref == 'refs/heads/main'
         run: echo "Deploy to production server here"
-
-
