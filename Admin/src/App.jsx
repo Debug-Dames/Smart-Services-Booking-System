@@ -1,6 +1,7 @@
 import { Navigate, Outlet, createBrowserRouter } from 'react-router-dom'
 import AdminSidebar from './components/AdminSidebar'
 import AdminDashboard from './screens/AdminDashboard'
+import Login from './screens/Login'
 import ManageBookings from './screens/ManageBookings'
 import ManageServices from './screens/ManageServices'
 import ManageUsers from './screens/ManageUsers'
@@ -21,7 +22,8 @@ const AdminLayout = () => (
 )
 
 const router = createBrowserRouter([
-  { path: '/', element: <Navigate to="/admin" replace /> },
+  { path: '/', element: <Navigate to="/login" replace /> },
+  { path: '/login', element: <Login /> },
   {
     path: '/admin',
     element: <AdminLayout />,

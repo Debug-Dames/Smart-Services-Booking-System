@@ -1,13 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from '../Pages/Home';
-import Services from '../Pages/Services';
-import Dashboard from '../Pages/Dashboard';
-import BookAppointment from '../Pages/BookAppointment';
-import MyBookings from '../Pages/MyBookings';
-import Profile from '../Pages/Profile';
-import Login from '../Pages/auth/Login';
-import Register from '../Pages/auth/Register';
+import Home from '../pages/Home';
+import Services from '../pages/Services';
+import Dashboard from '../pages/Dashboard';
+import BookAppointment from '../pages/BookAppointment';
+import MyBookings from '../pages/MyBookings';
+import Profile from '../pages/Profile';
+import Login from '../pages/auth/Login';
+import Register from '../pages/auth/Register';
 import ProtectedRoute from '../components/ProtectedRoute';
 import MainLayout from '../layouts/MainLayout';
 
