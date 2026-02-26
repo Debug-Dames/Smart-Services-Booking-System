@@ -57,11 +57,20 @@ jobs:
         working-directory: Backend/Server
         shell: bash
         run: |
-          npm start &
+          test -f index.js
+          npm start > backend.log 2>&1 &
           BACKEND_PID=$!
-          sleep 5
-          curl -f http://127.0.0.1:5000/health
-          kill $BACKEND_PID
+          trap 'kill $BACKEND_PID || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:5000/health > /dev/null; then
+              echo "Backend health check passed"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend failed to become healthy. Logs:"
+          cat backend.log
+          exit 1
 
   docker-build:
     name: Docker build validation
