@@ -15,7 +15,7 @@ services:
 
   backend:
     build:
-      context: ./Backend/Server       # Folder containing backend Dockerfile
+      context: ./Backend
     container_name: saloon_backend
     environment:
       DATABASE_URL: postgres://saloon:saloon@db:5432/saloon_db
@@ -26,24 +26,21 @@ services:
 
   frontend:
     build:
-      context: ./Frontend/client      # Folder containing frontend Dockerfile
+      context: ./Frontend
     container_name: saloon_frontend
     ports:
       - "3000:80"
     depends_on:
       - backend
 
-  mobile:
+  admin:
     build:
-      context: "./Mobile App"         # Folder containing mobile Dockerfile (quotes because of space)
-    container_name: saloon_mobile
+      context: ./Admin
+    container_name: saloon_admin
     ports:
-      - "19000:19000"
-      - "19001:19001"
-      - "19002:19002"
+      - "3001:80"
     depends_on:
       - backend
 
-# Named volume for PostgreSQL data persistence
 volumes:
   pgdata:

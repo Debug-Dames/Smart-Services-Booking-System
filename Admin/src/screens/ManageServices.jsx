@@ -16,15 +16,23 @@ const ManageServices = () => {
     }
 
     return (
-        <div style={{ padding: 16 }}>
+        <section className="admin-page">
             <h1>Manage Services</h1>
-            <ServiceForm onSubmit={addService} />
-            <ul>
-                {services.map((s) => (
-                    <li key={s.id}>{s.name} — {s.price}</li>
-                ))}
-            </ul>
-        </div>
+            <div className="admin-card">
+                <ServiceForm onSubmit={addService} />
+            </div>
+            <div className="admin-card">
+                <h3>Service List</h3>
+                <ul className="admin-list">
+                    {services.map((s) => (
+                        <li key={s.id} className="admin-list-item">
+                            <span>{s.name}</span>
+                            <strong>R {s.price}</strong>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </section>
     )
 }
 

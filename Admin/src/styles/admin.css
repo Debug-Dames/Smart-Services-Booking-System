@@ -1,0 +1,245 @@
+:root {
+    --admin-sidebar-bg: #22274C;
+    --admin-active: #1952A6;
+    --admin-inactive-text: #BDC2DB;
+    --admin-hover: rgba(255, 255, 255, 0.08);
+    --admin-topbar-bg: #FFFFFF;
+    --admin-topbar-border: #D4CACE;
+    --admin-card-bg: #FFFFFF;
+    --admin-title: #22274C;
+    --admin-number: #1952A6;
+    --admin-page-bg: #F4F6FB;
+    --admin-shadow: 0 8px 24px rgba(34, 39, 76, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--admin-page-bg);
+    color: var(--admin-title);
+}
+
+.admin-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+}
+
+.admin-sidebar {
+    background: var(--admin-sidebar-bg);
+    padding: 22px 14px;
+}
+
+.admin-sidebar-title {
+    color: #FFFFFF;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    margin: 0 8px 20px;
+}
+
+.admin-sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 6px;
+}
+
+.admin-nav-link {
+    display: block;
+    color: var(--admin-inactive-text);
+    text-decoration: none;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-nav-link:hover {
+    background: var(--admin-hover);
+    color: #FFFFFF;
+}
+
+.admin-nav-link.is-active {
+    background: var(--admin-active);
+    color: #FFFFFF;
+}
+
+.admin-main-area {
+    display: grid;
+    grid-template-rows: 64px 1fr;
+}
+
+.admin-topbar {
+    background: var(--admin-topbar-bg);
+    border-bottom: 1px solid var(--admin-topbar-border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+}
+
+.admin-topbar h2 {
+    margin: 0;
+    color: var(--admin-title);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.admin-main {
+    padding: 24px;
+}
+
+.admin-page h1 {
+    color: var(--admin-title);
+    margin: 0 0 8px;
+}
+
+.admin-page-header p {
+    margin: 0 0 20px;
+    color: #6B6F8E;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.admin-card {
+    background: var(--admin-card-bg);
+    border-radius: 14px;
+    box-shadow: var(--admin-shadow);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.stat-card h3 {
+    margin: 0;
+    color: var(--admin-title);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.stat-number {
+    margin: 10px 0 0;
+    color: var(--admin-number);
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.admin-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+}
+
+.admin-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #EEF0F6;
+}
+
+.admin-list-item:last-child {
+    border-bottom: none;
+}
+
+.list-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-form {
+    display: grid;
+    gap: 12px;
+}
+
+.admin-form-row {
+    display: grid;
+    gap: 6px;
+}
+
+.admin-form label {
+    color: var(--admin-title);
+    font-weight: 600;
+}
+
+.admin-form input {
+    border: 1px solid #D4CACE;
+    border-radius: 10px;
+    padding: 10px 12px;
+    outline: none;
+}
+
+.admin-form input:focus {
+    border-color: var(--admin-active);
+}
+
+.admin-btn {
+    border: none;
+    border-radius: 10px;
+    background: var(--admin-active);
+    color: #FFFFFF;
+    padding: 8px 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-btn:hover {
+    filter: brightness(1.06);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+}
+
+.status-confirmed {
+    color: #1952A6;
+    background: rgba(25, 82, 166, 0.16);
+}
+
+.status-pending {
+    color: #6B6F8E;
+    background: rgba(189, 194, 219, 0.35);
+}
+
+.status-completed {
+    color: #4D5069;
+    background: rgba(107, 111, 142, 0.25);
+}
+
+.status-cancelled {
+    color: #A94442;
+    background: rgba(169, 68, 66, 0.16);
+}
+
+@media (max-width: 1024px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-main-area {
+        grid-template-rows: auto 1fr;
+    }
+
+    .admin-main {
+        padding: 16px;
+    }
+}

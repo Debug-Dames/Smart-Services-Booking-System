@@ -15,10 +15,10 @@ const ManageBookings = () => {
     }
 
     return (
-        <div style={{ padding: 16 }}>
+        <section className="admin-page">
             <h1>Manage Bookings</h1>
             <BookingList bookings={bookings} onPay={handlePay} />
-        </div>
+        </section>
     )
 }
 

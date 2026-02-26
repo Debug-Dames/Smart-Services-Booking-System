@@ -9,14 +9,19 @@ const ManageUsers = () => {
     }, [])
 
     return (
-        <div style={{ padding: 16 }}>
+        <section className="admin-page">
             <h1>Manage Users</h1>
-            <ul>
-                {users.map((u) => (
-                    <li key={u.id}>{u.name} ({u.email})</li>
-                ))}
-            </ul>
-        </div>
+            <div className="admin-card">
+                <ul className="admin-list">
+                    {users.map((u) => (
+                        <li key={u.id} className="admin-list-item">
+                            <span>{u.name}</span>
+                            <span>{u.email}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        </section>
     )
 }
 
