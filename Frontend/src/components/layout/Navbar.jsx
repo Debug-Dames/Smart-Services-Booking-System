@@ -1,73 +1,72 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import './Navbar.css'
 
-export default function Navbar() {
-  const logo = '/logo.png';
+function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const location = useLocation()
+
+  const navLinks = [
+    { path: '/', label: 'Home' },
+    { path: '/services', label: 'Services' },
+    { path: '/book', label: 'Book Now' },
+    { path: '/my-bookings', label: 'My Bookings' },
+  ]
 
   return (
-    <nav style={navStyle}>
-      <div style={logoContainer}>
-        <img src={logo} alt="Dames Salon Logo" style={logoStyle} />
-        <h2 style={brandName}>Dames Beauty Salon</h2>
-      </div>
+    <header className="navbar">
+      <div className="navbar-container">
+        <Link to="/" className="navbar-logo">
+          <span className="logo-dame">Dame's</span>
+          <span className="logo-salon">Salon</span>
+        </Link>
 
-      <div style={linksContainer}>
-        <Link to="/" style={linkStyle}>
-          Home
-        </Link>
-        <Link to="/services" style={linkStyle}>
-          Services
-        </Link>
-        <Link to="/login" style={linkStyle}>
-          Login
-        </Link>
-        <Link to="/register" style={linkStyle}>
-          Register
-        </Link>
+        <nav className={`navbar-nav ${menuOpen ? 'navbar-nav--open' : ''}`}>
+          <ul className="navbar-links">
+            {navLinks.map((link) => (
+              <li key={link.path}>
+                <Link
+                  to={link.path}
+                  className={`navbar-link ${location.pathname === link.path ? 'navbar-link--active' : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="navbar-auth-mobile">
+            <Link to="/login" className="navbar-btn navbar-btn--ghost" onClick={() => setMenuOpen(false)}>
+              Log In
+            </Link>
+            <Link to="/register" className="navbar-btn navbar-btn--primary" onClick={() => setMenuOpen(false)}>
+              Sign Up
+            </Link>
+          </div>
+        </nav>
+
+        <div className="navbar-actions">
+          <Link to="/login" className="navbar-btn navbar-btn--ghost">
+            Log In
+          </Link>
+          <Link to="/register" className="navbar-btn navbar-btn--primary">
+            Sign Up
+          </Link>
+        </div>
+
+        <button
+          className={`navbar-hamburger ${menuOpen ? 'navbar-hamburger--open' : ''}`}
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          <span className="hamburger-line" />
+          <span className="hamburger-line" />
+          <span className="hamburger-line" />
+        </button>
       </div>
-    </nav>
-  );
+    </header>
+  )
 }
 
-const navStyle = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '15px 28px',
-  backgroundColor: '#22274C',
-  color: '#FFFFFF',
-  borderBottom: '2px solid #1952A6',
-};
-
-const logoContainer = {
-  display: 'flex',
-  alignItems: 'center',
-};
-
-const logoStyle = {
-  width: '48px',
-  height: '48px',
-  borderRadius: '50%',
-  objectFit: 'cover',
-  border: '1px solid #D4CACE',
-  backgroundColor: '#FFFFFF',
-};
-
-const brandName = {
-  marginLeft: '10px',
-  color: '#FFFFFF',
-  fontSize: '1.1rem',
-  fontFamily: "'Playfair Display', 'Times New Roman', serif",
-  fontWeight: '700',
-  letterSpacing: '0.02em',
-};
-
-const linksContainer = {
-  display: 'flex',
-  gap: '20px',
-};
-
-const linkStyle = {
-  color: '#BDC2DB',
-  textDecoration: 'none',
-  fontWeight: '600',
-};
+export default Navbar
