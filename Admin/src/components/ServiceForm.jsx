@@ -13,16 +13,16 @@ const ServiceForm = ({ initial = {}, onSubmit = () => { } }) => {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <div>
+        <form onSubmit={handleSubmit} className="admin-form">
+            <div className="admin-form-row">
                 <label>Name</label>
                 <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
-            <div>
+            <div className="admin-form-row">
                 <label>Price</label>
                 <input value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
             </div>
-            <button type="submit">Save</button>
+            <button type="submit" className="admin-btn">Save</button>
         </form>
     )
 }
