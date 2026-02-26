@@ -8,7 +8,7 @@ import MyBookings from '../pages/MyBookings';
 import Profile from '../pages/Profile';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
-import ProtectedRoute from '../../frontend/src/components/ProtectedRoute';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function AppRoutes() {
   return (
