@@ -1,4 +1,4 @@
-*,
+/* *,
 *::before,
 *::after {
   box-sizing: border-box;
@@ -14,4 +14,73 @@ body {
 
 a {
   color: inherit;
+} */
+
+
+:root {
+  --primary: #1952A6;
+  --primary-hover: #143F82;
+  --navy-dark: #22274C;
+  --lavender-light: #BDC2DB;
+  --platinum: #D4CACE;
+  --muted-text: #6B6F8E;
+
+  --background: #F5F6FA;
+  --card-bg: #FFFFFF;
+  --text-primary: #22274C;
+  --text-secondary: #6B6F8E;
+
+  --cancelled: #A94442;
+  --radius: 12px;
+
+  --font-heading: 'Playfair Display', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--background);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-body);
+  border: none;
+  outline: none;
+}
+
+ul, ol {
+  list-style: none;
 }
