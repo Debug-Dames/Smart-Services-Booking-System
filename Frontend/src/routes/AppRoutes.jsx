@@ -9,19 +9,20 @@ import Profile from '../pages/Profile';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import ProtectedRoute from '../components/ProtectedRoute';
+import MainLayout from '../layouts/MainLayout';
 
 export default function AppRoutes() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/book" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
-        <Route path="/bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+        <Route path="/services" element={<MainLayout><Services /></MainLayout>} />
+        <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
+        <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
+        <Route path="/dashboard" element={<MainLayout><ProtectedRoute><Dashboard /></ProtectedRoute></MainLayout>} />
+        <Route path="/book" element={<MainLayout><ProtectedRoute><BookAppointment /></ProtectedRoute></MainLayout>} />
+        <Route path="/bookings" element={<MainLayout><ProtectedRoute><MyBookings /></ProtectedRoute></MainLayout>} />
+        <Route path="/profile" element={<MainLayout><ProtectedRoute><Profile /></ProtectedRoute></MainLayout>} />
       </Routes>
     </Router>
   );
