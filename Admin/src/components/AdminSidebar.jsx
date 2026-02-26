@@ -26,6 +26,11 @@ const AdminSidebar = () => (
                         Services
                     </NavLink>
                 </li>
+                <li>
+                    <NavLink to="/login" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
+                        Login
+                    </NavLink>
+                </li>
             </ul>
         </nav>
     </aside>
