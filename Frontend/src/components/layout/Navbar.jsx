@@ -10,7 +10,7 @@ function Navbar() {
     { path: '/', label: 'Home' },
     { path: '/services', label: 'Services' },
     { path: '/book', label: 'Book Now' },
-    { path: '/my-bookings', label: 'My Bookings' },
+    { path: '/bookings', label: 'My Bookings' },
   ]
 
   return (
