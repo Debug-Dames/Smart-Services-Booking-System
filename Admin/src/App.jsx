@@ -7,6 +7,18 @@ import ManageServices from './screens/ManageServices'
 import ManageUsers from './screens/ManageUsers'
 import './styles/admin.css'
 
+const isAdminAuthenticated = () => {
+  return localStorage.getItem('adminAuth') === 'true'
+}
+
+const RequireAdmin = ({ children }) => {
+  return isAdminAuthenticated() ? children : <Navigate to="/login" replace />
+}
+
+const RequireGuest = ({ children }) => {
+  return isAdminAuthenticated() ? <Navigate to="/admin" replace /> : children
+}
+
 const AdminLayout = () => (
   <div className="admin-layout">
     <AdminSidebar />
@@ -23,10 +35,21 @@ const AdminLayout = () => (
 
 const router = createBrowserRouter([
   { path: '/', element: <Navigate to="/login" replace /> },
-  { path: '/login', element: <Login /> },
+  {
+    path: '/login',
+    element: (
+      <RequireGuest>
+        <Login />
+      </RequireGuest>
+    ),
+  },
   {
     path: '/admin',
-    element: <AdminLayout />,
+    element: (
+      <RequireAdmin>
+        <AdminLayout />
+      </RequireAdmin>
+    ),
     children: [
       { index: true, element: <AdminDashboard /> },
       { path: 'bookings', element: <ManageBookings /> },

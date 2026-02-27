@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL || "admin@smartservices.com")
+  .trim()
+  .toLowerCase();
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "Admin@123";
+
 export default function AdminLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -9,7 +14,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     setError("");
 
@@ -24,25 +29,19 @@ export default function AdminLogin() {
     }
 
     setLoading(true);
-    try {
-      const API = import.meta.env.VITE_API_URL || "";
-      const res = await fetch(`${API}/admin/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmedEmail, password }),
-      });
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(payload?.message || "Login failed");
-      if (!payload?.token) throw new Error("Login response did not include a token.");
 
-      localStorage.setItem("token", payload.token);
-      localStorage.setItem("adminUser", JSON.stringify(payload.user || { email: trimmedEmail }));
-      navigate("/admin");
-    } catch (err) {
-      setError(err.message || "Unable to login. Please try again.");
-    } finally {
+    if (trimmedEmail !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+      localStorage.removeItem("adminAuth");
+      localStorage.removeItem("adminUser");
+      setError("Invalid admin credentials.");
       setLoading(false);
+      return;
     }
+
+    localStorage.setItem("adminAuth", "true");
+    localStorage.setItem("adminUser", JSON.stringify({ email: trimmedEmail, role: "admin" }));
+    setLoading(false);
+    navigate("/admin", { replace: true });
   };
 
   return (

@@ -50,12 +50,18 @@ body {
 
 .admin-nav-link {
     display: block;
+    width: 100%;
+    text-align: left;
     color: var(--admin-inactive-text);
     text-decoration: none;
+    border: none;
+    background: transparent;
     border-radius: 10px;
     padding: 10px 12px;
     font-weight: 500;
+    font-size: 1rem;
     transition: background-color 0.2s ease, color 0.2s ease;
+    cursor: pointer;
 }
 
 .admin-nav-link:hover {
