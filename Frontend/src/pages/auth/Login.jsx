@@ -19,6 +19,34 @@ export default function Login() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setError('');
+
+  //   if (!formData.email || !formData.password) {
+  //     setError('Please enter both email and password.');
+  //     return;
+  //   }
+
+  //   try {
+  //     setLoading(true);
+  //     const response = await authService.login(formData);
+  //     const responseData = response?.data || {};
+  //     const userData = responseData.user || responseData.data || responseData;
+
+  //     if (!userData) {
+  //       throw new Error('Invalid login response.');
+  //     }
+
+  //     login(userData);
+  //     navigate('/dashboard');
+  //   } catch (err) {
+  //     const apiMessage = err?.response?.data?.message;
+  //     setError(apiMessage || 'Login failed. Please check your details and try again.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -30,23 +58,23 @@ export default function Login() {
 
     try {
       setLoading(true);
-      const response = await authService.login(formData);
-      const responseData = response?.data || {};
-      const userData = responseData.user || responseData.data || responseData;
 
-      if (!userData) {
-        throw new Error('Invalid login response.');
-      }
+      // Fake login success (skip API call for now)
+      const userData = {
+        id: 1,
+        email: formData.email,
+        name: "Test User"
+      };
 
-      login(userData);
-      navigate('/dashboard');
+      login(userData);   // update AuthContext
+      navigate('/book'); // redirect
     } catch (err) {
-      const apiMessage = err?.response?.data?.message;
-      setError(apiMessage || 'Login failed. Please check your details and try again.');
+      setError('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
+
 
   return (
     <section style={pageStyle}>
