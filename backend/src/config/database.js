@@ -18,6 +18,26 @@ export async function initDB() {
       role TEXT DEFAULT 'customer'
     );
   `);
+  await db.exec(`
+  CREATE TABLE IF NOT EXISTS appointments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    service TEXT,
+    appointment_date TEXT,
+    appointment_time TEXT,
+    notes TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    email TEXT,
+    message TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+`);
 
   return db;
 }
