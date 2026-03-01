@@ -1,138 +1,119 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../../api/services';
-import { useAuth } from '../../context/AuthContext';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { API_URL } from "../../utils/api";
 
 export default function Register() {
-  const navigate = useNavigate();
-  const { login } = useAuth();
-
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    setError('');
+    setMsg("");
+    setError("");
 
-    if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError('Please complete all fields.');
+    if (!name || !email || !password || !confirmPassword) {
+      setError("Please complete all fields.");
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters.");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match.');
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      const payload = {
-        name: formData.fullName,
-        fullName: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-      };
+      const res = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+      });
 
-      const response = await authService.register(payload);
-      const responseData = response?.data || {};
-      const userData = responseData.user || responseData.data || null;
+      const data = await res.json();
 
-      if (userData) {
-        login(userData);
-        navigate('/dashboard');
+      if (!res.ok) {
+        setError(data.message || "Registration failed. Please try again.");
         return;
       }
 
-      navigate('/login');
+      setMsg("Account created successfully! Redirecting to login...");
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      const apiMessage = err?.response?.data?.message;
-      setError(apiMessage || 'Registration failed. Please try again.');
+      setError("Network error. Please ensure the server is running.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <section style={pageStyle}>
       <form style={formStyle} onSubmit={handleSubmit}>
         <h1 style={titleStyle}>Create Account</h1>
+        <p style={subtitleStyle}>Join Dame's Salon today</p>
 
-        <label htmlFor="fullName" style={labelStyle}>
-          Full Name
-        </label>
+        <label htmlFor="name" style={labelStyle}>Full Name</label>
         <input
-          id="fullName"
-          name="fullName"
-          type="text"
-          value={formData.fullName}
-          onChange={handleChange}
+          id="name"
           placeholder="Enter your full name"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          required
           style={inputStyle}
         />
 
-        <label htmlFor="email" style={labelStyle}>
-          Email
-        </label>
+        <label htmlFor="email" style={labelStyle}>Email</label>
         <input
           id="email"
-          name="email"
           type="email"
-          value={formData.email}
-          onChange={handleChange}
           placeholder="Enter your email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
           style={inputStyle}
         />
 
-        <label htmlFor="password" style={labelStyle}>
-          Password
-        </label>
+        <label htmlFor="password" style={labelStyle}>Password</label>
         <input
           id="password"
-          name="password"
           type="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Create a password"
+          placeholder="Create a password (min 6 characters)"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
           style={inputStyle}
         />
 
-        <label htmlFor="confirmPassword" style={labelStyle}>
-          Confirm Password
-        </label>
+        <label htmlFor="confirmPassword" style={labelStyle}>Confirm Password</label>
         <input
           id="confirmPassword"
-          name="confirmPassword"
           type="password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
           placeholder="Confirm your password"
+          value={confirmPassword}
+          onChange={e => setConfirmPassword(e.target.value)}
+          required
           style={inputStyle}
         />
 
-        {error ? <p style={errorStyle}>{error}</p> : null}
+        {error && <p style={errorStyle}>{error}</p>}
+        {msg && <p style={successStyle}>{msg}</p>}
 
         <button type="submit" style={buttonStyle} disabled={loading}>
-          {loading ? 'Creating account...' : 'Register'}
+          {loading ? "Creating account..." : "Register"}
         </button>
 
         <p style={helperTextStyle}>
-          Already have an account? <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login" style={linkStyle}>Login here</Link>
         </p>
       </form>
     </section>
@@ -140,61 +121,91 @@ export default function Register() {
 }
 
 const pageStyle = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  minHeight: '70vh',
-  padding: '1rem',
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  minHeight: "80vh",
+  padding: "2rem 1rem",
 };
 
 const formStyle = {
-  width: '100%',
-  maxWidth: '420px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.6rem',
-  padding: '1.5rem',
-  borderRadius: '12px',
-  backgroundColor: '#F7F8FD',
-  boxShadow: '0 6px 18px rgba(34, 39, 76, 0.12)',
+  width: "100%",
+  maxWidth: "420px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "0.75rem",
+  padding: "2rem",
+  borderRadius: "12px",
+  backgroundColor: "#FFFFFF",
+  boxShadow: "0 6px 24px rgba(34, 39, 76, 0.12)",
 };
 
 const titleStyle = {
-  margin: '0 0 0.2rem',
-  color: '#22274C',
+  margin: "0 0 0.1rem",
+  color: "#22274C",
+  fontFamily: "var(--font-heading)",
+  fontSize: "1.8rem",
+};
+
+const subtitleStyle = {
+  margin: "0 0 0.5rem",
+  color: "#6B6F8E",
+  fontSize: "0.9rem",
 };
 
 const labelStyle = {
-  fontWeight: '600',
-  color: '#22274C',
+  fontWeight: "600",
+  color: "#22274C",
+  fontSize: "0.875rem",
 };
 
 const inputStyle = {
-  padding: '0.7rem 0.8rem',
-  borderRadius: '8px',
-  border: '1px solid #D4CACE',
-  outline: 'none',
+  padding: "0.75rem 1rem",
+  borderRadius: "8px",
+  border: "1px solid #D4CACE",
+  outline: "none",
+  fontSize: "0.95rem",
+  fontFamily: "inherit",
 };
 
 const buttonStyle = {
-  marginTop: '0.5rem',
-  padding: '0.75rem 1rem',
-  border: 'none',
-  borderRadius: '8px',
-  backgroundColor: '#22274C',
-  color: '#FFFFFF',
-  fontWeight: '700',
-  cursor: 'pointer',
+  marginTop: "0.5rem",
+  padding: "0.85rem 1rem",
+  border: "none",
+  borderRadius: "8px",
+  backgroundColor: "#1952A6",
+  color: "#FFFFFF",
+  fontWeight: "600",
+  fontSize: "1rem",
+  cursor: "pointer",
 };
 
 const errorStyle = {
-  margin: '0.2rem 0',
-  color: '#B42318',
-  fontSize: '0.9rem',
+  margin: "0",
+  color: "#B42318",
+  fontSize: "0.875rem",
+  backgroundColor: "#FEF2F2",
+  padding: "0.5rem 0.75rem",
+  borderRadius: "6px",
+};
+
+const successStyle = {
+  margin: "0",
+  color: "#166534",
+  fontSize: "0.875rem",
+  backgroundColor: "#F0FDF4",
+  padding: "0.5rem 0.75rem",
+  borderRadius: "6px",
 };
 
 const helperTextStyle = {
-  margin: '0.5rem 0 0',
-  color: '#4A4A4A',
-  fontSize: '0.95rem',
+  margin: "0.25rem 0 0",
+  color: "#6B6F8E",
+  fontSize: "0.9rem",
+  textAlign: "center",
+};
+
+const linkStyle = {
+  color: "#1952A6",
+  fontWeight: "600",
 };

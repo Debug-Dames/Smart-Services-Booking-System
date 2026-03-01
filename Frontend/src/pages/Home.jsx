@@ -24,13 +24,13 @@ const services = [
     image: '/images/service-nails.jpg',
     price: 'From R300',
   },
-  // {
-  //   id: 4,
-  //   title: 'Facial Treatments',
-  //   description: 'Rejuvenating facials that cleanse, nourish, and restore your natural radiance.',
-  //   image: '/images/service-facial.jpg',
-  //   price: 'From R1000',
-  // },
+  {
+    id: 4,
+    title: 'Facial Treatments',
+    description: 'Rejuvenating facials that cleanse, nourish, and restore your natural radiance.',
+    image: '/images/service-facial.jpg',
+    price: 'From R1000',
+  },
 ]
 
 
@@ -181,7 +181,7 @@ export default function Home() {
                 <div className="service-card-body">
                   <h3 className="service-card-title">{service.title}</h3>
                   <p className="service-card-description">{service.description}</p>
-                  <Link to="/book" className="service-card-link">
+                  <Link to="/book-appointment" className="service-card-link">
                     Book Now
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14" />

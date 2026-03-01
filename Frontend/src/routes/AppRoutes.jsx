@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home';
 import Services from '../pages/Services';
+import Contact from '../pages/Contact';
 import Dashboard from '../pages/Dashboard';
 import BookAppointment from '../pages/BookAppointment';
 import MyBookings from '../pages/MyBookings';
@@ -18,8 +19,11 @@ export default function AppRoutes() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="services" element={<Services />} />
+          <Route path="contact" element={<Contact />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
+          {/* Legacy redirect alias */}
+          <Route path="book-appointment" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
           <Route
             path="dashboard"
             element={
@@ -52,6 +56,7 @@ export default function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<Home />} />
         </Route>
       </Routes>
     </Router>

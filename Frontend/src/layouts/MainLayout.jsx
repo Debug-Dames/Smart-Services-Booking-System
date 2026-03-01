@@ -6,7 +6,7 @@ function MainLayout() {
   return (
     <div className="main-layout">
       <Navbar />
-      <main className="main-content">
+      <main className="main-content" style={{ paddingTop: '72px' }}>
         <Outlet />
       </main>
       <Footer />

@@ -145,6 +145,13 @@
   display: none;
 }
 
+.navbar-user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--navy-dark);
+  padding: 0 8px;
+}
+
 @media (max-width: 768px) {
   .navbar-actions {
     display: none;
