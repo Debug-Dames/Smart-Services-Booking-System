@@ -24,13 +24,13 @@ const services = [
     image: '/images/service-nails.jpg',
     price: 'From R300',
   },
-  {
-    id: 4,
-    title: 'Facial Treatments',
-    description: 'Rejuvenating facials that cleanse, nourish, and restore your natural radiance.',
-    image: '/images/service-facial.jpg',
-    price: 'From R1000',
-  },
+  // {
+  //   id: 4,
+  //   title: 'Facial Treatments',
+  //   description: 'Rejuvenating facials that cleanse, nourish, and restore your natural radiance.',
+  //   image: '/images/service-facial.jpg',
+  //   price: 'From R1000',
+  // },
 ]
 
 
