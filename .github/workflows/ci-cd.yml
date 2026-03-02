@@ -9,7 +9,7 @@ on:
 jobs:
   build-frontend-admin:
     name: Build ${{ matrix.app }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latestb 
     strategy:
       fail-fast: false
       matrix:
