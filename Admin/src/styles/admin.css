@@ -183,7 +183,16 @@ body {
     outline: none;
 }
 
-.admin-form input:focus {
+.admin-form select {
+    border: 1px solid #D4CACE;
+    border-radius: 10px;
+    padding: 10px 12px;
+    outline: none;
+    background: #FFFFFF;
+}
+
+.admin-form input:focus,
+.admin-form select:focus {
     border-color: var(--admin-active);
 }
 
