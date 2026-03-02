@@ -1,17 +1,5 @@
-const validateCreatePaymentInput = (payload) => {
-  const required = ["bookingId", "amount", "method"];
-  const missing = required.filter((field) => payload[field] === undefined);
-  if (missing.length) {
-    return { valid: false, message: `Missing fields: ${missing.join(", ")}` };
-  }
-
-  if (Number(payload.amount) <= 0) {
-    return { valid: false, message: "Amount must be greater than 0" };
-  }
-
-  return { valid: true };
-};
-
-module.exports = {
-  validateCreatePaymentInput,
+exports.validatePayment = (data) => {
+    const errors = [];
+    if (!data || !data.amount) errors.push('amount is required');
+    return { valid: errors.length === 0, errors };
 };

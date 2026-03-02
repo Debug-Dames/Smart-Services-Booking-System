@@ -1,15 +1,21 @@
-const app = require("./app");
-const env = require("./config/env");
-const { connectDatabase } = require("./config/database");
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
 
-const start = async () => {
-  await connectDatabase();
-  app.listen(env.port, () => {
-    console.log(`${env.appName} listening on port ${env.port}`);
-  });
-};
+dotenv.config();
 
-start().catch((error) => {
-  console.error("Failed to start server", error);
-  process.exit(1);
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const PORT = process.env.PORT || 5000;
+
+// Test route
+app.get("/", (req, res) => {
+    res.json({ message: "Backend is running successfully 🚀" });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
