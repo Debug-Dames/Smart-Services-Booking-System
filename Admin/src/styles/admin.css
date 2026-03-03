@@ -390,6 +390,19 @@ body {
     outline: none;
 }
 
+.admin-form select,
+.booking-filters input,
+.booking-filters select,
+.booking-table input,
+.booking-table select {
+    border: 1px solid #D4CACE;
+    border-radius: 10px;
+    padding: 8px 10px;
+    outline: none;
+    background: #FFFFFF;
+    width: 100%;
+}
+
 .admin-form input:focus {
     border-color: var(--admin-active);
 }
@@ -408,6 +421,7 @@ body {
     filter: brightness(1.06);
 }
 
+<<<<<<< HEAD
 .admin-mini-stats {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -591,11 +605,75 @@ body {
 }
 
 .table-actions {
+=======
+.admin-btn-secondary {
+    background: #4D5069;
+}
+
+.admin-btn-warning {
+    background: #D97706;
+}
+
+.admin-btn-danger {
+    background: #B91C1C;
+}
+
+.admin-btn-success {
+    background: #15803D;
+}
+
+.admin-muted {
+    color: #6B6F8E;
+    margin: 0 0 14px;
+}
+
+.admin-error {
+    color: #B91C1C;
+    margin: 10px 0;
+    font-size: 0.92rem;
+}
+
+.booking-filters {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.booking-table-wrap {
+    overflow-x: auto;
+}
+
+.booking-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+}
+
+.booking-table th,
+.booking-table td {
+    text-align: left;
+    border-bottom: 1px solid #EEF0F6;
+    padding: 10px 8px;
+    vertical-align: top;
+    font-size: 0.92rem;
+}
+
+.booking-table th {
+    font-size: 0.82rem;
+    color: #6B6F8E;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.booking-actions {
+>>>>>>> 5e08d817e74b2a469af433ed26f7e088a22eadb7
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
 
+<<<<<<< HEAD
 .admin-table tbody tr:hover {
     background: #FAFCFF;
 }
@@ -603,6 +681,12 @@ body {
 .table-actions .admin-btn {
     padding: 6px 10px;
     font-size: 0.8rem;
+=======
+.booking-empty {
+    text-align: center;
+    color: #6B6F8E;
+    padding: 18px 10px;
+>>>>>>> 5e08d817e74b2a469af433ed26f7e088a22eadb7
 }
 
 .status-badge {
@@ -656,12 +740,17 @@ body {
         width: 100%;
     }
 
+<<<<<<< HEAD
     .admin-grid-form {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .admin-mini-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+=======
+    .booking-filters {
+        grid-template-columns: 1fr;
+>>>>>>> 5e08d817e74b2a469af433ed26f7e088a22eadb7
     }
 }
 
