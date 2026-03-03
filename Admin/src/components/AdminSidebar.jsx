@@ -32,6 +32,11 @@ const AdminSidebar = () => {
                         </NavLink>
                     </li>
                     <li>
+                        <NavLink to="stylists" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
+                            Stylists
+                        </NavLink>
+                    </li>
+                    <li>
                         <NavLink to="services" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
                             Services
                         </NavLink>
