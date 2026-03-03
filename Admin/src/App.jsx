@@ -4,6 +4,7 @@ import AdminDashboard from './screens/AdminDashboard'
 import Login from './screens/Login'
 import ManageBookings from './screens/ManageBookings'
 import ManageServices from './screens/ManageServices'
+import ManageStylists from './screens/ManageStylists'
 import ManageUsers from './screens/ManageUsers'
 import './styles/admin.css'
 
@@ -23,9 +24,6 @@ const AdminLayout = () => (
   <div className="admin-layout">
     <AdminSidebar />
     <div className="admin-main-area">
-      <header className="admin-topbar">
-        <h2>Admin Dashboard</h2>
-      </header>
       <main className="admin-main">
         <Outlet />
       </main>
@@ -54,6 +52,7 @@ const router = createBrowserRouter([
       { index: true, element: <AdminDashboard /> },
       { path: 'bookings', element: <ManageBookings /> },
       { path: 'users', element: <ManageUsers /> },
+      { path: 'stylists', element: <ManageStylists /> },
       { path: 'services', element: <ManageServices /> },
       { path: 'service', element: <Navigate to="/admin/services" replace /> },
       { path: '*', element: <Navigate to="/admin" replace /> },
