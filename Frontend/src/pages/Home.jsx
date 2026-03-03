@@ -7,21 +7,21 @@ const services = [
     id: 1,
     title: 'Haircut & Styling',
     description: 'Expert cuts and styling tailored to enhance your natural beauty and personal flair.',
-    image: '/images/service-haircut.jpg',
+    image: 'https://i.ytimg.com/vi/KVuInRSkP78/maxresdefault.jpg',
     price: 'From R200',
   },
   {
     id: 2,
     title: 'Hair Coloring',
     description: 'From subtle highlights to bold transformations, our colorists create stunning results.',
-    image: '/images/service-coloring.jpg',
+    image: 'https://img.freepik.com/premium-photo/color-spectrum-assortment-showcases-different-hair-dyeing-shades-alongside-natural-hair-color_896558-6659.jpg',
     price: 'From R250',
   },
   {
     id: 3,
     title: 'Nail Care',
-    description: 'Luxurious manicures and pedicures with premium products for pristine nails.',
-    image: '/images/service-nails.jpg',
+    description:'Having clean, healthy-looking nails is a must for practicing good hygiene and keeping yourself looking your best! ',
+    image: 'https://tse4.mm.bing.net/th/id/OIP.LYGECJ1NswcNy0-wEOER6AHaHa?rs=1&pid=ImgDetMain&o=7&rm=3.',
     price: 'From R300',
   },
   // {
@@ -250,3 +250,7 @@ export default function Home() {
 };
 
 // export default Home;
+
+
+
+

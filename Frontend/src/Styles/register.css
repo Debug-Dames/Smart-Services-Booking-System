@@ -1,0 +1,182 @@
+.register-page {
+  min-height: 100vh;
+  padding: 112px 20px 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(27, 121, 164, 0.35), transparent 40%),
+    radial-gradient(circle at 92% 85%, rgba(4, 22, 58, 0.7), transparent 35%),
+    linear-gradient(130deg, #0a5160 0%, #04252f 30%, #02080d 100%);
+}
+
+.register-card {
+  width: 100%;
+  max-width: 980px;
+  min-height: 620px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #f6f7fb;
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.38);
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+}
+
+.register-art-panel {
+  position: relative;
+  background:
+    linear-gradient(20deg, rgba(0, 0, 0, 0.55), rgba(5, 14, 30, 0.24)),
+    url('https://images.unsplash.com/photo-1642425149556-b6f0f6c3445b?auto=format&fit=crop&w=1200&q=80')
+      center / cover no-repeat;
+}
+
+.register-art-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, rgba(4, 8, 25, 0.2), rgba(4, 8, 25, 0.65));
+}
+
+.register-art-content {
+  position: relative;
+  z-index: 1;
+  color: #f5f8ff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 42px;
+}
+
+.register-art-kicker {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  color: rgba(225, 234, 255, 0.82);
+}
+
+.register-art-content h2 {
+  color: #ffffff;
+  font-size: clamp(2rem, 4vw, 2.9rem);
+  line-height: 1.08;
+  margin-bottom: 14px;
+}
+
+.register-art-content p {
+  color: rgba(242, 246, 255, 0.86);
+  font-size: 1.05rem;
+  max-width: 320px;
+}
+
+.register-form-panel {
+  padding: 52px 46px;
+  display: flex;
+  flex-direction: column;
+}
+
+.register-form-panel h1 {
+  font-size: 2.2rem;
+  margin-bottom: 24px;
+  color: #111827;
+}
+
+.register-form-panel label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #293043;
+  margin-bottom: 8px;
+}
+
+.register-form-panel input {
+  height: 42px;
+  border: 1px solid #d8dce7;
+  border-radius: 8px;
+  padding: 0 12px;
+  margin-bottom: 13px;
+  font-size: 0.95rem;
+  color: #101828;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.register-form-panel input:focus {
+  outline: none;
+  border-color: #184fa1;
+  box-shadow: 0 0 0 3px rgba(24, 79, 161, 0.1);
+}
+
+.register-error {
+  margin: 0 0 10px;
+  color: #b42318;
+  font-size: 0.9rem;
+}
+
+.register-submit {
+  margin-top: 4px;
+  height: 44px;
+  border-radius: 10px;
+  border: 1px solid #090f1f;
+  background: #090f1f;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.register-submit:hover {
+  background: #111a31;
+  box-shadow: 0 10px 18px rgba(9, 15, 31, 0.25);
+  transform: translateY(-1px);
+}
+
+.register-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.register-helper {
+  margin-top: 16px;
+  color: #495067;
+  font-size: 0.94rem;
+}
+
+.register-helper a {
+  color: #184fa1;
+  font-weight: 600;
+}
+
+.register-helper a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .register-card {
+    max-width: 620px;
+    min-height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .register-art-panel {
+    min-height: 260px;
+  }
+
+  .register-art-content {
+    padding: 28px;
+  }
+
+  .register-form-panel {
+    padding: 30px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-page {
+    padding: 96px 12px 40px;
+  }
+
+  .register-form-panel {
+    padding: 26px 16px;
+  }
+}
