@@ -441,6 +441,18 @@ body {
     padding: 18px 10px;
 }
 
+.service-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
+}
+
+.service-form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -493,6 +505,10 @@ body {
     }
 
     .booking-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .service-form {
         grid-template-columns: 1fr;
     }
 }

@@ -316,7 +316,6 @@ const AdminDashboard = () => {
         <section className="admin-page">
             <div className="admin-page-header">
                 <h1>Dashboard Overview</h1>
-                <p>This is the first page the admin sees.</p>
             </div>
 
             {loading ? (

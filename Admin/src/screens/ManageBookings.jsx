@@ -153,10 +153,7 @@ const ManageBookings = () => {
             <h1>Manage Bookings</h1>
             <div className="admin-card">
                 <h3>Booking Management</h3>
-                <p className="admin-muted">
-                    View, filter, approve/reject, edit, and cancel bookings.
-                    {USE_MOCK_BOOKINGS ? ' Using mock data.' : ''}
-                </p>
+                <p className="admin-muted">View, filter, approve/reject, edit, and cancel bookings.</p>
                 <div className="booking-filters">
                     <div className="admin-form-row">
                         <label htmlFor="filter-date">Date</label>

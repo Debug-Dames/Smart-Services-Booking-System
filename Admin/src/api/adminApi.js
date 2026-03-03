@@ -18,4 +18,18 @@ export default {
         })
         return res.json()
     },
+    updateService: async (id, data) => {
+        const res = await fetch(`${API}/admin/services/${id}`, {
+            method: 'PUT',
+            headers: jsonHeaders,
+            body: JSON.stringify(data),
+        })
+        return res.json()
+    },
+    deleteService: async (id) => {
+        const res = await fetch(`${API}/admin/services/${id}`, {
+            method: 'DELETE',
+        })
+        return res.ok
+    },
 }
