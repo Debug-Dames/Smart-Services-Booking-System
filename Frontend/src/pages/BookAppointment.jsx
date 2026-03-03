@@ -19,6 +19,7 @@ const INITIAL_FORM = {
 
 export default function BookAppointment() {
   const [formData, setFormData] = useState(INITIAL_FORM);
+  const [activeStep, setActiveStep] = useState(1);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -36,6 +37,24 @@ export default function BookAppointment() {
     setSuccessMessage('');
     setErrorMessage('');
     setShowPaymentPopup(true);
+  };
+
+  const handleNextFromStepOne = () => {
+    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.service) {
+      setErrorMessage('Please complete Full Name, Phone Number, and Service.');
+      return;
+    }
+    setErrorMessage('');
+    setActiveStep(2);
+  };
+
+  const handleNextFromStepTwo = () => {
+    if (!formData.date || !formData.time) {
+      setErrorMessage('Please select both date and time.');
+      return;
+    }
+    setErrorMessage('');
+    setActiveStep(3);
   };
 
   const handleConfirmPayment = async () => {
@@ -66,6 +85,7 @@ export default function BookAppointment() {
       setShowPaymentPopup(false);
       setSuccessMessage('Booking confirmed. Payment received.');
       setFormData(INITIAL_FORM);
+      setActiveStep(1);
     } catch (error) {
       setErrorMessage('Network error. Please check your connection and try again.');
     } finally {
@@ -77,102 +97,139 @@ export default function BookAppointment() {
     <section style={pageStyle}>
       <form style={formStyle} onSubmit={handleSubmit}>
         <h1 style={titleStyle}>Book Appointment</h1>
+        <p style={stepTextStyle}>Step {activeStep} of 3</p>
 
-        <label style={labelStyle} htmlFor="fullName">
-          Full Name
-        </label>
-        <input
-          id="fullName"
-          name="fullName"
-          type="text"
-          style={inputStyle}
-          value={formData.fullName}
-          onChange={handleChange}
-          required
-        />
+        {activeStep === 1 ? (
+          <>
+            <label style={labelStyle} htmlFor="fullName">
+              Full Name
+            </label>
+            <input
+              id="fullName"
+              name="fullName"
+              type="text"
+              style={inputStyle}
+              value={formData.fullName}
+              onChange={handleChange}
+              required
+            />
 
-        <label style={labelStyle} htmlFor="phone">
-          Phone Number
-        </label>
-        <input
-          id="phone"
-          name="phone"
-          type="tel"
-          style={inputStyle}
-          value={formData.phone}
-          onChange={handleChange}
-          required
-        />
+            <label style={labelStyle} htmlFor="phone">
+              Phone Number
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              style={inputStyle}
+              value={formData.phone}
+              onChange={handleChange}
+              required
+            />
 
-        <label style={labelStyle} htmlFor="service">
-          Service
-        </label>
-        <select id="service" name="service" style={inputStyle} value={formData.service} onChange={handleChange}>
-          <option value="Haircut">Haircut</option>
-          <option value="Nails">Nails</option>
-          <option value="Braids">Braids</option>
-        </select>
+            <label style={labelStyle} htmlFor="service">
+              Service
+            </label>
+            <select id="service" name="service" style={inputStyle} value={formData.service} onChange={handleChange}>
+              <option value="Haircut">Haircut</option>
+              <option value="Nails">Nails</option>
+              <option value="Braids">Braids</option>
+            </select>
+          </>
+        ) : null}
 
-        <label style={labelStyle} htmlFor="date">
-          Date
-        </label>
-        <input
-          id="date"
-          name="date"
-          type="date"
-          style={inputStyle}
-          value={formData.date}
-          onChange={handleChange}
-          required
-        />
+        {activeStep === 2 ? (
+          <>
+            <label style={labelStyle} htmlFor="date">
+              Date
+            </label>
+            <input
+              id="date"
+              name="date"
+              type="date"
+              style={inputStyle}
+              value={formData.date}
+              onChange={handleChange}
+              required
+            />
 
-        <label style={labelStyle} htmlFor="time">
-          Time
-        </label>
-        <input
-          id="time"
-          name="time"
-          type="time"
-          style={inputStyle}
-          value={formData.time}
-          onChange={handleChange}
-          required
-        />
+            <label style={labelStyle} htmlFor="time">
+              Time
+            </label>
+            <input
+              id="time"
+              name="time"
+              type="time"
+              style={inputStyle}
+              value={formData.time}
+              onChange={handleChange}
+              required
+            />
+          </>
+        ) : null}
 
-        <label style={labelStyle} htmlFor="paymentMethod">
-          Payment Method
-        </label>
-        <select
-          id="paymentMethod"
-          name="paymentMethod"
-          style={inputStyle}
-          value={formData.paymentMethod}
-          onChange={handleChange}
-        >
-          <option value="Card">Card</option>
-          <option value="Cash">Cash</option>
-          <option value="EFT">EFT</option>
-        </select>
+        {activeStep === 3 ? (
+          <>
+            <label style={labelStyle} htmlFor="paymentMethod">
+              Payment Method
+            </label>
+            <select
+              id="paymentMethod"
+              name="paymentMethod"
+              style={inputStyle}
+              value={formData.paymentMethod}
+              onChange={handleChange}
+            >
+              <option value="Card">Card</option>
+              <option value="Cash">Cash</option>
+              <option value="EFT">EFT</option>
+            </select>
 
-        <label style={labelStyle} htmlFor="notes">
-          Notes (Optional)
-        </label>
-        <textarea
-          id="notes"
-          name="notes"
-          rows={3}
-          style={inputStyle}
-          value={formData.notes}
-          onChange={handleChange}
-          placeholder="Any preferences or special requests"
-        />
+            <label style={labelStyle} htmlFor="notes">
+              Notes (Optional)
+            </label>
+            <textarea
+              id="notes"
+              name="notes"
+              rows={3}
+              style={inputStyle}
+              value={formData.notes}
+              onChange={handleChange}
+              placeholder="Any preferences or special requests"
+            />
+          </>
+        ) : null}
 
         {successMessage ? <p style={successStyle}>{successMessage}</p> : null}
         {errorMessage ? <p style={errorStyle}>{errorMessage}</p> : null}
 
-        <button type="submit" style={buttonStyle} disabled={isSubmitting}>
-          Continue To Payment
-        </button>
+        {activeStep === 1 ? (
+          <button type="button" style={buttonStyle} onClick={handleNextFromStepOne}>
+            Next
+          </button>
+        ) : null}
+
+        {activeStep === 2 ? (
+          <div style={stepActionsStyle}>
+            <button type="button" style={cancelButtonStyle} onClick={() => setActiveStep(1)}>
+              Back
+            </button>
+            <button type="button" style={buttonStyle} onClick={handleNextFromStepTwo}>
+              Next
+            </button>
+          </div>
+        ) : null}
+
+        {activeStep === 3 ? (
+          <div style={stepActionsStyle}>
+            <button type="button" style={cancelButtonStyle} onClick={() => setActiveStep(2)} disabled={isSubmitting}>
+              Back
+            </button>
+            <button type="submit" style={buttonStyle} disabled={isSubmitting}>
+              Continue To Payment
+            </button>
+          </div>
+        ) : null}
       </form>
 
       {showPaymentPopup ? (
@@ -228,6 +285,12 @@ const formStyle = {
 const titleStyle = {
   margin: 0,
   color: '#22274C',
+};
+
+const stepTextStyle = {
+  margin: '0.1rem 0 0.4rem',
+  color: '#475467',
+  fontSize: '0.92rem',
 };
 
 const labelStyle = {
@@ -296,5 +359,12 @@ const actionsStyle = {
   marginTop: '1rem',
   display: 'flex',
   justifyContent: 'flex-end',
+  gap: '0.7rem',
+};
+
+const stepActionsStyle = {
+  marginTop: '0.7rem',
+  display: 'flex',
+  justifyContent: 'space-between',
   gap: '0.7rem',
 };
