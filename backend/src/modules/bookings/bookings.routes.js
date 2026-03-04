@@ -10,8 +10,8 @@ const router = express.Router();
 router.get("/", bookingController.getAllBookings);
 router.get("/:id", bookingController.getBookingById);
 
-// Protected routes (token required)
-router.post("/", protect, bookingController.createBooking);
+// Create route is public for now (no token required)
+router.post("/", bookingController.createBooking);
 router.put("/:id", protect, bookingController.updateBooking);
 router.delete("/:id", protect, bookingController.deleteBooking);
 

@@ -1,47 +1,40 @@
-// prisma/seed.js
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../src/config/database.js";
+import bcrypt from "bcryptjs";
 
 async function main() {
-  // 1️⃣ Create a test user
-  const user = await prisma.user.upsert({
-    where: { email: "testuser@example.com" },
+  const hashedPassword = await bcrypt.hash("123456", 10);
+
+  await prisma.user.upsert({
+    where: { email: "test@example.com" },
     update: {},
     create: {
       name: "Test User",
-      email: "testuser@example.com",
-      password: "hashed_password" // in production, hash properly
-    }
+      email: "test@example.com",
+      password: hashedPassword,
+      role: "customer",
+      userId: 1,
+    },
   });
 
-  // 2️⃣ Create a test service
-  const service = await prisma.service.upsert({
-    where: { name: "Haircut" },
+  await prisma.service.upsert({
+    where: { id: 2 },
     update: {},
     create: {
       name: "Haircut",
-      price: 150
-    }
+      description: "Standard haircut service",
+      price: 100,
+      duration: 60,
+    },
   });
 
-  // 3️⃣ Create a test booking
-  const booking = await prisma.booking.create({
-    data: {
-      userId: user.id,
-      serviceId: service.id,
-      date: new Date("2026-03-02T00:00:00.000Z"),
-      startTime: new Date("2026-03-02T10:00:00.000Z"),
-      endTime: new Date("2026-03-02T11:00:00.000Z"),
-      status: "pending"
-    }
-  });
-
-  console.log("✅ Seed complete:", { user, service, booking });
+  console.log("Seed complete");
 }
 
 main()
-  .catch((e) => console.error(e))
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(async () => {
     await prisma.$disconnect();
   });

@@ -33,17 +33,34 @@ export const createBooking = async (req, res) => {
     const startObj = new Date(startTime);
     const endObj = new Date(endTime);
 
-    if (
-      Number.isNaN(effectiveUserId) ||
-      Number.isNaN(serviceIdNum) ||
-      Number.isNaN(dateObj.getTime()) ||
-      Number.isNaN(startObj.getTime()) ||
-      Number.isNaN(endObj.getTime())
-    ) {
-      return res.status(400).json({
-        message:
-          "Invalid input. Use numeric userId/serviceId and valid date/time formats.",
-      });
+    const errors = [];
+
+    if (!req.user?.id && (userId === undefined || userId === null || userId === "")) {
+      errors.push("userId is required when request is unauthenticated");
+    } else if (Number.isNaN(effectiveUserId)) {
+      errors.push("userId must be numeric");
+    }
+
+    if (serviceId === undefined || serviceId === null || serviceId === "") {
+      errors.push("serviceId is required");
+    } else if (Number.isNaN(serviceIdNum)) {
+      errors.push("serviceId must be numeric");
+    }
+
+    if (Number.isNaN(dateObj.getTime())) {
+      errors.push("date must be in YYYY-MM-DD format");
+    }
+
+    if (Number.isNaN(startObj.getTime())) {
+      errors.push("startTime must be a valid ISO-8601 datetime");
+    }
+
+    if (Number.isNaN(endObj.getTime())) {
+      errors.push("endTime must be a valid ISO-8601 datetime");
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json({ message: "Invalid input", errors });
     }
 
     const [user, service] = await Promise.all([
