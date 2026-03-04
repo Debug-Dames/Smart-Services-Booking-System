@@ -100,14 +100,14 @@ export default function BookAppointment() {
     <section className="book-page">
       <div className="book-shell">
         <div className="book-main-grid">
-          <aside className="book-phone-panel">
-            <div className="book-phone-frame">
-              <img
-                src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=80"
-                alt="Nail art inspiration"
+          <aside className="book-side-panel">
+            <div className="book-pin-embed">
+              <iframe
+                src="https://assets.pinterest.com/ext/embed.html?id=2040762328200900"
+                title="Pinterest inspiration"
+                loading="lazy"
               />
             </div>
-            <p className="book-social">@DAMESBEAUTY</p>
           </aside>
 
           <div className="book-right-panel">
