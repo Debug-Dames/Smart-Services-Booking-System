@@ -9,6 +9,7 @@ datasource db {
 
 model User {
   id        Int      @id @default(autoincrement())
+  userId    Int
   name      String
   email     String   @unique
   password  String
@@ -33,9 +34,9 @@ model Booking {
   status    String   @default("pending")
   userId    Int
   serviceId Int
-
+  startTime DateTime
+  endTime   DateTime
   user      User     @relation(fields: [userId], references: [id])
   service   Service  @relation(fields: [serviceId], references: [id])
-
   createdAt DateTime @default(now())
 }
