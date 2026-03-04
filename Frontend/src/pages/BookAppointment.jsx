@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_URL, authHeaders } from '../utils/api';
+import '../Styles/bookAppointment.css';
 
 const SERVICE_PRICES = {
   Haircut: 150,
@@ -18,6 +20,7 @@ const INITIAL_FORM = {
 };
 
 export default function BookAppointment() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [activeStep, setActiveStep] = useState(1);
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
@@ -94,164 +97,175 @@ export default function BookAppointment() {
   };
 
   return (
-    <section style={pageStyle}>
-      <form style={formStyle} onSubmit={handleSubmit}>
-        <h1 style={titleStyle}>Book Appointment</h1>
-        <p style={stepTextStyle}>Step {activeStep} of 3</p>
+    <section className="book-page">
+      <div className="book-shell">
+        <div className="book-main-grid">
+          <aside className="book-phone-panel">
+            <div className="book-phone-frame">
+              <img
+                src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=80"
+                alt="Nail art inspiration"
+              />
+            </div>
+            <p className="book-social">@DAMESBEAUTY</p>
+          </aside>
 
-        {activeStep === 1 ? (
-          <>
-            <label style={labelStyle} htmlFor="fullName">
-              Full Name
-            </label>
-            <input
-              id="fullName"
-              name="fullName"
-              type="text"
-              style={inputStyle}
-              value={formData.fullName}
-              onChange={handleChange}
-              required
-            />
+          <div className="book-right-panel">
+            <form className="book-form" onSubmit={handleSubmit}>
+              <div className="book-form-head">
+                <h1>Book Appointment</h1>
+                <p>Step {activeStep} of 3</p>
+              </div>
 
-            <label style={labelStyle} htmlFor="phone">
-              Phone Number
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              style={inputStyle}
-              value={formData.phone}
-              onChange={handleChange}
-              required
-            />
+              {activeStep === 1 ? (
+                <>
+                  <label htmlFor="fullName">Full Name</label>
+                  <input
+                    id="fullName"
+                    name="fullName"
+                    type="text"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    required
+                  />
 
-            <label style={labelStyle} htmlFor="service">
-              Service
-            </label>
-            <select id="service" name="service" style={inputStyle} value={formData.service} onChange={handleChange}>
-              <option value="Haircut">Haircut</option>
-              <option value="Nails">Nails</option>
-              <option value="Braids">Braids</option>
-            </select>
-          </>
-        ) : null}
+                  <label htmlFor="phone">Phone Number</label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                  />
 
-        {activeStep === 2 ? (
-          <>
-            <label style={labelStyle} htmlFor="date">
-              Date
-            </label>
-            <input
-              id="date"
-              name="date"
-              type="date"
-              style={inputStyle}
-              value={formData.date}
-              onChange={handleChange}
-              required
-            />
+                  <label htmlFor="service">Service</label>
+                  <select id="service" name="service" value={formData.service} onChange={handleChange}>
+                    <option value="Haircut">Haircut</option>
+                    <option value="Nails">Nails</option>
+                    <option value="Braids">Braids</option>
+                  </select>
+                </>
+              ) : null}
 
-            <label style={labelStyle} htmlFor="time">
-              Time
-            </label>
-            <input
-              id="time"
-              name="time"
-              type="time"
-              style={inputStyle}
-              value={formData.time}
-              onChange={handleChange}
-              required
-            />
-          </>
-        ) : null}
+              {activeStep === 2 ? (
+                <>
+                  <label htmlFor="date">Date</label>
+                  <input
+                    id="date"
+                    name="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={handleChange}
+                    required
+                  />
 
-        {activeStep === 3 ? (
-          <>
-            <label style={labelStyle} htmlFor="paymentMethod">
-              Payment Method
-            </label>
-            <select
-              id="paymentMethod"
-              name="paymentMethod"
-              style={inputStyle}
-              value={formData.paymentMethod}
-              onChange={handleChange}
-            >
-              <option value="Card">Card</option>
-              <option value="Cash">Cash</option>
-              <option value="EFT">EFT</option>
-            </select>
+                  <label htmlFor="time">Time</label>
+                  <input
+                    id="time"
+                    name="time"
+                    type="time"
+                    value={formData.time}
+                    onChange={handleChange}
+                    required
+                  />
+                </>
+              ) : null}
 
-            <label style={labelStyle} htmlFor="notes">
-              Notes (Optional)
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              rows={3}
-              style={inputStyle}
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Any preferences or special requests"
-            />
-          </>
-        ) : null}
+              {activeStep === 3 ? (
+                <>
+                  <label htmlFor="paymentMethod">Payment Method</label>
+                  <select
+                    id="paymentMethod"
+                    name="paymentMethod"
+                    value={formData.paymentMethod}
+                    onChange={handleChange}
+                  >
+                    <option value="Card">Card</option>
+                    <option value="Cash">Cash</option>
+                    <option value="EFT">EFT</option>
+                  </select>
 
-        {successMessage ? <p style={successStyle}>{successMessage}</p> : null}
-        {errorMessage ? <p style={errorStyle}>{errorMessage}</p> : null}
+                  <label htmlFor="notes">Notes (Optional)</label>
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    rows={3}
+                    value={formData.notes}
+                    onChange={handleChange}
+                    placeholder="Any preferences or special requests"
+                  />
+                </>
+              ) : null}
 
-        {activeStep === 1 ? (
-          <button type="button" style={buttonStyle} onClick={handleNextFromStepOne}>
-            Next
-          </button>
-        ) : null}
+              <div className="book-total">Estimated Total: <strong>R{amount}</strong></div>
 
-        {activeStep === 2 ? (
-          <div style={stepActionsStyle}>
-            <button type="button" style={cancelButtonStyle} onClick={() => setActiveStep(1)}>
-              Back
-            </button>
-            <button type="button" style={buttonStyle} onClick={handleNextFromStepTwo}>
-              Next
-            </button>
+              {successMessage ? (
+                <div className="book-feedback-row">
+                  <p className="book-success">{successMessage}</p>
+                  <button
+                    type="button"
+                    className="book-btn book-btn--ghost"
+                    onClick={() => navigate(-1)}
+                  >
+                    Go Back
+                  </button>
+                </div>
+              ) : null}
+              {errorMessage ? <p className="book-error">{errorMessage}</p> : null}
+
+              {activeStep === 1 ? (
+                <button type="button" className="book-btn book-btn--primary" onClick={handleNextFromStepOne}>
+                  Next
+                </button>
+              ) : null}
+
+              {activeStep === 2 ? (
+                <div className="book-step-actions">
+                  <button type="button" className="book-btn book-btn--ghost" onClick={() => setActiveStep(1)}>
+                    Back
+                  </button>
+                  <button type="button" className="book-btn book-btn--primary" onClick={handleNextFromStepTwo}>
+                    Next
+                  </button>
+                </div>
+              ) : null}
+
+              {activeStep === 3 ? (
+                <div className="book-step-actions">
+                  <button type="button" className="book-btn book-btn--ghost" onClick={() => setActiveStep(2)} disabled={isSubmitting}>
+                    Back
+                  </button>
+                  <button type="submit" className="book-btn book-btn--primary" disabled={isSubmitting}>
+                    Continue To Payment
+                  </button>
+                </div>
+              ) : null}
+            </form>
           </div>
-        ) : null}
-
-        {activeStep === 3 ? (
-          <div style={stepActionsStyle}>
-            <button type="button" style={cancelButtonStyle} onClick={() => setActiveStep(2)} disabled={isSubmitting}>
-              Back
-            </button>
-            <button type="submit" style={buttonStyle} disabled={isSubmitting}>
-              Continue To Payment
-            </button>
-          </div>
-        ) : null}
-      </form>
+        </div>
+      </div>
 
       {showPaymentPopup ? (
-        <div style={overlayStyle}>
-          <div style={popupStyle}>
-            <h2 style={{ marginTop: 0 }}>Confirm Payment</h2>
+        <div className="book-overlay">
+          <div className="book-popup">
+            <h2>Confirm Payment</h2>
             <p>Service: {formData.service}</p>
             <p>
               Date/Time: {formData.date} at {formData.time}
             </p>
             <p>Method: {formData.paymentMethod}</p>
-            <p style={{ fontWeight: '700' }}>Amount: R{amount}</p>
-            <div style={actionsStyle}>
+            <p className="book-popup-amount">Amount: R{amount}</p>
+            <div className="book-popup-actions">
               <button
                 type="button"
-                style={cancelButtonStyle}
+                className="book-btn book-btn--ghost"
                 onClick={() => setShowPaymentPopup(false)}
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
-              <button type="button" style={buttonStyle} onClick={handleConfirmPayment} disabled={isSubmitting}>
+              <button type="button" className="book-btn book-btn--primary" onClick={handleConfirmPayment} disabled={isSubmitting}>
                 {isSubmitting ? 'Processing...' : 'Pay & Confirm'}
               </button>
             </div>
@@ -261,110 +275,3 @@ export default function BookAppointment() {
     </section>
   );
 }
-
-const pageStyle = {
-  minHeight: '70vh',
-  padding: '2.5rem 1rem 3rem',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-};
-
-const formStyle = {
-  width: '100%',
-  maxWidth: '420px',
-  backgroundColor: '#F7F8FD',
-  borderRadius: '6px',
-  padding: '0.5rem',
-  boxShadow: '0 4px 12px rgba(34, 39, 76, 0.10)',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.4rem',
-};
-
-const titleStyle = {
-  margin: 0,
-  color: '#22274C',
-};
-
-const stepTextStyle = {
-  margin: '0.1rem 0 0.4rem',
-  color: '#475467',
-  fontSize: '0.92rem',
-};
-
-const labelStyle = {
-  fontWeight: '600',
-  color: '#22274C',
-};
-
-const inputStyle = {
-  border: '1px solid #D4CACE',
-  borderRadius: '8px',
-  padding: '0.7rem 0.8rem',
-};
-
-const buttonStyle = {
-  marginTop: '0.7rem',
-  border: 'none',
-  borderRadius: '8px',
-  padding: '0.75rem 1rem',
-  backgroundColor: '#22274C',
-  color: '#FFFFFF',
-  fontWeight: '700',
-  cursor: 'pointer',
-};
-
-const cancelButtonStyle = {
-  border: '1px solid #22274C',
-  borderRadius: '8px',
-  padding: '0.75rem 1rem',
-  backgroundColor: '#FFFFFF',
-  color: '#22274C',
-  fontWeight: '600',
-  cursor: 'pointer',
-};
-
-const successStyle = {
-  color: '#067647',
-  margin: '0.2rem 0 0',
-};
-
-const errorStyle = {
-  color: '#B42318',
-  margin: '0.2rem 0 0',
-};
-
-const overlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.45)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: '1rem',
-  zIndex: 20,
-};
-
-const popupStyle = {
-  width: '100%',
-  maxWidth: '440px',
-  backgroundColor: '#FFFFFF',
-  borderRadius: '12px',
-  padding: '1.2rem',
-  boxShadow: '0 8px 24px rgba(34, 39, 76, 0.2)',
-};
-
-const actionsStyle = {
-  marginTop: '1rem',
-  display: 'flex',
-  justifyContent: 'flex-end',
-  gap: '0.7rem',
-};
-
-const stepActionsStyle = {
-  marginTop: '0.7rem',
-  display: 'flex',
-  justifyContent: 'space-between',
-  gap: '0.7rem',
-};
