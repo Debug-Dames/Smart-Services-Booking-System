@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
+import '../../Styles/auth.css';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -77,106 +77,62 @@ export default function Login() {
 
 
   return (
-    <section style={pageStyle}>
-      <form style={formStyle} onSubmit={handleSubmit}>
-        <h1 style={titleStyle}>Login</h1>
+    <section className="auth-page">
+      <div className="auth-shell">
+        <aside className="auth-art-panel">
+          <div className="auth-art-overlay" />
+          <div className="auth-art-content">
+            <p className="auth-kicker">Welcome Back</p>
+            <h2>Own your beauty routine</h2>
+            <p>Sign in to book appointments and manage your salon schedule.</p>
+          </div>
+        </aside>
 
-        <label htmlFor="email" style={labelStyle}>
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="Enter your email"
-          style={inputStyle}
-        />
+        <form className="auth-form-panel" onSubmit={handleSubmit}>
+          <h1>Login</h1>
 
-        <label htmlFor="password" style={labelStyle}>
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Enter your password"
-          style={inputStyle}
-        />
+          <label htmlFor="email">Email Address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Enter your email"
+          />
 
-        {error ? <p style={errorStyle}>{error}</p> : null}
+          <label htmlFor="password">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Enter your password"
+          />
 
-        <button type="submit" style={buttonStyle} disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
+          {error ? <p className="auth-error">{error}</p> : null}
 
-        <p style={helperTextStyle}>
-          Don&apos;t have an account? <Link to="/register">Register</Link>
-        </p>
-      </form>
+          <button type="submit" className="auth-primary-btn" disabled={loading}>
+            {loading ? 'Logging in...' : 'Sign in'}
+          </button>
+
+          <div className="auth-separator">
+            <span>or</span>
+          </div>
+
+          <button type="button" className="auth-secondary-btn">
+            Continue with Google
+          </button>
+          <button type="button" className="auth-secondary-btn auth-secondary-btn--dark">
+            Continue with Apple
+          </button>
+
+          <p className="auth-helper-text">
+            Don&apos;t have an account? <Link to="/register">Register</Link>
+          </p>
+        </form>
+      </div>
     </section>
   );
 }
-
-const pageStyle = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  minHeight: '70vh',
-  padding: '1rem',
-};
-
-const formStyle = {
-  width: '100%',
-  maxWidth: '420px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.6rem',
-  padding: '1.5rem',
-  borderRadius: '12px',
-  backgroundColor: '#F7F8FD',
-  boxShadow: '0 6px 18px rgba(34, 39, 76, 0.12)',
-};
-
-const titleStyle = {
-  margin: '0 0 0.2rem',
-  color: '#22274C',
-};
-
-const labelStyle = {
-  fontWeight: '600',
-  color: '#22274C',
-};
-
-const inputStyle = {
-  padding: '0.7rem 0.8rem',
-  borderRadius: '8px',
-  border: '1px solid #D4CACE',
-  outline: 'none',
-};
-
-const buttonStyle = {
-  marginTop: '0.5rem',
-  padding: '0.75rem 1rem',
-  border: 'none',
-  borderRadius: '8px',
-  backgroundColor: '#22274C',
-  color: '#FFFFFF',
-  fontWeight: '700',
-  cursor: 'pointer',
-};
-
-const errorStyle = {
-  margin: '0.2rem 0',
-  color: '#B42318',
-  fontSize: '0.9rem',
-};
-
-const helperTextStyle = {
-  margin: '0.5rem 0 0',
-  color: '#4A4A4A',
-  fontSize: '0.95rem',
-};
