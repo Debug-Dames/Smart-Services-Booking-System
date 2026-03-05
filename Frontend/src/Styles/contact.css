@@ -1,0 +1,235 @@
+.contact-page {
+  padding-top: 72px;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(25, 82, 166, 0.22), transparent 42%),
+    linear-gradient(180deg, var(--navy-dark) 0%, var(--primary-hover) 100%);
+  color: #ffffff;
+}
+
+.contact-hero {
+  position: relative;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 72px 24px;
+  overflow: hidden;
+}
+
+.contact-hero::before,
+contact-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(110deg, rgba(0, 0, 0, 0.7), rgba(34, 39, 76, 0.45)),
+    url('file:///C:/Users/CAPACITI-JHB/Downloads/salon%20flyer%20design_files/cfc436ff2ab55bf65e36aa6781b009ee.jpg')
+      center / cover no-repeat;
+  transform: scale(1.03);
+}
+
+.contact-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(34, 39, 76, 0.2), rgba(20, 63, 130, 0.88));
+}
+
+.contact-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+}
+
+.contact-kicker {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  color: var(--lavender-light);
+  margin-bottom: 14px;
+}
+
+.contact-hero h1 {
+  font-size: clamp(2.1rem, 5.4vw, 3.8rem);
+  color: #ffffff;
+  margin-bottom: 14px;
+}
+
+.contact-hero-copy {
+  color: rgba(189, 194, 219, 0.95);
+  font-size: 1.02rem;
+}
+
+.contact-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 56px 24px 84px;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: minmax(290px, 440px) 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.contact-form-card,
+.contact-info-panel {
+  border-radius: 16px;
+  border: 1px solid rgba(212, 202, 206, 0.32);
+  background: rgba(34, 39, 76, 0.88);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+}
+
+.contact-form-card {
+  padding: 30px 24px;
+}
+
+.contact-small-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lavender-light);
+  margin-bottom: 8px;
+}
+
+.contact-form-card h2 {
+  color: #ffffff;
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+
+.contact-form {
+  display: grid;
+  gap: 10px;
+}
+
+.contact-form label {
+  font-size: 0.86rem;
+  color: var(--lavender-light);
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  border: 1px solid rgba(212, 202, 206, 0.5);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 11px 12px;
+  font-size: 0.95rem;
+}
+
+.contact-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: rgba(189, 194, 219, 0.72);
+}
+
+.contact-form button {
+  margin-top: 6px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.25s ease;
+}
+
+.contact-form button:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.contact-info-panel {
+  padding: 30px 24px;
+}
+
+.contact-panel-copy {
+  color: rgba(189, 194, 219, 0.95);
+  margin-bottom: 24px;
+}
+
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.contact-info-item {
+  border: 1px solid rgba(212, 202, 206, 0.34);
+  border-radius: 12px;
+  padding: 14px 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.contact-info-item h3 {
+  color: #ffffff;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.contact-info-item p {
+  color: var(--lavender-light);
+  font-size: 0.9rem;
+}
+
+.contact-hours {
+  border-left: 3px solid var(--primary);
+  padding-left: 12px;
+  margin-bottom: 20px;
+}
+
+.contact-hours strong {
+  display: block;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.contact-hours p {
+  color: var(--lavender-light);
+}
+
+.contact-map {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 202, 206, 0.34);
+  min-height: 220px;
+}
+
+.contact-map iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  border: 0;
+}
+
+@media (max-width: 980px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-form-card,
+  .contact-info-panel {
+    padding: 24px 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .contact-main {
+    padding: 40px 14px 64px;
+  }
+
+  .contact-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

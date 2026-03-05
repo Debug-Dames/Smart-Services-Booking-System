@@ -8,6 +8,7 @@ import MyBookings from '../pages/MyBookings';
 import Profile from '../pages/Profile';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
+import Contact from '../pages/Contact';
 import ProtectedRoute from '../components/ProtectedRoute';
 import MainLayout from '../layouts/MainLayout';
 
@@ -18,6 +19,7 @@ export default function AppRoutes() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="services" element={<Services />} />
+          <Route path="contact" element={<Contact />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route

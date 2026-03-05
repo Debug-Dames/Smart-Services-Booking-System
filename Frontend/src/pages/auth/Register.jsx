@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
+import '../../Styles/auth.css';
 
 export default function Register() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -25,7 +27,7 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
       setError('Please complete all fields.');
       return;
     }
@@ -42,9 +44,10 @@ export default function Register() {
 
     try {
       setLoading(true);
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
       const payload = {
-        name: formData.fullName,
-        fullName: formData.fullName,
+        name: fullName,
+        fullName,
         email: formData.email,
         password: formData.password,
       };
@@ -69,132 +72,97 @@ export default function Register() {
   };
 
   return (
-    <section style={pageStyle}>
-      <form style={formStyle} onSubmit={handleSubmit}>
-        <h1 style={titleStyle}>Create Account</h1>
+    <section className="auth-page">
+      <div className="auth-shell">
+        <aside className="auth-art-panel">
+          <div className="auth-art-overlay" />
+          <div className="auth-art-content">
+            <p className="auth-kicker">Create Your Account</p>
+            <h2>Start your beauty journey</h2>
+            <p>Join now to book services, track appointments, and save time.</p>
+          </div>
+        </aside>
 
-        <label htmlFor="fullName" style={labelStyle}>
-          Full Name
-        </label>
-        <input
-          id="fullName"
-          name="fullName"
-          type="text"
-          value={formData.fullName}
-          onChange={handleChange}
-          placeholder="Enter your full name"
-          style={inputStyle}
-        />
+        <form className="auth-form-panel auth-form-panel--register" onSubmit={handleSubmit}>
+          <h1>Sign Up</h1>
 
-        <label htmlFor="email" style={labelStyle}>
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="Enter your email"
-          style={inputStyle}
-        />
+          <label htmlFor="firstName" className="auth-visually-hidden">First Name</label>
+          <input
+            id="firstName"
+            name="firstName"
+            type="text"
+            value={formData.firstName}
+            onChange={handleChange}
+            placeholder="First name"
+          />
 
-        <label htmlFor="password" style={labelStyle}>
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Create a password"
-          style={inputStyle}
-        />
+          <label htmlFor="lastName" className="auth-visually-hidden">Last Name</label>
+          <input
+            id="lastName"
+            name="lastName"
+            type="text"
+            value={formData.lastName}
+            onChange={handleChange}
+            placeholder="Last name"
+          />
 
-        <label htmlFor="confirmPassword" style={labelStyle}>
-          Confirm Password
-        </label>
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          placeholder="Confirm your password"
-          style={inputStyle}
-        />
+          <label htmlFor="email" className="auth-visually-hidden">Email Address</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Email address"
+          />
 
-        {error ? <p style={errorStyle}>{error}</p> : null}
+          <label htmlFor="password" className="auth-visually-hidden">Password</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Password"
+          />
 
-        <button type="submit" style={buttonStyle} disabled={loading}>
-          {loading ? 'Creating account...' : 'Register'}
-        </button>
+          <label htmlFor="confirmPassword" className="auth-visually-hidden">Confirm Password</label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="Confirm password"
+          />
 
-        <p style={helperTextStyle}>
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
-      </form>
+          <label className="auth-terms">
+            <input type="checkbox" />
+            <span>Accept Terms &amp; Conditions</span>
+          </label>
+
+          {error ? <p className="auth-error">{error}</p> : null}
+
+          <button type="submit" className="auth-primary-btn" disabled={loading}>
+            {loading ? 'Creating account...' : 'Join us'}
+          </button>
+
+          <div className="auth-separator">
+            <span>or</span>
+          </div>
+
+          <button type="button" className="auth-secondary-btn">
+            Sign up with Google
+          </button>
+          <button type="button" className="auth-secondary-btn auth-secondary-btn--dark">
+            Sign up with Apple
+          </button>
+
+          <p className="auth-helper-text">
+            Already have an account? <Link to="/login">Login</Link>
+          </p>
+        </form>
+      </div>
     </section>
   );
 }
-
-const pageStyle = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  minHeight: '70vh',
-  padding: '1rem',
-};
-
-const formStyle = {
-  width: '100%',
-  maxWidth: '420px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.6rem',
-  padding: '1.5rem',
-  borderRadius: '12px',
-  backgroundColor: '#F7F8FD',
-  boxShadow: '0 6px 18px rgba(34, 39, 76, 0.12)',
-};
-
-const titleStyle = {
-  margin: '0 0 0.2rem',
-  color: '#22274C',
-};
-
-const labelStyle = {
-  fontWeight: '600',
-  color: '#22274C',
-};
-
-const inputStyle = {
-  padding: '0.7rem 0.8rem',
-  borderRadius: '8px',
-  border: '1px solid #D4CACE',
-  outline: 'none',
-};
-
-const buttonStyle = {
-  marginTop: '0.5rem',
-  padding: '0.75rem 1rem',
-  border: 'none',
-  borderRadius: '8px',
-  backgroundColor: '#22274C',
-  color: '#FFFFFF',
-  fontWeight: '700',
-  cursor: 'pointer',
-};
-
-const errorStyle = {
-  margin: '0.2rem 0',
-  color: '#B42318',
-  fontSize: '0.9rem',
-};
-
-const helperTextStyle = {
-  margin: '0.5rem 0 0',
-  color: '#4A4A4A',
-  fontSize: '0.95rem',
-};
