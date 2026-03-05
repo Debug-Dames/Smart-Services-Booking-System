@@ -1,15 +1,23 @@
-import express from "express";
-import bookingRoutes from "./modules/bookings/bookings.routes.js"; // adjust path
+import app from "./app.js";
+import { env } from "./config/env.js";
+import { PrismaClient } from "@prisma/client";
 
-const app = express();
+const prisma = new PrismaClient();
+const PORT = env.PORT || 5000;
 
-// Important: parse JSON bodies
-app.use(express.json());
+async function startServer() {
+    try {
 
-// Mount booking routes
-app.use("/api/bookings", bookingRoutes);
+        await prisma.$connect();
+        console.log("✅ Database connected successfully");
 
-const PORT = 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on http://localhost:${PORT}`);
-});
+        app.listen(PORT, () => {
+            console.log(`🚀 Backend running on http://localhost:${PORT}`);
+        });
+
+    } catch (error) {
+        console.error("❌ Database connection failed:", error);
+    }
+}
+
+startServer();
