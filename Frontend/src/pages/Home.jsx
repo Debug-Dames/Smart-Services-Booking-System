@@ -24,13 +24,13 @@ const services = [
     image: 'https://tse4.mm.bing.net/th/id/OIP.LYGECJ1NswcNy0-wEOER6AHaHa?rs=1&pid=ImgDetMain&o=7&rm=3.',
     price: 'From R300',
   },
-  // {
-  //   id: 4,
-  //   title: 'Facial Treatments',
-  //   description: 'Rejuvenating facials that cleanse, nourish, and restore your natural radiance.',
-  //   image: '/images/service-facial.jpg',
-  //   price: 'From R1000',
-  // },
+  {
+    id: 4,
+    title: 'Facial Treatments',
+    description: 'Rejuvenating facials that cleanse, nourish, and restore your natural radiance.',
+     image: 'https://tse2.mm.bing.net/th/id/OIP.Yg5VKT5ecnOZNRBRy-AB4gHaEO?rs=1&pid=ImgDetMain&o=7&rm=3',
+    price: 'From R1000',
+   },
 ]
 
 
