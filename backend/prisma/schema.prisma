@@ -45,6 +45,13 @@ model Booking {
   userId    Int
   serviceId Int
   createdAt DateTime @default(now())
+  startTime DateTime @default(now())
+  endTime   DateTime @default(now())
   service   Service  @relation(fields: [serviceId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
 }
