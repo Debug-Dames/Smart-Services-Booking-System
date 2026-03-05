@@ -22,6 +22,8 @@ export default function AppRoutes() {
           <Route path="contact" element={<Contact />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
+          {/* Legacy redirect alias */}
+          <Route path="book-appointment" element={<ProtectedRoute><BookAppointment /></ProtectedRoute>} />
           <Route
             path="dashboard"
             element={
@@ -54,6 +56,7 @@ export default function AppRoutes() {
               </ProtectedRoute>
             }
           />
+          <Route path="*" element={<Home />} />
         </Route>
       </Routes>
     </Router>

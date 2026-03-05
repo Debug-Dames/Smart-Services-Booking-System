@@ -135,6 +135,12 @@
   margin: 0 0 10px;
 }
 
+.auth-success {
+  color: #166534;
+  font-size: 0.88rem;
+  margin: 0 0 10px;
+}
+
 .auth-terms {
   display: flex;
   align-items: center;

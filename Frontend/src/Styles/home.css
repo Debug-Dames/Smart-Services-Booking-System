@@ -253,6 +253,8 @@
   display: flex;
   align-items: center;
   overflow: hidden;
+  margin-top: -72px; /* Pull hero up to sit flush under the transparent/overlapping navbar */
+  padding-top: 72px; /* Push content back down so text clears the navbar */
 }
 
 .hero-bg {

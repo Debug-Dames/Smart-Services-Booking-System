@@ -1,13 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import '../Styles/contact.css';
 
 export default function Contact() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+  const [submitted, setSubmitted] = useState(false);
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    setSubmitted(true);
+    setFormData({ name: '', email: '', subject: '', message: '' });
+    setTimeout(() => setSubmitted(false), 3000);
+  }
+
   return (
     <div className="contact-page">
       <section className="contact-hero">
         <div className="contact-hero-overlay" />
         <div className="contact-hero-content">
-          <p className="contact-kicker">Dame's Beauty Salon</p>
+          <p className="contact-kicker">Dame&apos;s Beauty Salon</p>
           <h1>Contact Us</h1>
           <p className="contact-hero-copy">
             We would love to hear from you. Reach out for appointments, pricing,
@@ -21,24 +41,52 @@ export default function Contact() {
           <article className="contact-form-card">
             <p className="contact-small-label">Get In Touch</p>
             <h2>Send A Message</h2>
-            <form className="contact-form">
+            <form className="contact-form" onSubmit={handleSubmit}>
               <label htmlFor="name">Name</label>
-              <input id="name" type="text" placeholder="Your name" />
+              <input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="Your name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
 
               <label htmlFor="email">Email</label>
-              <input id="email" type="email" placeholder="example@email.com" />
+              <input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="example@email.com"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
 
               <label htmlFor="subject">Subject</label>
-              <input id="subject" type="text" placeholder="How can we help?" />
+              <input
+                id="subject"
+                name="subject"
+                type="text"
+                placeholder="How can we help?"
+                value={formData.subject}
+                onChange={handleChange}
+              />
 
               <label htmlFor="message">Message</label>
               <textarea
                 id="message"
+                name="message"
                 rows="5"
                 placeholder="Type your message here..."
+                value={formData.message}
+                onChange={handleChange}
+                required
               />
 
-              <button type="button">Send Now</button>
+              <button type="submit">Send Now</button>
+              {submitted ? <p style={{ color: '#79e8b2', marginTop: '8px' }}>Message sent successfully.</p> : null}
             </form>
           </article>
 

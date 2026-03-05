@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_URL, authHeaders } from '../utils/api';
+import { bookingService, getAvailableSlots, getServices } from '../api/services';
 import '../Styles/bookAppointment.css';
 
 const SERVICE_PRICES = {
@@ -27,40 +27,92 @@ export default function BookAppointment() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [services, setServices] = useState([]);
+  const [serviceId, setServiceId] = useState('');
+  const [date, setDate] = useState('');
+  const [slots, setSlots] = useState([]);
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [message, setMessage] = useState('');
+  const today = new Date().toISOString().split('T')[0];
 
   const amount = useMemo(() => SERVICE_PRICES[formData.service] || 0, [formData.service]);
 
-  const handleChange = (e) => {
+  useEffect(() => {
+    getServices()
+      .then(setServices)
+      .catch(() => setServices([]));
+  }, []);
+
+  useEffect(() => {
+    if (date && serviceId) {
+      getAvailableSlots(date, serviceId)
+        .then((data) => {
+          setSlots(data);
+
+          if (data.length === 0) {
+            setMessage('This date is fully booked.');
+          } else {
+            setMessage('Slots available. Choose a time.');
+          }
+        })
+        .catch(() => {
+          setMessage('Error fetching slots.');
+        });
+    }
+  }, [date, serviceId]);
+
+  function getBookingErrorMessage(error) {
+    if (error?.response?.data?.message) return error.response.data.message;
+    if (error?.code === 'ERR_NETWORK') {
+      return 'Cannot reach API. Start backend on http://localhost:5000 and try again.';
+    }
+    return 'Unable to complete booking. Please try again.';
+  }
+
+  function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    if (name === 'service') {
+      setServiceId(value);
+    }
+    if (name === 'date') {
+      setDate(value);
+    }
+    if (name === 'time') {
+      setSelectedSlot(value);
+    }
+  }
 
-  const handleSubmit = (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
     setSuccessMessage('');
     setErrorMessage('');
     setShowPaymentPopup(true);
-  };
+  }
 
-  const handleNextFromStepOne = () => {
+  function handleNextFromStepOne() {
     if (!formData.fullName.trim() || !formData.phone.trim() || !formData.service) {
       setErrorMessage('Please complete Full Name, Phone Number, and Service.');
       return;
     }
     setErrorMessage('');
     setActiveStep(2);
-  };
+  }
 
-  const handleNextFromStepTwo = () => {
+  function handleNextFromStepTwo() {
     if (!formData.date || !formData.time) {
       setErrorMessage('Please select both date and time.');
       return;
     }
+    if (formData.date < today) {
+      setErrorMessage('You cannot book a past date.');
+      return;
+    }
     setErrorMessage('');
     setActiveStep(3);
-  };
+  }
 
-  const handleConfirmPayment = async () => {
+  async function handleConfirmPayment() {
     try {
       setIsSubmitting(true);
       setErrorMessage('');
@@ -72,29 +124,24 @@ export default function BookAppointment() {
         notes: `${formData.notes || ''}\nCustomer: ${formData.fullName}\nPhone: ${formData.phone}\nPayment: ${formData.paymentMethod}\nAmount: R${amount}`.trim(),
       };
 
-      const res = await fetch(`${API_URL}/api/bookings`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setErrorMessage(data?.message || 'Unable to complete booking. Please try again.');
+      if (payload.date < today) {
+        setErrorMessage('You cannot book a past date.');
         return;
       }
+
+      await bookingService.bookAppointment(payload);
 
       setShowPaymentPopup(false);
       setSuccessMessage('Booking confirmed. Payment received.');
       setFormData(INITIAL_FORM);
       setActiveStep(1);
+      navigate('/bookings');
     } catch (error) {
-      setErrorMessage('Network error. Please check your connection and try again.');
+      setErrorMessage(getBookingErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
     <section className="book-page">
@@ -157,18 +204,29 @@ export default function BookAppointment() {
                     type="date"
                     value={formData.date}
                     onChange={handleChange}
+                    min={today}
                     required
                   />
 
                   <label htmlFor="time">Time</label>
-                  <input
-                    id="time"
-                    name="time"
-                    type="time"
-                    value={formData.time}
-                    onChange={handleChange}
-                    required
-                  />
+                  {slots.length > 0 ? (
+                    <select id="time" name="time" value={formData.time} onChange={handleChange} required>
+                      <option value="">Select available slot</option>
+                      {slots.map((slot) => (
+                        <option key={slot} value={slot}>{slot}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      id="time"
+                      name="time"
+                      type="time"
+                      value={formData.time}
+                      onChange={handleChange}
+                      required
+                    />
+                  )}
+                  {message ? <p className="book-error">{message}</p> : null}
                 </>
               ) : null}
 
