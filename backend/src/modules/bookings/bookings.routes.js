@@ -1,8 +1,10 @@
 // backend/src/modules/bookings/bookings.routes.js
 import express from "express";
+
 import { protect } from "../../middlewares/auth.middleware.js";
 
 import * as bookingController from "./bookings.service.js";
+import { validateBooking } from "./middleware/bookingValidation.js";
 
 const router = express.Router();
 
@@ -225,6 +227,7 @@ router.get("/:id", bookingController.getBookingById);
 router.post("/", protect, bookingController.createBooking);
 router.put("/:id", bookingController.updateBooking);
 router.delete("/:id", bookingController.deleteBooking);
+
 
 
 export default router;

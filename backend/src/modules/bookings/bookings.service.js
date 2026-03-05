@@ -1,4 +1,6 @@
+
 import prisma from "../../config/database.js";
+
 
 const DEFAULT_SERVICE_META = {
   Haircut: { price: 150, duration: 60 },
@@ -11,11 +13,12 @@ export const getAllBookings = async (req, res) => {
   try {
     const bookings = await prisma.booking.findMany();
     res.json(bookings);
-    
+
   } catch (err) {
     res.status(500).json({ message: "Error fetching bookings", error: err.message });
   }
 };
+
 
 // Get booking by ID
 export const getBookingById = async (req, res) => {
@@ -28,6 +31,7 @@ export const getBookingById = async (req, res) => {
     res.status(500).json({ message: "Error fetching booking", error: err.message });
   }
 };
+
 
 // Create a new booking
 export const createBooking = async (req, res) => {
@@ -47,6 +51,7 @@ export const createBooking = async (req, res) => {
         errors.push("userId is required when no users exist in the database");
       }
     }
+
 
     const ensureServiceByName = async (serviceName) => {
       if (!serviceName) return null;
@@ -106,8 +111,8 @@ export const createBooking = async (req, res) => {
       (Number.isNaN(startObj.getTime())
         ? null
         : new Date(
-            startObj.getTime() + (Number(serviceRecord?.duration) > 0 ? Number(serviceRecord.duration) : 60) * 60000
-          ).toISOString());
+          startObj.getTime() + (Number(serviceRecord?.duration) > 0 ? Number(serviceRecord.duration) : 60) * 60000
+        ).toISOString());
     const endObj = new Date(endCandidate);
     if (!endCandidate || Number.isNaN(endObj.getTime())) {
       errors.push("Provide endTime (ISO-8601) or a valid time to auto-calculate duration");
@@ -182,3 +187,4 @@ export const deleteBooking = async (req, res) => {
     res.status(500).json({ message: "Error deleting booking", error: err.message });
   }
 };
+
