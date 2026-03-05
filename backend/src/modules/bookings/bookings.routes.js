@@ -12,8 +12,8 @@ router.get("/:id", bookingController.getBookingById);
 
 // Create route is public for now (no token required)
 router.post("/", bookingController.createBooking);
-router.put("/:id", protect, bookingController.updateBooking);
-router.delete("/:id", protect, bookingController.deleteBooking);
+router.put("/:id", bookingController.updateBooking);
+router.delete("/:id", bookingController.deleteBooking);
 
 
 export default router;

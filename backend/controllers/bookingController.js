@@ -1,5 +1,7 @@
 import prisma from "../../config/database.js";
 
+
+// CREATE BOOKING (POST /bookings)
 export const createBooking = async (req, res) => {
   try {
     const { userId, serviceId, date, startTime, endTime } = req.body;
@@ -22,7 +24,8 @@ export const createBooking = async (req, res) => {
         serviceId: sId,
         date: d,
         startTime: start,
-        endTime: end
+        endTime: end,
+        status: "pending"
       }
     });
 
@@ -30,6 +33,92 @@ export const createBooking = async (req, res) => {
 
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error creating booking", error: error.message });
+    res.status(500).json({ message: "Failed to create booking" });
+  }
+};
+
+
+
+// GET ALL BOOKINGS (GET /bookings)
+export const getBookings = async (req, res) => {
+  try {
+
+    const bookings = await prisma.booking.findMany();
+
+    res.json(bookings);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch bookings" });
+  }
+};
+
+
+
+// GET BOOKING BY ID (GET /bookings/:id)
+export const getBookingById = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: Number(id) }
+    });
+
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    res.json(booking);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch booking" });
+  }
+};
+
+
+
+// UPDATE BOOKING (PUT /bookings/:id)
+export const updateBooking = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const updatedBooking = await prisma.booking.update({
+      where: { id: Number(id) },
+      data: { status }
+    });
+
+    res.json(updatedBooking);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to update booking" });
+  }
+};
+
+
+
+// CANCEL BOOKING (DELETE /bookings/:id)
+export const deleteBooking = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+
+    const cancelledBooking = await prisma.booking.update({
+      where: { id: Number(id) },
+      data: { status: "cancelled" }
+    });
+
+    res.json({
+      message: "Booking cancelled successfully",
+      booking: cancelledBooking
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to cancel booking" });
   }
 };
