@@ -390,20 +390,16 @@ body {
     outline: none;
 }
 
-.admin-form select,
-.booking-filters input,
-.booking-filters select,
-.booking-table input,
-.booking-table select {
+.admin-form select {
     border: 1px solid #D4CACE;
     border-radius: 10px;
-    padding: 8px 10px;
+    padding: 10px 12px;
     outline: none;
     background: #FFFFFF;
-    width: 100%;
 }
 
-.admin-form input:focus {
+.admin-form input:focus,
+.admin-form select:focus {
     border-color: var(--admin-active);
 }
 
@@ -421,191 +417,6 @@ body {
     filter: brightness(1.06);
 }
 
-<<<<<<< HEAD
-.admin-mini-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.admin-mini-card {
-    background: linear-gradient(180deg, #FFFFFF 0%, #F6F9FF 100%);
-    border: 1px solid #E0E8FA;
-    border-radius: 14px;
-    padding: 12px 14px;
-    box-shadow: 0 6px 20px rgba(34, 39, 76, 0.06);
-    display: grid;
-    gap: 8px;
-}
-
-.users-page .admin-page-header {
-    background: linear-gradient(125deg, #E7F5FF 0%, #F3FBFF 45%, #FFFFFF 100%);
-    border-color: #CEE9FB;
-}
-
-.users-page .page-kicker {
-    background: #D5EEFF;
-    color: #0D4A74;
-}
-
-.users-page .admin-mini-card:nth-child(1) {
-    border-top: 4px solid #0EA5E9;
-}
-
-.users-page .admin-mini-card:nth-child(2) {
-    border-top: 4px solid #22C55E;
-}
-
-.users-page .admin-mini-card:nth-child(3) {
-    border-top: 4px solid #EF4444;
-}
-
-.users-page .admin-mini-card:nth-child(4) {
-    border-top: 4px solid #2563EB;
-}
-
-.stylists-page .admin-page-header {
-    background: linear-gradient(125deg, #FFF0E7 0%, #FFF8F0 45%, #FFFFFF 100%);
-    border-color: #F8D9C2;
-}
-
-.stylists-page .page-kicker {
-    background: #FFE4CF;
-    color: #92400E;
-}
-
-.stylists-page .admin-mini-card:nth-child(1) {
-    border-top: 4px solid #F97316;
-}
-
-.stylists-page .admin-mini-card:nth-child(2) {
-    border-top: 4px solid #16A34A;
-}
-
-.stylists-page .admin-mini-card:nth-child(3) {
-    border-top: 4px solid #DC2626;
-}
-
-.stylists-page .admin-mini-card:nth-child(4) {
-    border-top: 4px solid #7C3AED;
-}
-
-.admin-mini-card span {
-    color: #546083;
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-}
-
-.admin-mini-card strong {
-    color: #1A3575;
-    font-size: 1.4rem;
-    line-height: 1;
-}
-
-.admin-btn-secondary {
-    background: #DCE5F8;
-    color: #22274C;
-}
-
-.admin-btn-danger {
-    background: #B42318;
-}
-
-.admin-error {
-    margin: 0;
-    color: #B42318;
-    font-weight: 600;
-}
-
-.admin-grid-form {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    align-items: end;
-}
-
-.admin-grid-form select {
-    border: 1px solid #D4CACE;
-    border-radius: 10px;
-    padding: 10px 12px;
-    background: #FCFDFF;
-    outline: none;
-}
-
-.admin-grid-form select:focus {
-    border-color: var(--admin-active);
-}
-
-.admin-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.admin-toolbar h3 {
-    margin: 0;
-}
-
-.admin-sort {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-}
-
-.admin-sort select {
-    border: 1px solid #D4CACE;
-    border-radius: 8px;
-    padding: 8px 10px;
-}
-
-.admin-table-wrap {
-    overflow-x: auto;
-}
-
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 900px;
-    border: 1px solid #E8EEFB;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.admin-table th,
-.admin-table td {
-    text-align: left;
-    padding: 10px;
-    border-bottom: 1px solid #EEF0F6;
-    vertical-align: top;
-}
-
-.admin-table th {
-    font-size: 0.85rem;
-    color: #4D5069;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    background: #F4F7FF;
-}
-
-.admin-table input {
-    width: 100%;
-    border: 1px solid #D4CACE;
-    border-radius: 8px;
-    padding: 8px 10px;
-}
-
-.admin-table select {
-    width: 100%;
-    border: 1px solid #D4CACE;
-    border-radius: 8px;
-    padding: 8px 10px;
-    background: #FCFDFF;
-}
-
-.table-actions {
-=======
 .admin-btn-secondary {
     background: #4D5069;
 }
@@ -667,26 +478,15 @@ body {
 }
 
 .booking-actions {
->>>>>>> 5e08d817e74b2a469af433ed26f7e088a22eadb7
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
 }
 
-<<<<<<< HEAD
-.admin-table tbody tr:hover {
-    background: #FAFCFF;
-}
-
-.table-actions .admin-btn {
-    padding: 6px 10px;
-    font-size: 0.8rem;
-=======
 .booking-empty {
     text-align: center;
     color: #6B6F8E;
     padding: 18px 10px;
->>>>>>> 5e08d817e74b2a469af433ed26f7e088a22eadb7
 }
 
 .service-form {
@@ -752,17 +552,8 @@ body {
         width: 100%;
     }
 
-<<<<<<< HEAD
-    .admin-grid-form {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .admin-mini-stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-=======
     .booking-filters {
         grid-template-columns: 1fr;
->>>>>>> 5e08d817e74b2a469af433ed26f7e088a22eadb7
     }
 
     .service-form {

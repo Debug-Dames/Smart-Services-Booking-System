@@ -1,443 +1,166 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import adminApi from '../api/adminApi'
 import bookingApi from '../api/bookingApi'
 
-const emptyUserForm = {
-  name: '',
-  email: '',
-  password: '',
-  phone: '',
-}
-
-const getRowId = (row) => row.id ?? row._id ?? row.email
-
-const normalizeUser = (user, bookingCount = 0) => ({
-  id: getRowId(user),
-  name: user.name || '',
-  email: user.email || '',
-  phone: user.phone || '',
-  role: user.role || 'customer',
-  bookingCount,
-  isBlocked: Boolean(user.isBlocked || user.blocked || user.status === 'blocked'),
-})
-
-const buildUserBookingMap = (bookings) => {
-  const map = new Map()
-
-  bookings.forEach((booking) => {
-    const userId = booking.userId ?? booking.user?.id ?? booking.user?._id
-    const userEmail = booking.email ?? booking.user?.email
-
-    if (userId != null) {
-      const key = String(userId)
-      map.set(key, (map.get(key) || 0) + 1)
-    }
-
-    if (userEmail) {
-      const key = String(userEmail).toLowerCase()
-      map.set(key, (map.get(key) || 0) + 1)
-    }
-  })
-
-  return map
-}
-
-const sortUsers = (items, sortBy) => {
-  const users = [...items]
-  users.sort((a, b) => {
-    if (sortBy === 'bookings') return (b.bookingCount || 0) - (a.bookingCount || 0)
-    const left = String(a[sortBy] || '').toLowerCase()
-    const right = String(b[sortBy] || '').toLowerCase()
-    return left.localeCompare(right)
-  })
-  return users
-}
-
 export default function ManageUsers() {
   const [users, setUsers] = useState([])
-  const [bookings, setBookings] = useState([])
-  const [sortBy, setSortBy] = useState('name')
-  const [newUser, setNewUser] = useState(emptyUserForm)
-  const [editingUserId, setEditingUserId] = useState(null)
-  const [editDraft, setEditDraft] = useState({ name: '', email: '', phone: '' })
-  const [openHistoryUserId, setOpenHistoryUserId] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'customer',
+  })
 
-  const loadData = async () => {
+  const loadUsers = async () => {
     setLoading(true)
     setError('')
     try {
-      const [usersData, bookingsData] = await Promise.all([
-        adminApi.fetchUsers(),
-        bookingApi.fetchBookings(),
-      ])
-      const safeUsers = Array.isArray(usersData) ? usersData : []
-      const safeBookings = Array.isArray(bookingsData) ? bookingsData : []
-      const bookingMap = buildUserBookingMap(safeBookings)
-
-      setBookings(safeBookings)
-      setUsers(
-        safeUsers.map((user) => {
-          const idKey = getRowId(user)
-          const idCount = idKey != null ? bookingMap.get(String(idKey)) || 0 : 0
-          const emailCount = user.email ? bookingMap.get(String(user.email).toLowerCase()) || 0 : 0
-          return normalizeUser(user, Math.max(idCount, emailCount))
-        }),
-      )
-    } catch (loadErr) {
-      console.error('Failed to load users', loadErr)
-      setError('Failed to load users. Check backend endpoints and try again.')
-      setUsers([])
-      setBookings([])
+      const data = await adminApi.fetchUsers()
+      setUsers(Array.isArray(data) ? data : [])
+    } catch {
+      setError('Failed to load users.')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadData()
+    loadUsers()
   }, [])
 
-  const sortedUsers = useMemo(() => sortUsers(users, sortBy), [users, sortBy])
-  const activeUsersCount = useMemo(() => users.filter((user) => !user.isBlocked).length, [users])
-  const blockedUsersCount = useMemo(() => users.filter((user) => user.isBlocked).length, [users])
-  const totalBookingsCount = useMemo(
-    () => users.reduce((sum, user) => sum + (user.bookingCount || 0), 0),
-    [users],
-  )
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
 
-  const visibleBookingHistory = useMemo(() => {
-    if (openHistoryUserId == null) return []
-
-    const currentUser = users.find((user) => String(user.id) === String(openHistoryUserId))
-    if (!currentUser) return []
-
-    return bookings.filter((booking) => {
-      const bookingUserId = booking.userId ?? booking.user?.id ?? booking.user?._id
-      const bookingEmail = (booking.email ?? booking.user?.email ?? '').toLowerCase()
-
-      if (bookingUserId != null && String(bookingUserId) === String(currentUser.id)) return true
-      if (bookingEmail && bookingEmail === String(currentUser.email).toLowerCase()) return true
-      return false
-    })
-  }, [bookings, openHistoryUserId, users])
-
-  const handleCreateUser = async (event) => {
-    event.preventDefault()
-    const payload = {
-      name: newUser.name.trim(),
-      email: newUser.email.trim(),
-      password: newUser.password,
-      role: 'customer',
-      phone: newUser.phone.trim(),
-    }
-
-    if (!payload.name || !payload.email || !payload.password) {
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
       setError('Name, email, and password are required.')
       return
     }
-
+    setSubmitting(true)
     setError('')
     try {
-      const created = await adminApi.createUser(payload)
-      if (created && (created.id || created._id || created.email)) {
-        setUsers((prev) => [...prev, normalizeUser(created, 0)])
-      } else {
-        await loadData()
-      }
-      setNewUser(emptyUserForm)
-    } catch (createErr) {
-      console.error('Failed to create user', createErr)
-      setError('Unable to create user. Please verify backend configuration.')
+      await adminApi.createUser({
+        ...form,
+        name: form.name.trim(),
+        email: form.email.trim(),
+      })
+      setForm({ name: '', email: '', password: '', role: 'customer' })
+      await loadUsers()
+    } catch {
+      setError('Failed to create user.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  const startEdit = (user) => {
-    setEditingUserId(user.id)
-    setEditDraft({
-      name: user.name,
-      email: user.email,
-      phone: user.phone || '',
-    })
-  }
-
-  const cancelEdit = () => {
-    setEditingUserId(null)
-    setEditDraft({ name: '', email: '', phone: '' })
-  }
-
-  const saveEdit = async (userId) => {
-    const payload = {
-      name: editDraft.name.trim(),
-      email: editDraft.email.trim(),
-      phone: editDraft.phone.trim(),
-    }
-
-    if (!payload.name || !payload.email) {
-      setError('Name and email are required for edits.')
-      return
-    }
-
+  const handleDelete = async (id) => {
     setError('')
     try {
-      const updated = await adminApi.updateUser(userId, payload)
-      setUsers((prev) =>
-        prev.map((user) => {
-          if (String(user.id) !== String(userId)) return user
-          return normalizeUser(updated || { ...user, ...payload }, user.bookingCount)
-        }),
-      )
-      cancelEdit()
-    } catch (updateErr) {
-      console.error('Failed to update user', updateErr)
-      setUsers((prev) =>
-        prev.map((user) =>
-          String(user.id) === String(userId)
-            ? { ...user, name: payload.name, email: payload.email, phone: payload.phone }
-            : user,
-        ),
-      )
-      cancelEdit()
-      setError('User updated locally. Backend update endpoint may be unavailable.')
+      await adminApi.deleteUser(id)
+      await loadUsers()
+    } catch {
+      setError('Failed to delete user.')
     }
   }
 
-  const toggleBlocked = async (user) => {
-    const nextBlocked = !user.isBlocked
-
-    setError('')
-    try {
-      const updated = await adminApi.updateUser(user.id, { isBlocked: nextBlocked })
-      setUsers((prev) =>
-        prev.map((row) => {
-          if (String(row.id) !== String(user.id)) return row
-          return normalizeUser(updated || { ...row, isBlocked: nextBlocked }, row.bookingCount)
-        }),
-      )
-    } catch (blockErr) {
-      console.error('Failed to toggle user status', blockErr)
-      setUsers((prev) =>
-        prev.map((row) =>
-          String(row.id) === String(user.id) ? { ...row, isBlocked: nextBlocked } : row,
-        ),
-      )
-      setError('Status changed locally. Backend status endpoint may be unavailable.')
-    }
+  const getPhone = (user) => user.phone || user.phoneNumber || 'N/A'
+  const getBookingHistory = (user) => {
+    if (Array.isArray(user.bookings)) return user.bookings.length
+    if (typeof user.bookingHistoryCount === 'number') return user.bookingHistoryCount
+    if (typeof user.totalBookings === 'number') return user.totalBookings
+    return 0
   }
-
-  const removeUser = async (userId) => {
-    setError('')
-    try {
-      await adminApi.deleteUser(userId)
-      setUsers((prev) => prev.filter((user) => String(user.id) !== String(userId)))
-      if (String(openHistoryUserId) === String(userId)) setOpenHistoryUserId(null)
-    } catch (deleteErr) {
-      console.error('Failed to delete user', deleteErr)
-      setError('Unable to delete user from backend.')
-    }
+  const getStatus = (user) => {
+    if (typeof user.status === 'string') return user.status
+    if (user.isBlocked === true) return 'Blocked'
+    return 'Active'
   }
 
   return (
-    <section className="admin-page admin-page-enhanced users-page">
-      <div className="admin-page-header">
-        <span className="page-kicker">Customer Studio</span>
-        <h1>Manage Users</h1>
-        <p>View, add, edit, block/unblock, delete users, and inspect booking history.</p>
-      </div>
+    <section className="admin-page">
+      <h1>Manage Users</h1>
 
-      <div className="admin-mini-stats">
-        <article className="admin-mini-card">
-          <span>Total Users</span>
-          <strong>{users.length}</strong>
-        </article>
-        <article className="admin-mini-card">
-          <span>Active Users</span>
-          <strong>{activeUsersCount}</strong>
-        </article>
-        <article className="admin-mini-card">
-          <span>Blocked Users</span>
-          <strong>{blockedUsersCount}</strong>
-        </article>
-        <article className="admin-mini-card">
-          <span>Total Bookings</span>
-          <strong>{totalBookingsCount}</strong>
-        </article>
-      </div>
-
-      {error ? (
-        <div className="admin-card">
-          <p className="admin-error">{error}</p>
-        </div>
-      ) : null}
-
-      <article className="admin-card admin-section-card">
+      <div className="admin-card">
         <h3>Add User</h3>
-        <form className="admin-form admin-grid-form" onSubmit={handleCreateUser}>
-          <input
-            name="name"
-            placeholder="Name"
-            value={newUser.name}
-            onChange={(event) => setNewUser((prev) => ({ ...prev, name: event.target.value }))}
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={newUser.email}
-            onChange={(event) => setNewUser((prev) => ({ ...prev, email: event.target.value }))}
-          />
-          <input
-            name="phone"
-            placeholder="Phone"
-            value={newUser.phone}
-            onChange={(event) => setNewUser((prev) => ({ ...prev, phone: event.target.value }))}
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={newUser.password}
-            onChange={(event) => setNewUser((prev) => ({ ...prev, password: event.target.value }))}
-          />
-          <button type="submit" className="admin-btn">Add User</button>
-        </form>
-      </article>
+        <form className="admin-form" onSubmit={handleSubmit}>
+          <div className="admin-form-row">
+            <label htmlFor="name">Name</label>
+            <input id="name" name="name" value={form.name} placeholder="Name" onChange={handleChange} />
+          </div>
 
-      <article className="admin-card admin-section-card">
-        <div className="admin-toolbar">
-          <h3>User Directory</h3>
-          <div className="admin-sort">
-            <label htmlFor="user-sort">Sort By</label>
-            <select id="user-sort" value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
-              <option value="name">Name</option>
-              <option value="email">Email</option>
-              <option value="bookings">Booking Count</option>
+          <div className="admin-form-row">
+            <label htmlFor="email">Email</label>
+            <input id="email" name="email" type="email" value={form.email} placeholder="Email" onChange={handleChange} />
+          </div>
+
+          <div className="admin-form-row">
+            <label htmlFor="password">Password</label>
+            <input id="password" name="password" type="password" value={form.password} placeholder="Password" onChange={handleChange} />
+          </div>
+
+          <div className="admin-form-row">
+            <label htmlFor="role">Role</label>
+            <select id="role" name="role" value={form.role} onChange={handleChange}>
+              <option value="customer">Customer</option>
+              <option value="stylist">Stylist</option>
             </select>
           </div>
-        </div>
 
+          <button className="admin-btn" type="submit" disabled={submitting}>
+            {submitting ? 'Adding...' : 'Add User'}
+          </button>
+        </form>
+      </div>
+
+      <div className="admin-card">
+        <h3>User List</h3>
+        {error ? <p>{error}</p> : null}
         {loading ? (
           <p>Loading users...</p>
         ) : (
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead>
+          <table border="1" width="100%">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Booking History</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.length === 0 ? (
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Bookings</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <td colSpan="6">No users found.</td>
                 </tr>
-              </thead>
-              <tbody>
-                {sortedUsers.map((user) => {
-                  const isEditing = String(editingUserId) === String(user.id)
-                  return (
-                    <tr key={user.id}>
-                      <td>
-                        {isEditing ? (
-                          <input
-                            value={editDraft.name}
-                            onChange={(event) => setEditDraft((prev) => ({ ...prev, name: event.target.value }))}
-                          />
-                        ) : (
-                          user.name
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <input
-                            value={editDraft.email}
-                            onChange={(event) => setEditDraft((prev) => ({ ...prev, email: event.target.value }))}
-                          />
-                        ) : (
-                          user.email
-                        )}
-                      </td>
-                      <td>
-                        {isEditing ? (
-                          <input
-                            value={editDraft.phone}
-                            onChange={(event) => setEditDraft((prev) => ({ ...prev, phone: event.target.value }))}
-                          />
-                        ) : (
-                          user.phone || '-'
-                        )}
-                      </td>
-                      <td>{user.bookingCount}</td>
-                      <td>
-                        <span className={`status-badge ${user.isBlocked ? 'status-cancelled' : 'status-confirmed'}`}>
-                          {user.isBlocked ? 'Blocked' : 'Active'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="table-actions">
-                          {isEditing ? (
-                            <>
-                              <button className="admin-btn" type="button" onClick={() => saveEdit(user.id)}>Save</button>
-                              <button className="admin-btn admin-btn-secondary" type="button" onClick={cancelEdit}>Cancel</button>
-                            </>
-                          ) : (
-                            <>
-                              <button className="admin-btn" type="button" onClick={() => startEdit(user)}>Edit</button>
-                              <button className="admin-btn admin-btn-secondary" type="button" onClick={() => toggleBlocked(user)}>
-                                {user.isBlocked ? 'Unblock' : 'Block'}
-                              </button>
-                              <button className="admin-btn admin-btn-danger" type="button" onClick={() => removeUser(user.id)}>Delete</button>
-                              <button
-                                className="admin-btn admin-btn-secondary"
-                                type="button"
-                                onClick={() => setOpenHistoryUserId((prev) => (String(prev) === String(user.id) ? null : user.id))}
-                              >
-                                History
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </article>
-
-      {openHistoryUserId != null ? (
-        <article className="admin-card">
-          <h3>User Booking History</h3>
-          {visibleBookingHistory.length ? (
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Booking ID</th>
-                    <th>Service</th>
-                    <th>Date</th>
-                    <th>Status</th>
+              ) : null}
+              {users.map((user) => {
+                const id = user.id ?? user._id
+                return (
+                  <tr key={id}>
+                    <td>{user.name || 'N/A'}</td>
+                    <td>{user.email || 'N/A'}</td>
+                    <td>{getPhone(user)}</td>
+                    <td>{getBookingHistory(user)}</td>
+                    <td>{getStatus(user)}</td>
+                    <td>
+                      <button className="admin-btn" type="button" onClick={() => handleDelete(id)}>
+                        Delete
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {visibleBookingHistory.map((booking) => (
-                    <tr key={booking.id ?? booking._id}>
-                      <td>{booking.id ?? booking._id}</td>
-                      <td>{booking.serviceName ?? booking.service ?? '-'}</td>
-                      <td>{booking.date ?? booking.bookingDate ?? booking.createdAt ?? '-'}</td>
-                      <td>{booking.status ?? '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>No bookings found for this user.</p>
-          )}
-        </article>
-      ) : null}
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
     </section>
   )
 }
