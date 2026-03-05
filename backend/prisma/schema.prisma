@@ -8,13 +8,18 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  role      String    @default("customer")
-  createdAt DateTime  @default(now())
-  bookings  Booking[]
+  id               Int       @id @default(autoincrement())
+  name             String
+  email            String    @unique
+  password         String
+  createdAt        DateTime  @default(now())
+  gender           String?
+  phone            String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  updatedAt        DateTime
+  role             Role      @default(CUSTOMER)
+  bookings         Booking[]
 }
 
 model Service {
@@ -34,6 +39,13 @@ model Booking {
   userId    Int
   serviceId Int
   createdAt DateTime @default(now())
+  startTime DateTime @default(now())
+  endTime   DateTime @default(now())
   service   Service  @relation(fields: [serviceId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
 }

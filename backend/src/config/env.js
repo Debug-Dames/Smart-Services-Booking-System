@@ -1,13 +1,15 @@
 import dotenv from "dotenv";
-dotenv.config();
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Always load backend/.env regardless of where the node process was started.
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 export const env = {
   PORT: process.env.PORT || 5000,
   JWT_SECRET: process.env.JWT_SECRET || "super_secret_key",
-  DATABASE_URL: process.env.DATABASE_URL || "",
-  DB_HOST: process.env.DB_HOST || "localhost",
-  DB_PORT: Number(process.env.DB_PORT || 5432),
-  DB_NAME: process.env.DB_NAME || "smart_services",
-  DB_USER: process.env.DB_USER || "postgres",
-  DB_PASSWORD: process.env.DB_PASSWORD || "postgres"
+  DATABASE_URL: process.env.DATABASE_URL,
 };
