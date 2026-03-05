@@ -23,10 +23,6 @@ model User {
   bookings    Booking[]
 }
 
-enum Role {
-  CUSTOMER
-  ADMIN
-}
 
 model Service {
   id          Int       @id @default(autoincrement())

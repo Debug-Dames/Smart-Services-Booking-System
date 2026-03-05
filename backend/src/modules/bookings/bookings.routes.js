@@ -222,7 +222,7 @@ router.get("/", bookingController.getAllBookings);
 router.get("/:id", bookingController.getBookingById);
 
 // Create route is public for now (no token required)
-router.post("/", bookingController.createBooking);
+router.post("/", protect, bookingController.createBooking);
 router.put("/:id", bookingController.updateBooking);
 router.delete("/:id", bookingController.deleteBooking);
 
