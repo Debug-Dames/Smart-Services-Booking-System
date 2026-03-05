@@ -1,6 +1,5 @@
 import { Navigate, Outlet, createBrowserRouter } from 'react-router-dom'
 import AdminSidebar from './components/AdminSidebar'
-import AdminDashboard from './screens/AdminDashboard'
 import Login from './screens/Login'
 import ManageBookings from './screens/ManageBookings'
 import ManageServices from './screens/ManageServices'
@@ -17,16 +16,14 @@ const RequireAdmin = ({ children }) => {
 }
 
 const RequireGuest = ({ children }) => {
-  return isAdminAuthenticated() ? <Navigate to="/admin" replace /> : children
+  return isAdminAuthenticated() ? <Navigate to="/admin/users" replace /> : children
 }
 
 const AdminLayout = () => (
   <div className="admin-layout">
     <AdminSidebar />
     <div className="admin-main-area">
-      <header className="admin-topbar">
-        <h2>Admin Dashboard</h2>
-      </header>
+      <header className="admin-topbar" />
       <main className="admin-main">
         <Outlet />
       </main>
@@ -52,13 +49,13 @@ const router = createBrowserRouter([
       </RequireAdmin>
     ),
     children: [
-      { index: true, element: <AdminDashboard /> },
+      { index: true, element: <Navigate to="/admin/users" replace /> },
       { path: 'bookings', element: <ManageBookings /> },
       { path: 'users', element: <ManageUsers /> },
       { path: 'stylists', element: <ManageStylists /> },
       { path: 'services', element: <ManageServices /> },
       { path: 'service', element: <Navigate to="/admin/services" replace /> },
-      { path: '*', element: <Navigate to="/admin" replace /> },
+      { path: '*', element: <Navigate to="/admin/users" replace /> },
     ],
   },
 ])
