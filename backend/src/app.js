@@ -6,6 +6,7 @@ import paymentRoutes from "./modules/payments/payments.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import bookingRoutes from "./modules/bookings/bookings.routes.js";
 import contactRoutes from "./modules/contact/contact.routes.js";
+import bookingRoutes from "../routes/bookingRoutes.js";
 
 const app = express();
 
@@ -13,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/", (_, res) => {
-  res.json({ message: "Smart Services API is running" });
+    res.json({ message: "Smart Services API is running" });
 });
 
 app.use("/api/auth", authRoutes);
