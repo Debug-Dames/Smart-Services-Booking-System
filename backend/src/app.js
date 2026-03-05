@@ -6,7 +6,7 @@ import paymentRoutes from "./modules/payments/payments.routes.js";
 import { errorHandler } from "./middlewares/error.middleware.js";
 import bookingRoutes from "./modules/bookings/bookings.routes.js";
 import contactRoutes from "./modules/contact/contact.routes.js";
-import bookingRoutes from "../routes/bookingRoutes.js";
+
 
 const app = express();
 
@@ -21,7 +21,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/contact", contactRoutes);
-app.use("/api/bookings", bookingRoutes);
 
 app.use(errorHandler);
 
