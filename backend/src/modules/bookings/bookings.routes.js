@@ -1,29 +1,10 @@
 // backend/src/modules/bookings/bookings.routes.js
 import express from "express";
-<<<<<<< HEAD
-import { authMiddleware } from "../../middlewares/auth.middleware.js";
-import {
-  createAppointment,
-  getAllAppointments,
-  getMyAppointments,
-  updateAppointment,
-  updateAppointmentStatus,
-  cancelAppointment,
-} from "./bookings.service.js";
 
-const router = express.Router();
-
-router.post("/", authMiddleware, createAppointment);
-router.get("/", getAllAppointments);
-router.get("/mine", authMiddleware, getMyAppointments);
-router.put("/:id", updateAppointment);
-router.patch("/:id/status", updateAppointmentStatus);
-router.patch("/:id/cancel", cancelAppointment);
-
-=======
 import { protect } from "../../middlewares/auth.middleware.js";
 
 import * as bookingController from "./bookings.service.js";
+import { validateBooking } from "./middleware/bookingValidation.js";
 
 const router = express.Router();
 
@@ -243,10 +224,10 @@ router.get("/", bookingController.getAllBookings);
 router.get("/:id", bookingController.getBookingById);
 
 // Create route is public for now (no token required)
-router.post("/", bookingController.createBooking);
+router.post("/", validateBooking, bookingController.createBooking);
 router.put("/:id", bookingController.updateBooking);
 router.delete("/:id", bookingController.deleteBooking);
 
 
->>>>>>> 3c5ed21b3d16e53a3fe6e5f915627005c1687a98
+
 export default router;
