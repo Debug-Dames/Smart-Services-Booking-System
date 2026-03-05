@@ -1,20 +1,15 @@
-import app from "./app.js";
-import { env } from "./config/env.js";
-import { ensureBookingTimeColumns } from "./config/database.js";
+import express from "express";
+import bookingRoutes from "./modules/bookings/bookings.routes.js"; // adjust path
 
-const PORT = env.PORT || 5000;
+const app = express();
 
-const startServer = async () => {
-  try {
-    await ensureBookingTimeColumns();
+// Important: parse JSON bodies
+app.use(express.json());
 
-    app.listen(PORT, () => {
-      console.log(`Backend running on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error("Failed to initialize database schema:", error);
-    process.exit(1);
-  }
-};
+// Mount booking routes
+app.use("/api/bookings", bookingRoutes);
 
-startServer();
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Backend running on http://localhost:${PORT}`);
+});

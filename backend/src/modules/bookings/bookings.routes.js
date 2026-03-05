@@ -217,6 +217,10 @@ const router = express.Router();
 //router.post("/", authMiddleware, createAppointment);
 //router.get("/mine", authMiddleware, getMyAppointments);
 
+
+router.get("/", bookingController.getAllBookings);
+router.get("/:id", bookingController.getBookingById);
+
 // Create route is public for now (no token required)
 router.post("/", bookingController.createBooking);
 router.put("/:id", bookingController.updateBooking);
