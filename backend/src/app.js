@@ -21,6 +21,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 app.use(errorHandler);
 
