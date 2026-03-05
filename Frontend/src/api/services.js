@@ -5,6 +5,24 @@ export const authService = {
   register: (data) => api.post('/auth/register', data),
 };
 
+// Register / Sign Up
+export const registerUser = async (data) => {
+  const res = await api.post('/auth/register', data);
+  return res.data;
+};
+
+// Login
+export const loginUser = async (data) => {
+  const res = await api.post('/auth/login', data);
+
+  // store token
+  if (res.data.token) {
+    localStorage.setItem('token', res.data.token);
+  }
+
+  return res.data;
+};
+
 export const bookingService = {
   getAppointments: () => api.get('/bookings/mine'),
   bookAppointment: (data) => api.post('/bookings', data),
