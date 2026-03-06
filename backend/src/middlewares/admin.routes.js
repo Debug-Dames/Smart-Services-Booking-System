@@ -5,9 +5,11 @@ import {
   validateServiceId,
   validateUpdateService,
 } from "./admin.validation.js";
-import { requireAdmin } from "./middleware/adminAccess.js";
+import { protect } from "./auth.middleware.js";
+import { roleMiddleware } from "./role.middleware.js";
 
 const router = express.Router();
+const requireAdmin = [protect, roleMiddleware("ADMIN")];
 
 router.get("/users", ...requireAdmin, adminController.getUsers);
 router.get("/services", ...requireAdmin, adminController.getServices);

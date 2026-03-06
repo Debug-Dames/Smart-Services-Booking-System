@@ -4,7 +4,7 @@ import express from "express";
 import { protect } from "../../middlewares/auth.middleware.js";
 
 import * as bookingController from "./bookings.service.js";
-import { validateBooking } from "./middleware/bookingValidation.js";
+import { validateBooking } from "../../middlewares/bookingValidation.js";
 
 const router = express.Router();
 
@@ -221,10 +221,12 @@ const router = express.Router();
 
 
 router.get("/", bookingController.getAllBookings);
-router.get("/:id", bookingController.getBookingById);
+router.post("/lock", validateBooking, bookingController.lockSlot);
+router.delete("/lock/:token", bookingController.unlockSlot);
 
 // Create route is public for now (no token required)
 router.post("/", validateBooking, bookingController.createBooking);
+router.get("/:id", bookingController.getBookingById);
 router.put("/:id", bookingController.updateBooking);
 router.delete("/:id", bookingController.deleteBooking);
 
