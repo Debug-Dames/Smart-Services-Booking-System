@@ -5,9 +5,16 @@ import jwt from "jsonwebtoken";
 // 🔐 REGISTER
 export async function register(req, res) {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, phone, gender } = req.body;
 
-        // Check if user already exists
+        // Validate required fields
+        if (!name || !email || !password || !phone) {
+            return res.status(400).json({
+                message: "Name, email, password and phone are required"
+            });
+        }
+
+        // Check existing user
         const existingUser = await prisma.user.findUnique({
             where: { email }
         });
@@ -25,13 +32,22 @@ export async function register(req, res) {
                 name,
                 email,
                 password: hashedPassword,
+                phone,
+                gender,
                 role: "CUSTOMER"
             }
         });
 
         res.status(201).json({
             message: "User registered successfully",
-            user
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                gender: user.gender,
+                role: user.role
+            }
         });
 
     } catch (error) {
@@ -40,12 +56,18 @@ export async function register(req, res) {
     }
 }
 
-// 🔐 LOGIN
 export async function login(req, res) {
     try {
-        const { email, password } = req.body;
+        let { email, password } = req.body;
 
-        // Find user
+        email = email?.trim().toLowerCase();
+
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Email and password required"
+            });
+        }
+
         const user = await prisma.user.findUnique({
             where: { email }
         });
@@ -54,21 +76,28 @@ export async function login(req, res) {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        // Create JWT
-        const token = jwt.sign({ userId: user.id, role: user.role },
-            process.env.JWT_SECRET || "supersecretkey", { expiresIn: "1d" }
+        const token = jwt.sign(
+            { userId: user.id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
         );
+        // console.log("JWT_SECRET =", process.env.JWT_SECRET);
 
         res.status(200).json({
             message: "Login successful",
-            token
+            token,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            }
         });
 
     } catch (error) {
