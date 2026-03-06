@@ -81,16 +81,6 @@ body {
 .admin-topbar {
     background: var(--admin-topbar-bg);
     border-bottom: 1px solid var(--admin-topbar-border);
-    display: flex;
-    align-items: center;
-    padding: 0 24px;
-}
-
-.admin-topbar h2 {
-    margin: 0;
-    color: var(--admin-title);
-    font-size: 1.1rem;
-    font-weight: 700;
 }
 
 .admin-main {
@@ -365,6 +355,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .admin-form {
@@ -396,10 +387,14 @@ body {
     padding: 10px 12px;
     outline: none;
     background: #FFFFFF;
+    width: 100%;
 }
 
 .admin-form input:focus,
-.admin-form select:focus {
+.admin-form select:focus,
+.admin-table input:focus,
+.admin-table select:focus,
+.admin-search-input:focus {
     border-color: var(--admin-active);
 }
 
@@ -417,88 +412,207 @@ body {
     filter: brightness(1.06);
 }
 
-.admin-btn-secondary {
-    background: #4D5069;
-}
-
-.admin-btn-warning {
-    background: #D97706;
-}
-
 .admin-btn-danger {
-    background: #B91C1C;
+    background: #ad3f4b;
 }
 
-.admin-btn-success {
-    background: #15803D;
+.admin-btn-soft {
+    background: #6d7ca6;
+}
+
+.admin-creative-page {
+    display: grid;
+    gap: 16px;
+}
+
+.admin-users-theme {
+    --hero-grad-start: #165ec3;
+    --hero-grad-end: #0b2a67;
+    --hero-glow: rgba(21, 94, 194, 0.36);
+}
+
+.admin-stylists-theme {
+    --hero-grad-start: #2f7ae5;
+    --hero-grad-end: #1452ad;
+    --hero-glow: rgba(20, 82, 173, 0.35);
+}
+
+.admin-page-hero {
+    background: linear-gradient(125deg, var(--hero-grad-start), var(--hero-grad-end));
+    border-radius: 18px;
+    padding: 22px;
+    color: #ffffff;
+    box-shadow: 0 18px 40px var(--hero-glow);
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 18px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-page-hero::after {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    right: -70px;
+    top: -70px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+    border-radius: 50%;
+}
+
+.admin-page-kicker {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    opacity: 0.82;
+}
+
+.admin-page-hero h1 {
+    margin: 8px 0 8px;
+    color: #ffffff;
+}
+
+.admin-page-subtitle {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    max-width: 56ch;
+}
+
+.admin-hero-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.admin-metric-chip {
+    padding: 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    backdrop-filter: blur(2px);
+    color: #ffffff;
+}
+
+.admin-users-theme .admin-metric-chip:nth-child(5n + 1) { background: linear-gradient(135deg, #35b5ff, #1f7df2); }
+.admin-users-theme .admin-metric-chip:nth-child(5n + 2) { background: linear-gradient(135deg, #7d6cff, #4b58d1); }
+.admin-users-theme .admin-metric-chip:nth-child(5n + 3) { background: linear-gradient(135deg, #ff7a8f, #d64573); }
+.admin-users-theme .admin-metric-chip:nth-child(5n + 4) { background: linear-gradient(135deg, #26c7b7, #159f8e); }
+.admin-users-theme .admin-metric-chip:nth-child(5n) { background: linear-gradient(135deg, #ffb44c, #d88b21); }
+
+.admin-stylists-theme .admin-metric-chip:nth-child(5n + 1) { background: linear-gradient(135deg, #35b5ff, #1f7df2); }
+.admin-stylists-theme .admin-metric-chip:nth-child(5n + 2) { background: linear-gradient(135deg, #7d6cff, #4b58d1); }
+.admin-stylists-theme .admin-metric-chip:nth-child(5n + 3) { background: linear-gradient(135deg, #ff7a8f, #d64573); }
+.admin-stylists-theme .admin-metric-chip:nth-child(5n + 4) { background: linear-gradient(135deg, #26c7b7, #159f8e); }
+.admin-stylists-theme .admin-metric-chip:nth-child(5n) { background: linear-gradient(135deg, #ffb44c, #d88b21); }
+
+.admin-metric-chip span {
+    display: block;
+    font-size: 0.78rem;
+    opacity: 0.92;
+}
+
+.admin-metric-chip strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 1.05rem;
+    line-height: 1.25;
+    word-break: break-word;
+}
+
+.admin-card-glass {
+    border: 1px solid rgba(24, 53, 84, 0.08);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(249, 252, 255, 0.88));
+}
+
+.admin-ui-elevated {
+    box-shadow: 0 16px 34px rgba(17, 34, 68, 0.08);
+    transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.admin-ui-elevated:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 40px rgba(17, 34, 68, 0.12);
+}
+
+.users-card-accent {
+    border-top: 3px solid #2b88ff;
+}
+
+.stylists-card-accent {
+    border-top: 3px solid #3a87df;
+}
+
+.admin-inline-toolbar {
+    margin-bottom: 12px;
+}
+
+.admin-inline-error {
+    color: #a94442;
+    background: rgba(169, 68, 66, 0.1);
+    border: 1px solid rgba(169, 68, 66, 0.25);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin: 0 0 12px;
 }
 
 .admin-muted {
-    color: #6B6F8E;
-    margin: 0 0 14px;
+    color: #6b6f8e;
+    margin: 0;
 }
 
-.admin-error {
-    color: #B91C1C;
-    margin: 10px 0;
-    font-size: 0.92rem;
-}
-
-.booking-filters {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.booking-table-wrap {
-    overflow-x: auto;
-}
-
-.booking-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 980px;
-}
-
-.booking-table th,
-.booking-table td {
-    text-align: left;
-    border-bottom: 1px solid #EEF0F6;
-    padding: 10px 8px;
-    vertical-align: top;
-    font-size: 0.92rem;
-}
-
-.booking-table th {
-    font-size: 0.82rem;
-    color: #6B6F8E;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-}
-
-.booking-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.booking-empty {
+.admin-muted-cell {
     text-align: center;
-    color: #6B6F8E;
-    padding: 18px 10px;
+    color: #6b6f8e;
+    padding: 20px;
 }
 
-.service-form {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px 14px;
+.admin-empty-card {
+    border: 1px dashed #cfd5e6;
+    border-radius: 12px;
+    padding: 16px;
+    color: #6b6f8e;
+    justify-content: center;
 }
 
-.service-form-actions {
-    grid-column: 1 / -1;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+.admin-list-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.admin-profile-card {
+    background: #ffffff;
+    border: 1px solid #e7ecf5;
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 6px 20px rgba(17, 34, 68, 0.05);
+}
+
+.admin-profile-card p {
+    margin: 4px 0 0;
+}
+
+.admin-status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 6px 10px;
+    min-width: 72px;
+}
+
+.admin-status-pill.is-active {
+    color: #1452ad;
+    background: rgba(20, 82, 173, 0.16);
+}
+
+.admin-status-pill.is-blocked {
+    color: #9f3f3f;
+    background: rgba(159, 63, 63, 0.14);
 }
 
 .status-badge {
@@ -530,33 +644,31 @@ body {
     background: rgba(169, 68, 66, 0.16);
 }
 
-@media (max-width: 1024px) {
-    .stats-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+.admin-table-wrap {
+    overflow-x: auto;
+}
 
-    .stats-grid-expanded {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 880px;
+}
 
-    .chart-grid {
-        grid-template-columns: 1fr;
-    }
+.admin-table th,
+.admin-table td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #e8edf7;
+    vertical-align: middle;
+}
 
-    .pie-chart-wrap {
-        grid-template-columns: 1fr;
-        justify-items: center;
-    }
+.admin-table th {
+    color: #21345f;
+    font-size: 0.9rem;
+}
 
-    .pie-legend {
-        width: 100%;
-    }
-
-    .booking-filters {
-        grid-template-columns: 1fr;
-    }
-
-    .service-form {
+@media (max-width: 1100px) {
+    .admin-page-hero {
         grid-template-columns: 1fr;
     }
 }
@@ -605,3 +717,4 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
