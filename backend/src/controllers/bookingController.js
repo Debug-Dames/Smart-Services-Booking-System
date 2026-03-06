@@ -1,41 +1,58 @@
-import { PrismaClient } from "@prisma/client";
+// import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
-// Create booking
-export const createBooking = async(req, res) => {
-    try {
-        const { date, userId, serviceId } = req.body;
+// // Create booking
+// export const createBooking = async(req, res) => {
+//     try {
+//         const { date, userId, serviceId } = req.body;
 
-        const booking = await prisma.booking.create({
-            data: {
-                date: new Date(date),
-                userId: Number(userId),
-                serviceId: Number(serviceId),
-            },
-        });
+//         const booking = await prisma.booking.create({
+//             data: {
+//                 date: new Date(date),
+//                 userId: Number(userId),
+//                 serviceId: Number(serviceId),
+//             },
+//         });
 
-        res.status(201).json(booking);
+//         res.status(201).json(booking);
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Failed to create booking" });
-    }
-};
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ error: "Failed to create booking" });
+//     }
+// };
 
-// Get all bookings
-export const getBookings = async(req, res) => {
-    try {
-        const bookings = await prisma.booking.findMany({
-            include: {
-                user: true,
-                service: true,
-            },
-        });
+// // Get all bookings
+// export const getBookings = async(req, res) => {
+//     try {
+//         const bookings = await prisma.booking.findMany({
+//             include: {
+//                 user: true,
+//                 service: true,
+//             },
+//         });
 
-        res.json(bookings);
+//         res.json(bookings);
 
-    } catch (error) {
-        res.status(500).json({ error: "Failed to fetch bookings" });
-    }
-};
+//     } catch (error) {
+//         res.status(500).json({ error: "Failed to fetch bookings" });
+//     }
+// };
+
+
+import { createBooking } from "./booking.logic.js"
+
+export const createBookingController = async (req, res) => {
+  try {
+
+    const booking = await createBooking(req.body)
+
+    res.status(201).json(booking)
+
+  } catch (error) {
+
+    res.status(400).json({ message: error.message })
+
+  }
+}

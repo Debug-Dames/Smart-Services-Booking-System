@@ -1,44 +1,125 @@
-import { createBookingService } from "../../src/modules/bookings/bookings.service"
-import { PrismaClient } from "@prisma/client"
+// import { PrismaClient } from "@prisma/client"
+// import { jest } from "@jest/globals"
 
-jest.mock("@prisma/client", () => {
-  const mPrisma = { booking: { findFirst: jest.fn(), create: jest.fn() } }
-  return { PrismaClient: jest.fn(() => mPrisma) }
+// // Create mock functions
+// const mockBooking = {
+//   findFirst: jest.fn(),
+//   create: jest.fn()
+// }
+
+// // Mock the database module BEFORE importing the service
+// jest.unstable_mockModule("../../src/config/database.js", () => ({
+//   default: {
+//     booking: mockBooking
+//   }
+// }))
+
+// import prisma from "../../src/config/database.js"
+// import { createBooking } from "../../src/modules/bookings/bookings.service.js"
+// // const prisma = new PrismaClient()
+
+// describe("Booking Service Unit Tests", () => {
+
+//   beforeEach(() => jest.clearAllMocks())
+
+//   it("should reject booking in the past", async () => {
+//     await expect(createBooking({
+//       userId: 1, serviceId: 1,
+//       date: "2020-01-01", startTime: "10:00", endTime: "11:00"
+//     })).rejects.toThrow("Cannot book in the past")
+//   })
+
+//   it("should reject if end time is before start time", async () => {
+//     await expect(createBooking({
+//       userId: 1, serviceId: 1,
+//       date: "2026-03-10", startTime: "11:00", endTime: "10:00"
+//     })).rejects.toThrow("Invalid time range")
+//   })
+
+//   it("should prevent double booking", async () => {
+//     mockBooking.findFirst.mockResolvedValue({ id: 1 })
+//     await expect(createBooking({
+//       userId: 1, serviceId: 1,
+//       date: "2026-03-10", startTime: "10:00", endTime: "11:00"
+//     })).rejects.toThrow("Time slot already booked")
+//   })
+
+//   it("should create booking when slot is available", async () => {
+//     mockBooking.findFirst.mockResolvedValue(null)
+//     mockBooking.create.mockResolvedValue({ id: 99, userId: 1, serviceId: 1 })
+
+//     const result = await createBooking({
+//       userId: 1, serviceId: 1,
+//       date: "2026-03-10", startTime: "10:00", endTime: "11:00"
+//     })
+
+//     expect(prisma.booking.findFirst).toHaveBeenCalled()
+//     expect(prisma.booking.create).toHaveBeenCalled()
+//     expect(result).toHaveProperty("id", 99)
+//   })
+
+//   it("should reject overlapping bookings", async () => {
+//     mockBooking.findFirst.mockResolvedValue({ id: 2 })
+//     await expect(createBooking({
+//       userId: 1, serviceId: 1,
+//       date: "2026-03-10", startTime: "10:30", endTime: "11:30"
+//     })).rejects.toThrow("Time slot already booked")
+//   })
+// })
+
+
+
+import { jest } from "@jest/globals"
+
+// Create mock functions
+const mockBooking = {
+  findFirst: jest.fn(),
+  create: jest.fn()
+}
+
+// Mock the database module
+jest.unstable_mockModule("../../src/config/database.js", () => ({
+  default: { booking: mockBooking }
+}))
+
+// Dynamic import of the service after mocking
+let createBooking
+let prisma
+beforeAll(async () => {
+  prisma = (await import("../../src/config/database.js")).default
+  createBooking = (await import("../../src/modules/bookings/bookings.service.js")).createBooking
 })
 
-const prisma = new PrismaClient()
-
 describe("Booking Service Unit Tests", () => {
-
   beforeEach(() => jest.clearAllMocks())
 
   it("should reject booking in the past", async () => {
-    await expect(createBookingService({
+    await expect(createBooking({
       userId: 1, serviceId: 1,
       date: "2020-01-01", startTime: "10:00", endTime: "11:00"
     })).rejects.toThrow("Cannot book in the past")
   })
 
   it("should reject if end time is before start time", async () => {
-    await expect(createBookingService({
+    await expect(createBooking({
       userId: 1, serviceId: 1,
       date: "2026-03-10", startTime: "11:00", endTime: "10:00"
     })).rejects.toThrow("Invalid time range")
   })
 
   it("should prevent double booking", async () => {
-    prisma.booking.findFirst.mockResolvedValue({ id: 1 })
-    await expect(createBookingService({
+    mockBooking.findFirst.mockResolvedValue({ id: 1 })
+    await expect(createBooking({
       userId: 1, serviceId: 1,
       date: "2026-03-10", startTime: "10:00", endTime: "11:00"
     })).rejects.toThrow("Time slot already booked")
   })
 
   it("should create booking when slot is available", async () => {
-    prisma.booking.findFirst.mockResolvedValue(null)
-    prisma.booking.create.mockResolvedValue({ id: 99, userId: 1, serviceId: 1 })
+    mockBooking.findFirst.mockResolvedValue(null)
+    mockBooking.create.mockResolvedValue({ id: 99, userId: 1, serviceId: 1 })
 
-    const result = await createBookingService({
+    const result = await createBooking({
       userId: 1, serviceId: 1,
       date: "2026-03-10", startTime: "10:00", endTime: "11:00"
     })
@@ -49,8 +130,8 @@ describe("Booking Service Unit Tests", () => {
   })
 
   it("should reject overlapping bookings", async () => {
-    prisma.booking.findFirst.mockResolvedValue({ id: 2 })
-    await expect(createBookingService({
+    mockBooking.findFirst.mockResolvedValue({ id: 2 })
+    await expect(createBooking({
       userId: 1, serviceId: 1,
       date: "2026-03-10", startTime: "10:30", endTime: "11:30"
     })).rejects.toThrow("Time slot already booked")
