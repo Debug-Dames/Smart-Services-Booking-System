@@ -1,131 +1,73 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import adminApi from '../api/adminApi'
 
-export default function ManageStylists() {
-  const [stylists, setStylists] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    password: '',
-    specialty: '',
-  })
+const ManageStylists = () => {
+    const [stylists, setStylists] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
 
-  const loadStylists = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const data = await adminApi.fetchStylists()
-      setStylists(Array.isArray(data) ? data : [])
-    } catch {
-      setError('Failed to load stylists.')
-    } finally {
-      setLoading(false)
-    }
-  }
+    useEffect(() => {
+        let mounted = true
+        const loadStylists = async () => {
+            try {
+                const data = await adminApi.fetchStylists()
+                if (!mounted) return
+                setStylists(Array.isArray(data) ? data : [])
+            } catch (err) {
+                if (!mounted) return
+                setError(err.message || 'Failed to load stylists')
+                setStylists([])
+            } finally {
+                if (mounted) setLoading(false)
+            }
+        }
 
-  useEffect(() => {
-    loadStylists()
-  }, [])
+        loadStylists()
+        return () => {
+            mounted = false
+        }
+    }, [])
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim()) {
-      setError('Name, email, and password are required.')
-      return
-    }
-    setSubmitting(true)
-    setError('')
-    try {
-      await adminApi.createStylist({
-        ...form,
-        name: form.name.trim(),
-        email: form.email.trim(),
-        specialty: form.specialty.trim(),
-      })
-      setForm({ name: '', email: '', password: '', specialty: '' })
-      await loadStylists()
-    } catch {
-      setError('Failed to create stylist.')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleDelete = async (id) => {
-    setError('')
-    try {
-      await adminApi.deleteStylist(id)
-      await loadStylists()
-    } catch {
-      setError('Failed to delete stylist.')
-    }
-  }
-
-  return (
-    <section className="admin-page">
-      <h1>Manage Stylists</h1>
-
-      <div className="admin-card">
-        <h3>Add Stylist</h3>
-        <form className="admin-form" onSubmit={handleSubmit}>
-          <div className="admin-form-row">
-            <label htmlFor="name">Name</label>
-            <input id="name" name="name" placeholder="Name" value={form.name} onChange={handleChange} />
-          </div>
-
-          <div className="admin-form-row">
-            <label htmlFor="email">Email</label>
-            <input id="email" name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} />
-          </div>
-
-          <div className="admin-form-row">
-            <label htmlFor="password">Password</label>
-            <input id="password" name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} />
-          </div>
-
-          <div className="admin-form-row">
-            <label htmlFor="specialty">Specialty</label>
-            <input id="specialty" name="specialty" placeholder="Specialty" value={form.specialty} onChange={handleChange} />
-          </div>
-
-          <button className="admin-btn" type="submit" disabled={submitting}>
-            {submitting ? 'Adding...' : 'Add Stylist'}
-          </button>
-        </form>
-      </div>
-
-      <div className="admin-card">
-        <h3>Stylist List</h3>
-        {error ? <p>{error}</p> : null}
-        {loading ? (
-          <p>Loading stylists...</p>
-        ) : (
-          <ul className="admin-list">
-            {stylists.length === 0 ? <li className="admin-list-item">No stylists found.</li> : null}
-            {stylists.map((stylist) => {
-              const id = stylist.id ?? stylist._id
-              return (
-                <li key={id} className="admin-list-item">
-                  <span>
-                    <strong>{stylist.name}</strong> ({stylist.email})
-                    {stylist.specialty ? ` - ${stylist.specialty}` : ''}
-                  </span>
-                  <button className="admin-btn" type="button" onClick={() => handleDelete(id)}>
-                    Delete
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </div>
-    </section>
-  )
+    return (
+        <section className="admin-page">
+            <h1>Manage Stylists</h1>
+            <div className="admin-card">
+                <h3>Stylists</h3>
+                {error ? <p className="admin-error">{error}</p> : null}
+                {loading ? (
+                    <p>Loading stylists...</p>
+                ) : (
+                    <div className="booking-table-wrap">
+                        <table className="booking-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Specialty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stylists.map((stylist) => (
+                                    <tr key={stylist.id}>
+                                        <td>{stylist.name || '-'}</td>
+                                        <td>{stylist.email || '-'}</td>
+                                        <td>{stylist.phone || '-'}</td>
+                                        <td>{stylist.specialty || '-'}</td>
+                                    </tr>
+                                ))}
+                                {!stylists.length ? (
+                                    <tr>
+                                        <td colSpan="4" className="booking-empty">No stylists found.</td>
+                                    </tr>
+                                ) : null}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </section>
+    )
 }
+
+export default ManageStylists
