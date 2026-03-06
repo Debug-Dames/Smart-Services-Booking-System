@@ -12,7 +12,7 @@ const SERVICE_PRICES = {
 const INITIAL_FORM = {
   fullName: '',
   phone: '',
-  service: 'Haircut',
+  service: '',
   date: '',
   time: '',
   paymentMethod: 'Card',
@@ -29,9 +29,7 @@ export default function BookAppointment() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [services, setServices] = useState([]);
   const [serviceId, setServiceId] = useState('');
-  const [date, setDate] = useState('');
   const [slots, setSlots] = useState([]);
-  const [selectedSlot, setSelectedSlot] = useState('');
   const [message, setMessage] = useState('');
   const today = new Date().toISOString().split('T')[0];
 
@@ -39,27 +37,46 @@ export default function BookAppointment() {
 
   useEffect(() => {
     getServices()
-      .then(setServices)
-      .catch(() => setServices([]));
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setServices(list);
+
+        if (list.length > 0) {
+          const first = list[0];
+          const firstId = first._id || first.id || '';
+          const firstName = first.name || '';
+          setServiceId(firstId);
+          setFormData((prev) => ({
+            ...prev,
+            service: firstName,
+          }));
+        }
+      })
+      .catch(() => {
+        setServices([]);
+        setServiceId('');
+      });
   }, []);
 
   useEffect(() => {
-    if (date && serviceId) {
-      getAvailableSlots(date, serviceId)
+    if (formData.date && serviceId) {
+      getAvailableSlots(formData.date, serviceId)
         .then((data) => {
-          setSlots(data);
+          const availableSlots = Array.isArray(data) ? data : [];
+          setSlots(availableSlots);
 
-          if (data.length === 0) {
+          if (availableSlots.length === 0) {
             setMessage('This date is fully booked.');
           } else {
             setMessage('Slots available. Choose a time.');
           }
         })
         .catch(() => {
+          setSlots([]);
           setMessage('Error fetching slots.');
         });
     }
-  }, [date, serviceId]);
+  }, [formData.date, serviceId]);
 
   function getBookingErrorMessage(error) {
     if (error?.response?.data?.message) return error.response.data.message;
@@ -72,14 +89,19 @@ export default function BookAppointment() {
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (name === 'service') {
-      setServiceId(value);
+      const selectedService = services.find((svc) => (svc.name || '') === value);
+      setServiceId(selectedService?._id || selectedService?.id || '');
+      setSlots([]);
+      setMessage('');
+      setFormData((prev) => ({ ...prev, time: '' }));
     }
+
     if (name === 'date') {
-      setDate(value);
-    }
-    if (name === 'time') {
-      setSelectedSlot(value);
+      setFormData((prev) => ({ ...prev, time: '' }));
+      setSlots([]);
+      setMessage('');
     }
   }
 
@@ -104,10 +126,6 @@ export default function BookAppointment() {
       setErrorMessage('Please select both date and time.');
       return;
     }
-    if (formData.date < today) {
-      setErrorMessage('You cannot book a past date.');
-      return;
-    }
     setErrorMessage('');
     setActiveStep(3);
   }
@@ -118,6 +136,7 @@ export default function BookAppointment() {
       setErrorMessage('');
 
       const payload = {
+        ...(serviceId ? { serviceId: Number(serviceId) } : {}),
         service: formData.service,
         date: formData.date,
         time: formData.time,
@@ -134,6 +153,9 @@ export default function BookAppointment() {
       setShowPaymentPopup(false);
       setSuccessMessage('Booking confirmed. Payment received.');
       setFormData(INITIAL_FORM);
+      setServiceId('');
+      setSlots([]);
+      setMessage('');
       setActiveStep(1);
       navigate('/bookings');
     } catch (error) {
@@ -188,9 +210,21 @@ export default function BookAppointment() {
 
                   <label htmlFor="service">Service</label>
                   <select id="service" name="service" value={formData.service} onChange={handleChange}>
-                    <option value="Haircut">Haircut</option>
-                    <option value="Nails">Nails</option>
-                    <option value="Braids">Braids</option>
+                    <option value="" disabled>Select a service</option>
+                    {services.length > 0 ? services.map((svc) => {
+                      const value = svc.name || '';
+                      return (
+                        <option key={svc._id || svc.id || value} value={value}>
+                          {value}
+                        </option>
+                      );
+                    }) : (
+                      <>
+                        <option value="Haircut">Haircut</option>
+                        <option value="Nails">Nails</option>
+                        <option value="Braids">Braids</option>
+                      </>
+                    )}
                   </select>
                 </>
               ) : null}
@@ -202,9 +236,9 @@ export default function BookAppointment() {
                     id="date"
                     name="date"
                     type="date"
+                    min={today}
                     value={formData.date}
                     onChange={handleChange}
-                    min={today}
                     required
                   />
 

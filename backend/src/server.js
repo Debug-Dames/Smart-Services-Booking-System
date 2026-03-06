@@ -1,28 +1,23 @@
 import app from "./app.js";
 import { env } from "./config/env.js";
-import { ensureBookingTimeColumns } from "./config/database.js";
+import { PrismaClient } from "@prisma/client";
 
+const prisma = new PrismaClient();
 const PORT = env.PORT || 5000;
 
-<<<<<<< HEAD
-function startServer() {
-  app.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
-  });
-}
-=======
-const startServer = async () => {
-  try {
-    await ensureBookingTimeColumns();
+async function startServer() {
+    try {
 
-    app.listen(PORT, () => {
-      console.log(`Backend running on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error("Failed to initialize database schema:", error);
-    process.exit(1);
-  }
-};
->>>>>>> 40f5c115f31d08af3d54757a50d3ba53b0bf67ee
+        await prisma.$connect();
+        console.log("✅ Database connected successfully");
+
+        app.listen(PORT, () => {
+            console.log(`🚀 Backend running on http://localhost:${PORT}`);
+        });
+
+    } catch (error) {
+        console.error("❌ Database connection failed:", error);
+    }
+}
 
 startServer();

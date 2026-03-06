@@ -3,59 +3,34 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 
 model User {
-<<<<<<< HEAD
-  id       Int    @id @default(autoincrement())
-  name     String
-  email    String @unique
-  password String
-  role     String @default("customer")
-
-  @@map("users")
-}
-=======
   id        Int      @id @default(autoincrement())
-  name      String
   email     String   @unique
   password  String
-  phone     String
-  gender    String?
-  role      Role     @default(CUSTOMER)
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  bookings    Booking[]
-}
-
-enum Role {
-  CUSTOMER
-  ADMIN
+  bookings  Booking[]
+  name     String
+  phone    String?
+  gender   String?
+  role      String   @default("CUSTOMER")
 }
 
 model Service {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String?
-  price       Float
-  duration    Int
-  createdAt   DateTime  @default(now())
-  bookings    Booking[]
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  bookings  Booking[]
 }
-
 model Booking {
   id        Int      @id @default(autoincrement())
   date      DateTime
   status    String   @default("pending")
   userId    Int
   serviceId Int
-  createdAt DateTime @default(now())
   service   Service  @relation(fields: [serviceId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 }
->>>>>>> 40f5c115f31d08af3d54757a50d3ba53b0bf67ee

@@ -5,11 +5,13 @@ import '../../Styles/auth.css';
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
+    gender: '',
+    phone: '',
     email: '',
     password: '',
     confirmPassword: '',
+
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -34,13 +36,14 @@ export default function Register() {
     setError('');
     setSuccess('');
 
-    const firstName = formData.firstName.trim();
-    const lastName = formData.lastName.trim();
+    const name = formData.name.trim();
     const email = formData.email.trim().toLowerCase();
     const password = formData.password;
     const confirmPassword = formData.confirmPassword;
+    const gender = formData.gender;
+    const phone = formData.phone.trim();
 
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    if (!name || !gender || !phone || !email || !password || !confirmPassword) {
       setError('Please complete all fields.');
       return;
     }
@@ -57,8 +60,7 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const name = `${firstName} ${lastName}`.trim();
-      await authService.register({ name, email, password });
+      await authService.register({ name, gender, phone, email, password });
 
       setSuccess('Account created successfully! Redirecting to login...');
       setTimeout(() => navigate('/login'), 1200);
@@ -84,25 +86,39 @@ export default function Register() {
         <form className="auth-form-panel auth-form-panel--register" onSubmit={handleSubmit}>
           <h1>Sign Up</h1>
 
-          <label htmlFor="firstName" className="auth-visually-hidden">First Name</label>
+          <label htmlFor="name" className="auth-visually-hidden">Name</label>
           <input
-            id="firstName"
-            name="firstName"
+            id="name"
+            name="name"
             type="text"
-            value={formData.firstName}
+            value={formData.name}
             onChange={handleChange}
-            placeholder="First name"
+            placeholder="Name"
             required
           />
 
-          <label htmlFor="lastName" className="auth-visually-hidden">Last Name</label>
-          <input
-            id="lastName"
-            name="lastName"
-            type="text"
-            value={formData.lastName}
+          <label htmlFor="gender" className="auth-visually-hidden">Gender</label>
+          <select
+            id="gender"
+            name="gender"
+            value={formData.gender}
             onChange={handleChange}
-            placeholder="Last name"
+            required
+          >
+            <option value="" disabled>Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+
+          <label htmlFor="phone" className="auth-visually-hidden">Phone Number</label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="Phone number"
             required
           />
 
