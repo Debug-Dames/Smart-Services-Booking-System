@@ -164,15 +164,16 @@ export default function ManageUsers() {
         email: form.email.trim(),
       })
 
+
       if (created) {
         setUsers((prev) => {
           const filtered = prev.filter((item) => String(item.id ?? item._id) !== String(created.id ?? created._id))
           return [created, ...filtered]
         })
       }
-
       setForm({ name: '', email: '', password: '', role: 'user' })
-      loadUsers()
+      await loadUsers()
+
     } catch {
       setError('Failed to create user.')
     } finally {

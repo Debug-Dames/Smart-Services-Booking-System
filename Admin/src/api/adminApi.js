@@ -26,12 +26,12 @@ const setLocalUsers = (users) => {
 
 const normalizeUser = (data) => ({
   id: data.id ?? data._id ?? `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  name: String(data.name || '').trim() || 'Unnamed',
-  email: String(data.email || '').trim(),
+  name: data.name?.trim() || 'Unnamed',
+  email: data.email?.trim() || '',
   password: data.password || '',
-  role: String(data.role || 'user').toLowerCase(),
+  role: (data.role || 'user').toLowerCase(),
   status: data.status || 'Active',
-  specialty: String(data.specialty || '').trim(),
+  specialty: data.specialty?.trim() || '',
   availability: data.availability || 'Available',
   workingHours: data.workingHours || '09:00 - 17:00',
   services: Array.isArray(data.services)
@@ -39,8 +39,22 @@ const normalizeUser = (data) => ({
     : typeof data.services === 'string'
       ? data.services.split(',').map((item) => item.trim()).filter(Boolean)
       : [],
+  rating: typeof data.rating === 'number' ? data.rating : 0,
+  bookingCount:
+    typeof data.bookingCount === 'number'
+      ? data.bookingCount
+      : typeof data.totalBookings === 'number'
+        ? data.totalBookings
+        : 0,
   createdAt: data.createdAt || new Date().toISOString(),
 })
+
+const fetchUsersRemote = async () => {
+  const res = await fetch(`${API}/admin/users`)
+  if (!res.ok) return null
+  const data = await safeJson(res)
+  return Array.isArray(data) ? data : []
+}
 
 const upsertLocalUser = (user) => {
   const local = getLocalUsers()
@@ -50,59 +64,19 @@ const upsertLocalUser = (user) => {
   return user
 }
 
-const removeLocalUser = (id) => {
-  const local = getLocalUsers()
-  const filtered = local.filter((item) => String(item.id) !== String(id))
-  setLocalUsers(filtered)
-  return filtered.length !== local.length
-}
-
-const fetchRemoteUsers = async () => {
-  const res = await fetch(`${API}/admin/users`)
-  if (!res.ok) return null
-  const data = await safeJson(res)
-  return Array.isArray(data) ? data : []
-}
-
-const mergeUsers = (remoteUsers, localUsers) => {
-  const byId = new Map()
-
-  ;(remoteUsers || []).forEach((user) => {
-    const normalized = normalizeUser(user)
-    byId.set(String(normalized.id), normalized)
-  })
-
-  ;(localUsers || []).forEach((user) => {
-    const normalized = normalizeUser(user)
-    byId.set(String(normalized.id), normalized)
-  })
-
-  // Secondary de-dupe by email while preserving latest entry order.
-  const seenEmails = new Set()
-  const merged = []
-  byId.forEach((user) => {
-    const emailKey = String(user.email || '').toLowerCase()
-    if (emailKey && seenEmails.has(emailKey)) return
-    if (emailKey) seenEmails.add(emailKey)
-    merged.push(user)
-  })
-
-  return merged
-}
-
 const adminApi = {
   fetchUsers: async () => {
-    const local = getLocalUsers()
+    const localUsers = getLocalUsers()
+
     try {
-      const remote = await fetchRemoteUsers()
-      if (remote) {
-        const merged = mergeUsers(remote, local)
-        setLocalUsers(merged)
-        return merged
+      const remoteUsers = await fetchUsersRemote()
+      if (remoteUsers && remoteUsers.length > 0) {
+        setLocalUsers(remoteUsers)
+        return remoteUsers
       }
-      return local
+      return localUsers
     } catch {
-      return local
+      return localUsers
     }
   },
 
@@ -114,20 +88,23 @@ const adminApi = {
         headers: jsonHeaders,
         body: JSON.stringify(payload),
       })
+
       if (res.ok) {
         const created = (await safeJson(res)) || payload
-        return upsertLocalUser(normalizeUser(created))
+        return upsertLocalUser(created)
       }
     } catch {
-      // fallback to local write below
+      // Fallback to local.
     }
+
     return upsertLocalUser(payload)
   },
 
   updateUser: async (id, data) => {
     const local = getLocalUsers()
-    const current = local.find((item) => String(item.id) === String(id)) || {}
+    const current = local.find((user) => String(user.id) === String(id)) || {}
     const payload = normalizeUser({ ...current, ...data, id })
+
     try {
       const res = await fetch(`${API}/admin/users/${id}`, {
         method: 'PUT',
@@ -136,24 +113,32 @@ const adminApi = {
       })
       if (res.ok) {
         const updated = (await safeJson(res)) || payload
-        return upsertLocalUser(normalizeUser(updated))
+        return upsertLocalUser(updated)
       }
     } catch {
-      // fallback to local write below
+      // Fallback to local.
     }
+
     return upsertLocalUser(payload)
   },
 
   deleteUser: async (id) => {
-    let remoteDeleted = false
+    let deleted = false
+
     try {
-      const res = await fetch(`${API}/admin/users/${id}`, { method: 'DELETE' })
-      remoteDeleted = res.ok
+      const res = await fetch(`${API}/admin/users/${id}`, {
+        method: 'DELETE',
+      })
+      deleted = res.ok
     } catch {
-      remoteDeleted = false
+      deleted = false
     }
-    const localDeleted = removeLocalUser(id)
-    return remoteDeleted || localDeleted
+
+    const local = getLocalUsers()
+    const filtered = local.filter((user) => String(user.id) !== String(id))
+    setLocalUsers(filtered)
+
+    return deleted || filtered.length !== local.length
   },
 
   fetchStylists: async () => {
@@ -165,8 +150,8 @@ const adminApi = {
     adminApi.createUser({
       ...data,
       role: 'stylist',
-      status: data.status || data.availability || 'Available',
       availability: data.availability || 'Available',
+      status: data.status || 'Available',
     }),
 
   updateStylist: async (id, data) =>
