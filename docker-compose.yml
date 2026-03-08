@@ -1,0 +1,46 @@
+
+
+services:
+  db:
+    image: postgres:15
+    container_name: saloon_db
+    environment:
+      POSTGRES_USER: saloon
+      POSTGRES_PASSWORD: saloon
+      POSTGRES_DB: saloon_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./Backend
+    container_name: saloon_backend
+    environment:
+      DATABASE_URL: postgres://saloon:saloon@db:5432/saloon_db
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./Frontend
+    container_name: saloon_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  admin:
+    build:
+      context: ./Admin
+    container_name: saloon_admin
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
