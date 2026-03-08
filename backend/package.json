@@ -8,7 +8,7 @@
         "dev": "nodemon src/server.js",
         "prisma:generate": "prisma generate",
         "prisma:migrate": "prisma migrate dev",
-        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
         "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
     },
     "dependencies": {

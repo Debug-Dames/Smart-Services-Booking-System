@@ -1,53 +1,53 @@
-import request from "supertest"
-import { PrismaClient } from "@prisma/client"
-import app from "../../src/app.js"
-import jwt from "jsonwebtoken"
-import { env } from "../../src/config/env.js" // your JWT secret
+import request from "supertest";
+import jwt from "jsonwebtoken";
+import app from "../../src/app.js";
+import "../setupTests.js";
+import { env } from "../../src/config/env.js";
+import prisma from "../../src/config/database.js";
 
-const prisma = new PrismaClient()
-let user, service, token
+let user, service, token;
 
 beforeAll(async () => {
   // Clean DB
-  await prisma.booking.deleteMany()
-  await prisma.user.deleteMany()
-  await prisma.service.deleteMany()
+  await prisma.booking.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.service.deleteMany();
 
   // Create test user
   user = await prisma.user.create({
     data: {
-      email: "testuser@example.com",
+      email: `testuser_${Date.now()}@example.com`,
       name: "Test User",
       phone: "+27628463521",
       password: "123456",
     },
-  })
+  });
 
-  // Create JWT token for auth
+  // JWT token
   token = jwt.sign({ id: user.id }, env.JWT_SECRET || "testsecret", {
     expiresIn: "1h",
-  })
+  });
 
-  // Create test service
+  // Create service
   service = await prisma.service.create({
     data: {
       name: "Haircut",
       duration: 60,
       price: 200,
     },
-  })
-})
+  });
+});
 
 afterAll(async () => {
-  await prisma.booking.deleteMany()
-  await prisma.user.deleteMany()
-  await prisma.service.deleteMany()
-  await prisma.$disconnect()
-})
+  await prisma.booking.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.service.deleteMany();
+  await prisma.$disconnect();
+});
 
 beforeEach(async () => {
-  await prisma.booking.deleteMany()
-})
+  await prisma.booking.deleteMany();
+});
 
 describe("Booking API Integration Tests", () => {
   it("should create a booking successfully", async () => {
@@ -58,15 +58,16 @@ describe("Booking API Integration Tests", () => {
         userId: user.id,
         serviceId: service.id,
         date: "2026-03-10",
-        startTime: "10:00",
-        endTime: "11:00",
-      })
+        startTime: "2026-03-10T10:00:00",
+        endTime: "2026-03-10T11:00:00",
+      });
 
-    expect(res.statusCode).toBe(201)
-    expect(res.body).toHaveProperty("id")
-  })
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty("id");
+  });
 
   it("should reject duplicate booking", async () => {
+    // First booking
     await prisma.booking.create({
       data: {
         userId: user.id,
@@ -75,8 +76,9 @@ describe("Booking API Integration Tests", () => {
         startTime: new Date("2026-03-10T10:00:00"),
         endTime: new Date("2026-03-10T11:00:00"),
       },
-    })
+    });
 
+    // Try creating duplicate
     const res = await request(app)
       .post("/bookings")
       .set("Authorization", `Bearer ${token}`)
@@ -84,12 +86,12 @@ describe("Booking API Integration Tests", () => {
         userId: user.id,
         serviceId: service.id,
         date: "2026-03-10",
-        startTime: "10:00",
-        endTime: "11:00",
-      })
+        startTime: "2026-03-10T10:00:00",
+        endTime: "2026-03-10T11:00:00",
+      });
 
-    expect(res.statusCode).toBe(409) // API should handle unique constraint error
-  })
+    expect(res.statusCode).toBe(409);
+  });
 
   it("should return all bookings", async () => {
     await prisma.booking.create({
@@ -100,15 +102,15 @@ describe("Booking API Integration Tests", () => {
         startTime: new Date("2026-03-10T10:00:00"),
         endTime: new Date("2026-03-10T11:00:00"),
       },
-    })
+    });
 
     const res = await request(app)
       .get("/bookings")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${token}`);
 
-    expect(res.statusCode).toBe(200)
-    expect(res.body.length).toBe(1)
-  })
+    expect(res.statusCode).toBe(200);
+    expect(res.body.length).toBe(1);
+  });
 
   it("should update a booking", async () => {
     const booking = await prisma.booking.create({
@@ -119,15 +121,18 @@ describe("Booking API Integration Tests", () => {
         startTime: new Date("2026-03-10T10:00:00"),
         endTime: new Date("2026-03-10T11:00:00"),
       },
-    })
+    });
 
     const res = await request(app)
       .put(`/bookings/${booking.id}`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ startTime: "12:00", endTime: "13:00" })
+      .send({
+        startTime: "2026-03-10T12:00:00",
+        endTime: "2026-03-10T13:00:00",
+      });
 
-    expect(res.statusCode).toBe(200)
-  })
+    expect(res.statusCode).toBe(200);
+  });
 
   it("should delete a booking", async () => {
     const booking = await prisma.booking.create({
@@ -138,15 +143,15 @@ describe("Booking API Integration Tests", () => {
         startTime: new Date("2026-03-10T10:00:00"),
         endTime: new Date("2026-03-10T11:00:00"),
       },
-    })
+    });
 
     const res = await request(app)
       .delete(`/bookings/${booking.id}`)
-      .set("Authorization", `Bearer ${token}`)
+      .set("Authorization", `Bearer ${token}`);
 
-    expect(res.statusCode).toBe(200)
+    expect(res.statusCode).toBe(200);
 
-    const deleted = await prisma.booking.findUnique({ where: { id: booking.id } })
-    expect(deleted).toBeNull()
-  })
-})
+    const deleted = await prisma.booking.findUnique({ where: { id: booking.id } });
+    expect(deleted).toBeNull();
+  });
+});
