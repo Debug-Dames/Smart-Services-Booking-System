@@ -12,7 +12,7 @@ export async function forgotPassword(req, res) {
 
     // Generate JWT token valid for 1 hour
     const token = jwt.sign(
-        { userId: user.id },
+        { id: user.id },
         process.env.JWT_SECRET,
         { expiresIn: "1h" }
     );
