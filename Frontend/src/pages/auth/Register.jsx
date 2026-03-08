@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axios';
 import '../../Styles/auth.css';
 
 export default function Register() {
@@ -12,11 +12,13 @@ export default function Register() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [agreed, setAgreed] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -27,42 +29,48 @@ export default function Register() {
     e.preventDefault();
     setError('');
 
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
+    const { firstName, lastName, email, phone, password, confirmPassword } = formData;
+
+    if (!firstName || !lastName || !email || !phone || !password || !confirmPassword) {
       setError('Please complete all fields.');
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (password.length < 6) {
       setError('Password must be at least 6 characters.');
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError('Passwords do not match.');
+      return;
+    }
+
+    if (!agreed) {
+      setError('Please accept the Terms & Conditions.');
       return;
     }
 
     try {
       setLoading(true);
-      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-      const payload = {
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      const response = await api.post('/auth/register', {
         name: fullName,
-        fullName,
-        email: formData.email,
-        password: formData.password,
-      };
+        email: email.trim().toLowerCase(),
+        password,
+        phone: phone.trim(),
+      });
 
-      const response = await authService.register(payload);
-      const responseData = response?.data || {};
-      const userData = responseData.user || responseData.data || null;
-
-      if (userData) {
-        login(userData);
+      // After registration, log them in automatically if token returned
+      const { token, user } = response.data;
+      if (token && user) {
+        login(user, token);
         navigate('/dashboard');
-        return;
+      } else {
+        // Backend registered but didn't return token – redirect to login
+        navigate('/login');
       }
-
-      navigate('/login');
     } catch (err) {
       const apiMessage = err?.response?.data?.message;
       setError(apiMessage || 'Registration failed. Please try again.');
@@ -94,6 +102,7 @@ export default function Register() {
             value={formData.firstName}
             onChange={handleChange}
             placeholder="First name"
+            autoComplete="given-name"
           />
 
           <label htmlFor="lastName" className="auth-visually-hidden">Last Name</label>
@@ -104,6 +113,7 @@ export default function Register() {
             value={formData.lastName}
             onChange={handleChange}
             placeholder="Last name"
+            autoComplete="family-name"
           />
 
           <label htmlFor="email" className="auth-visually-hidden">Email Address</label>
@@ -114,6 +124,18 @@ export default function Register() {
             value={formData.email}
             onChange={handleChange}
             placeholder="Email address"
+            autoComplete="email"
+          />
+
+          <label htmlFor="phone" className="auth-visually-hidden">Phone Number</label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="Phone number (e.g. 0821234567)"
+            autoComplete="tel"
           />
 
           <label htmlFor="password" className="auth-visually-hidden">Password</label>
@@ -123,7 +145,8 @@ export default function Register() {
             type="password"
             value={formData.password}
             onChange={handleChange}
-            placeholder="Password"
+            placeholder="Password (min 6 characters)"
+            autoComplete="new-password"
           />
 
           <label htmlFor="confirmPassword" className="auth-visually-hidden">Confirm Password</label>
@@ -134,29 +157,28 @@ export default function Register() {
             value={formData.confirmPassword}
             onChange={handleChange}
             placeholder="Confirm password"
+            autoComplete="new-password"
           />
 
           <label className="auth-terms">
-            <input type="checkbox" />
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+            />
             <span>Accept Terms &amp; Conditions</span>
           </label>
 
-          {error ? <p className="auth-error">{error}</p> : null}
+          {error && <p className="auth-error">{error}</p>}
 
           <button type="submit" className="auth-primary-btn" disabled={loading}>
-            {loading ? 'Creating account...' : 'Join us'}
+            {loading ? 'Creating account…' : 'Join us'}
           </button>
 
-          <div className="auth-separator">
-            <span>or</span>
-          </div>
+          <div className="auth-separator"><span>or</span></div>
 
-          <button type="button" className="auth-secondary-btn">
-            Sign up with Google
-          </button>
-          <button type="button" className="auth-secondary-btn auth-secondary-btn--dark">
-            Sign up with Apple
-          </button>
+          <button type="button" className="auth-secondary-btn">Sign up with Google</button>
+          <button type="button" className="auth-secondary-btn auth-secondary-btn--dark">Sign up with Apple</button>
 
           <p className="auth-helper-text">
             Already have an account? <Link to="/login">Login</Link>

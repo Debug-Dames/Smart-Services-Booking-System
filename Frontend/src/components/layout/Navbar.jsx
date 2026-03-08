@@ -1,17 +1,27 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import './navbar.css'
 
 function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/services', label: 'Services' },
     { path: '/book', label: 'Book Now' },
-    { path: '/contact', label: 'contact us' },
+    { path: '/contact', label: 'Contact Us' },
+    ...(user ? [{ path: '/bookings', label: 'My Bookings' }] : []),
   ]
+
+  const handleLogout = () => {
+    logout()
+    setMenuOpen(false)
+    navigate('/')
+  }
 
   return (
     <header className="navbar">
@@ -35,23 +45,44 @@ function Navbar() {
               </li>
             ))}
           </ul>
+
+          {/* Mobile auth buttons */}
           <div className="navbar-auth-mobile">
-            <Link to="/login" className="navbar-btn navbar-btn--ghost" onClick={() => setMenuOpen(false)}>
-              Log In
-            </Link>
-            <Link to="/register" className="navbar-btn navbar-btn--primary" onClick={() => setMenuOpen(false)}>
-              Sign Up
-            </Link>
+            {user ? (
+              <>
+                <span className="navbar-user-greeting">Hi, {user.name?.split(' ')[0]}</span>
+                <button className="navbar-btn navbar-btn--ghost" onClick={handleLogout}>
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="navbar-btn navbar-btn--ghost" onClick={() => setMenuOpen(false)}>
+                  Log In
+                </Link>
+                <Link to="/register" className="navbar-btn navbar-btn--primary" onClick={() => setMenuOpen(false)}>
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </nav>
 
+        {/* Desktop auth buttons */}
         <div className="navbar-actions">
-          <Link to="/login" className="navbar-btn navbar-btn--ghost">
-            Log In
-          </Link>
-          <Link to="/register" className="navbar-btn navbar-btn--primary">
-            Sign Up
-          </Link>
+          {user ? (
+            <>
+              <span className="navbar-user-greeting">Hi, {user.name?.split(' ')[0]} 👋</span>
+              <button className="navbar-btn navbar-btn--ghost" onClick={handleLogout}>
+                Log Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="navbar-btn navbar-btn--ghost">Log In</Link>
+              <Link to="/register" className="navbar-btn navbar-btn--primary">Sign Up</Link>
+            </>
+          )}
         </div>
 
         <button
@@ -70,4 +101,3 @@ function Navbar() {
 }
 
 export default Navbar
-

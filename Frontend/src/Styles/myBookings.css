@@ -1,0 +1,213 @@
+.mybookings-page {
+  min-height: 100vh;
+  padding: 96px 20px 48px;
+  background:
+    linear-gradient(rgba(20, 26, 60, 0.82), rgba(14, 22, 54, 0.88)),
+    url('https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1600&q=80')
+      center / cover no-repeat;
+}
+
+.mybookings-shell {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.mybookings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.mybookings-header h1 {
+  color: #e8eeff;
+  font-size: 2rem;
+  margin: 0 0 4px;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.mybookings-header p {
+  color: rgba(200, 210, 255, 0.65);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.mybookings-new-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 11px 22px;
+  background: linear-gradient(135deg, #1952a6, #2d6be4);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: 10px;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(25, 82, 166, 0.35);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mybookings-new-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(25, 82, 166, 0.45);
+}
+
+/* State messages */
+.mybookings-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  color: rgba(200, 210, 255, 0.6);
+  font-size: 0.95rem;
+}
+
+.mybookings-state--error { color: #fca5a5; }
+
+.mybookings-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: #4a90e2;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Empty state */
+.mybookings-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 24px;
+  background: rgba(12, 18, 38, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  gap: 12px;
+}
+
+.mybookings-empty-icon { font-size: 3rem; }
+
+.mybookings-empty h3 {
+  color: #e0e8ff;
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.mybookings-empty p {
+  color: rgba(200, 210, 255, 0.6);
+  margin: 0;
+  max-width: 340px;
+  line-height: 1.5;
+}
+
+/* Cards grid */
+.mybookings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.mybooking-card {
+  background: rgba(12, 18, 38, 0.72);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mybooking-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+}
+
+.mybooking-card--past {
+  opacity: 0.65;
+}
+
+.mybooking-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.mybooking-service {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #e0e8ff;
+  font-size: 0.98rem;
+}
+
+.mybooking-service-icon {
+  font-size: 1.1rem;
+}
+
+.mybooking-status {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status--pending {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.status--confirmed {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status--cancelled {
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.mybooking-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mybooking-detail {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(200, 210, 255, 0.72);
+  font-size: 0.88rem;
+}
+
+.mybooking-detail-icon { font-size: 0.95rem; }
+
+.mybooking-past-badge {
+  margin-top: 14px;
+  padding: 5px 0;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 0.75rem;
+  color: rgba(200,210,255,0.4);
+  text-align: center;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 600px) {
+  .mybookings-grid { grid-template-columns: 1fr; }
+  .mybookings-header { flex-direction: column; }
+}

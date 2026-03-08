@@ -132,3 +132,23 @@ export const deleteBooking = async (req, res) => {
     res.status(500).json({ message: "Error cancelling booking", error: err.message });
   }
 };
+
+export const getBookingsByDate = async (req,res) => {
+
+try{
+
+const { date } = req.query;
+
+const bookings = await prisma.appointment.findMany({
+where:{ date }
+});
+
+res.json(bookings);
+
+}catch(err){
+
+res.status(500).json({message:"Server error"});
+
+}
+
+};

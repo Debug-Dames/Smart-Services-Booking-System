@@ -9,7 +9,13 @@ const __dirname = path.dirname(__filename);
 // Ensure Prisma always gets DATABASE_URL from backend/.env.
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
 
 export const ensureBookingTimeColumns = async () => {
   await prisma.$executeRawUnsafe(`

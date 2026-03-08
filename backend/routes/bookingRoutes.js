@@ -14,4 +14,6 @@ router.post("/", bookingController.createBooking); // can add protect later
 router.put("/:id", bookingController.updateBooking);
 router.delete("/:id", bookingController.deleteBooking);
 
+router.get("/bookings", getBookingsByDate);
+
 export default router;

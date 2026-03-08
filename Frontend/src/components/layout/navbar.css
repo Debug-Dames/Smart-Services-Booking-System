@@ -198,3 +198,18 @@
     text-align: center;
   }
 }
+
+/* ── Auth-aware additions ── */
+.navbar-user-greeting {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--navy-dark);
+  padding: 0 4px;
+}
+
+.navbar-btn[class*="ghost"] {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  font-size: 0.875rem;
+}
