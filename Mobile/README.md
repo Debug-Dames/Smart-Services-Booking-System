@@ -204,7 +204,3 @@ npx expo start
 
 ---
 
-## Notes
-
-- The `src/contants/colors.ts` file has a typo in the folder name (`contants` instead of `constants`) — this is intentional to match the existing import paths throughout the project. If you rename the folder, update all import references.
-- All booking data is currently mocked locally. Connect to your backend API by replacing the static arrays in `BookingScreen.tsx` and `MyBookingsScreen.tsx` with API calls.
