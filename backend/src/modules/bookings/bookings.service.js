@@ -19,6 +19,31 @@ export const getAllBookings = async (req, res) => {
   }
 };
 
+// Get bookings for the authenticated user
+export const getMyBookings = async (req, res) => {
+  try {
+    const userId = Number(req.user?.id);
+
+    if (Number.isNaN(userId)) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
+    const bookings = await prisma.booking.findMany({
+      where: { userId },
+      include: {
+        service: true,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    return res.json(bookings);
+  } catch (err) {
+    return res.status(500).json({ message: "Error fetching your bookings", error: err.message });
+  }
+};
+
 
 // Get booking by ID
 export const getBookingById = async (req, res) => {
@@ -138,15 +163,39 @@ export const createBooking = async (req, res) => {
       return res.status(404).json({ message: "Service not found" });
     }
 
-    const booking = await prisma.booking.create({
-      data: {
-        userId: effectiveUserId,
-        serviceId: serviceRecord.id,
-        date: dateObj,
-        startTime: startObj,
-        endTime: endObj,
-      },
-    });
+    let booking;
+    try {
+      booking = await prisma.booking.create({
+        data: {
+          userId: effectiveUserId,
+          serviceId: serviceRecord.id,
+          date: dateObj,
+          startTime: startObj,
+          endTime: endObj,
+        },
+      });
+    } catch (createErr) {
+      const msg = String(createErr?.message || "");
+      const missingTimeFields =
+        msg.includes("Unknown argument `startTime`") ||
+        msg.includes("Unknown argument `endTime`") ||
+        msg.includes('column "startTime" does not exist') ||
+        msg.includes('column "endTime" does not exist');
+
+      if (!missingTimeFields) {
+        throw createErr;
+      }
+
+      // Compatibility fallback for environments where Booking has no start/end columns.
+      // Persist the selected slot as the main booking datetime so booking still succeeds.
+      booking = await prisma.booking.create({
+        data: {
+          userId: effectiveUserId,
+          serviceId: serviceRecord.id,
+          date: startObj,
+        },
+      });
+    }
     res.status(201).json(booking);
   } catch (err) {
     if (

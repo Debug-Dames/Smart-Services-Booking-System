@@ -220,6 +220,7 @@ const router = express.Router();
 //router.get("/mine", authMiddleware, getMyAppointments);
 
 
+router.get("/mine", protect, bookingController.getMyBookings);
 router.get("/", bookingController.getAllBookings);
 router.get("/:id", bookingController.getBookingById);
 
