@@ -38,8 +38,8 @@ export default function Register() {
 
     const name = formData.name.trim();
     const email = formData.email.trim().toLowerCase();
-    const password = formData.password;
-    const confirmPassword = formData.confirmPassword;
+    const password = formData.password.trim();
+    const confirmPassword = formData.confirmPassword.trim();
     const gender = formData.gender;
     const phone = formData.phone.trim();
 

@@ -13,6 +13,9 @@ export default function Login() {
   const { login } = useAuth();
 
   function getAuthErrorMessage(err) {
+    const reason = err?.response?.data?.reason;
+    if (reason === 'email_not_found') return 'No account found for this email. Please register first.';
+    if (reason === 'password_mismatch') return 'Incorrect password. Please try again.';
     if (err?.response?.data?.message) return err.response.data.message;
     if (err?.code === 'ERR_NETWORK') {
       return 'Cannot reach API. Start backend on http://localhost:5000 and try again.';
@@ -26,7 +29,9 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await authService.login({ email, password });
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPassword = password.trim();
+      const data = await authService.login({ email: normalizedEmail, password: normalizedPassword });
       login(data.user || { email }, data.token);
       navigate('/book');
     } catch (err) {

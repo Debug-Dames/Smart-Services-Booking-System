@@ -3,10 +3,11 @@ import express from "express";
 
 import { protect } from "../../middlewares/auth.middleware.js";
 
-import * as bookingController from "./bookings.service.js";
+import * as bookingController from "../../controllers/bookingController.js";
 import { validateBooking } from "./middleware/bookingValidation.js";
 
 const router = express.Router();
+
 
 /**
  * @swagger
@@ -79,6 +80,66 @@ const router = express.Router();
  *         - endTime
  */
 
+
+
+/**
+ * @swagger
+ * /bookings:
+ *   get:
+ *     summary: Get all bookings for the authenticated user
+ *     description: Returns a list of bookings belonging to the logged-in user.
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of user bookings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Booking'
+ *       401:
+ *         description: Unauthorized
+ */
+
+
+router.get("/", protect, bookingController.getAllBookings);
+router.get("/mine", protect, bookingController.getMyBookings);
+
+
+/**
+ * @swagger
+ * /bookings/{id}:
+ *   get:
+ *     summary: Get a booking by ID
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Booking ID
+ *     responses:
+ *       200:
+ *         description: Booking details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Booking'
+ *       404:
+ *         description: Booking not found
+ *       401:
+ *         description: Unauthorized
+ */
+
+router.get("/:id", protect, bookingController.getBookingById);
+
+
 /**
  * @swagger
  * /bookings:
@@ -109,55 +170,7 @@ const router = express.Router();
  *         description: Time slot already booked
  */
 
-/**
- * @swagger
- * /bookings:
- *   get:
- *     summary: Get all bookings for the authenticated user
- *     description: Returns a list of bookings belonging to the logged-in user.
- *     tags: [Bookings]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of user bookings
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Booking'
- *       401:
- *         description: Unauthorized
- */
-
-/**
- * @swagger
- * /bookings/{id}:
- *   get:
- *     summary: Get a booking by ID
- *     tags: [Bookings]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Booking ID
- *     responses:
- *       200:
- *         description: Booking details
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Booking'
- *       404:
- *         description: Booking not found
- *       401:
- *         description: Unauthorized
- */
+router.post("/", protect, bookingController.createBookingController);
 
 /**
  * @swagger
@@ -192,6 +205,9 @@ const router = express.Router();
  *         description: Unauthorized
  */
 
+router.put("/:id", protect, bookingController.updateBooking);
+
+
 /**
  * @swagger
  * /bookings/{id}:
@@ -216,18 +232,8 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-//router.post("/", authMiddleware, createAppointment);
-//router.get("/mine", authMiddleware, getMyAppointments);
 
-
-router.get("/mine", protect, bookingController.getMyBookings);
-router.get("/", bookingController.getAllBookings);
-router.get("/:id", bookingController.getBookingById);
-
-// Create route is public for now (no token required)
-router.post("/", protect, bookingController.createBooking);
-router.put("/:id", bookingController.updateBooking);
-router.delete("/:id", bookingController.deleteBooking);
+router.delete("/:id", protect, bookingController.deleteBooking);
 
 
 
