@@ -7,20 +7,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 model User {
-  id               Int       @id @default(autoincrement())
-  name             String
-  email            String    @unique
-  password         String
-  createdAt        DateTime  @default(now())
-  gender           String?
-  phone            String
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String
+  gender    String?
+  role      Role     @default(CUSTOMER)
   resetToken       String?
   resetTokenExpiry DateTime?
-  updatedAt        DateTime
-  role             Role      @default(CUSTOMER)
-  bookings         Booking[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  bookings    Booking[]
 }
+
 
 model Service {
   id          Int       @id @default(autoincrement())
@@ -47,6 +49,7 @@ model Booking {
 
   @@index([serviceId, startTime, endTime])
   @@index([stylistId, startTime, endTime])
+  @@unique([userId, serviceId, date, startTime])
 }
 
 enum Role {

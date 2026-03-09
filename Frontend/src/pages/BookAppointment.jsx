@@ -8,6 +8,7 @@ const SERVICE_PRICES = {
   Nails: 220,
   Braids: 350,
 };
+const SALON_VIDEO_URL = '/images/videoframe_4772.png';
 
 const INITIAL_FORM = {
   fullName: '',
@@ -27,6 +28,14 @@ export default function BookAppointment() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const today = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
 
   const amount = useMemo(() => SERVICE_PRICES[formData.service] || 0, [formData.service]);
 
@@ -54,6 +63,10 @@ export default function BookAppointment() {
   const handleNextFromStepTwo = () => {
     if (!formData.date || !formData.time) {
       setErrorMessage('Please select both date and time.');
+      return;
+    }
+    if (formData.date < today) {
+      setErrorMessage('Please select today or a future date.');
       return;
     }
     setErrorMessage('');
@@ -102,10 +115,7 @@ export default function BookAppointment() {
         <div className="book-main-grid">
           <aside className="book-phone-panel">
             <div className="book-phone-frame">
-              <img
-                src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=80"
-                alt="Nail art inspiration"
-              />
+              <img src={SALON_VIDEO_URL} alt="Salon interior preview" />
             </div>
             <p className="book-social">@DAMESBEAUTY</p>
           </aside>
@@ -155,6 +165,7 @@ export default function BookAppointment() {
                     id="date"
                     name="date"
                     type="date"
+                    min={today}
                     value={formData.date}
                     onChange={handleChange}
                     required
