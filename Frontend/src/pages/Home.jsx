@@ -1,7 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "../Styles/home.css";
+import Chatbot from "../components/common/Chatbot";
 
+
+function App() {
+  return (
+    <div>
+      <Home />
+    </div>
+  );
+}
 const services = [
   {
     id: 1,
@@ -225,6 +234,15 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {
+   (
+    <div>
+      
+      <Chatbot /> {/* <-- this renders your Chatbot */}
+    </div>
+  )
+}
       </section>
 
       {/* <section className="features container">
@@ -246,7 +264,9 @@ export default function Home() {
 
 
     </div>
+
   );
+
 };
 
 // export default Home;

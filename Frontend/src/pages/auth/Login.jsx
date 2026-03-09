@@ -14,6 +14,7 @@ export default function Login() {
 
   function getAuthErrorMessage(err) {
     if (err?.response?.data?.message) return err.response.data.message;
+    if (err?.message) return err.message;
     if (err?.code === 'ERR_NETWORK') {
       return 'Cannot reach API. Start backend on http://localhost:5000 and try again.';
     }
@@ -26,7 +27,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await authService.login({ email, password });gi
+      const data = await authService.login({ email, password });
       login(data.user || { email }, data.token);
       navigate('/book');
     } catch (err) {
