@@ -1,19 +1,27 @@
 const Colors = {
-  primary: '#1952A6',           // Sapphire
-  primaryHover: '#143F82',
-  navyDark: '#22274C',          // Oxford Navy
-  lavenderLight: '#BDC2DB',     // Lavender Blue
-  platinum: '#D4CACE',
-  mutedText: '#6B6F8E',          // Rhythm
+  light: {
+    primary: '#1952A6',
+    primaryHover: '#143F82',
+    navyDark: '#22274C',
+    lavenderLight: '#BDC2DB',
+    platinum: '#D4CACE',
+    mutedText: '#6B6F8E',
 
-  background: '#F5F6FA',
-  card: '#FFFFFF',
-  white: '#FFFFFF',
+    background: '#F5F6FA',
+    card: '#FFFFFF',
+    textPrimary: '#22274C',
+    textSecondary: '#6B6F8E',
+    border: 'rgba(0,0,0,0.06)',
+  },
 
-  success: '#1952A6',
-  pending: '#BDC2DB',
-  completed: '#6B6F8E',
-  cancelled: '#A94442',
+  dark: {
+    background: '#1A1F3A',
+    card: '#22274C',
+    primary: '#1952A6',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#BDC2DB',
+    border: 'rgba(255,255,255,0.08)',
+  },
 };
 
 export default Colors;
