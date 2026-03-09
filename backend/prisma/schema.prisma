@@ -43,29 +43,17 @@ model User {
 
 >>>>>>> 999976a92e607cd8ceb8fc74836c2e2a3a3e478f
 model Service {
-  id          Int       @id @default(autoincrement())
-  name        String
-  description String?
-  price       Float
-  duration    Int
-  createdAt   DateTime  @default(now())
-  bookings    Booking[]
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  bookings  Booking[]
 }
-
 model Booking {
   id        Int      @id @default(autoincrement())
   date      DateTime
   status    String   @default("pending")
   userId    Int
   serviceId Int
-  createdAt DateTime @default(now())
-  startTime DateTime @default(now())
-  endTime   DateTime @default(now())
   service   Service  @relation(fields: [serviceId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
-}
-
-enum Role {
-  CUSTOMER
-  ADMIN
 }

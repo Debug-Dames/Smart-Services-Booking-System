@@ -1,80 +1,40 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
 import '../../Styles/auth.css';
 
 export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  function getAuthErrorMessage(err) {
+    if (err?.response?.data?.message) return err.response.data.message;
+    if (err?.code === 'ERR_NETWORK') {
+      return 'Cannot reach API. Start backend on http://localhost:5000 and try again.';
+    }
+    return 'Login failed. Please try again.';
+  }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setError('');
-
-  //   if (!formData.email || !formData.password) {
-  //     setError('Please enter both email and password.');
-  //     return;
-  //   }
-
-  //   try {
-  //     setLoading(true);
-  //     const response = await authService.login(formData);
-  //     const responseData = response?.data || {};
-  //     const userData = responseData.user || responseData.data || responseData;
-
-  //     if (!userData) {
-  //       throw new Error('Invalid login response.');
-  //     }
-
-  //     login(userData);
-  //     navigate('/dashboard');
-  //   } catch (err) {
-  //     const apiMessage = err?.response?.data?.message;
-  //     setError(apiMessage || 'Login failed. Please check your details and try again.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-
-    if (!formData.email || !formData.password) {
-      setError('Please enter both email and password.');
-      return;
-    }
+    setLoading(true);
 
     try {
-      setLoading(true);
-
-      // Fake login success (skip API call for now)
-      const userData = {
-        id: 1,
-        email: formData.email,
-        name: "Test User"
-      };
-
-      login(userData);   // update AuthContext
-      navigate('/book'); // redirect
+      const data = await authService.login({ email, password });gi
+      login(data.user || { email }, data.token);
+      navigate('/book');
     } catch (err) {
-      setError('Login failed. Please try again.');
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
-  };
-
+  }
 
   return (
     <section className="auth-page">
@@ -96,9 +56,10 @@ export default function Login() {
             id="email"
             name="email"
             type="email"
-            value={formData.email}
-            onChange={handleChange}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
+            required
           />
 
           <label htmlFor="password">Password</label>
@@ -106,9 +67,10 @@ export default function Login() {
             id="password"
             name="password"
             type="password"
-            value={formData.password}
-            onChange={handleChange}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
+            required
           />
 
           {error ? <p className="auth-error">{error}</p> : null}
