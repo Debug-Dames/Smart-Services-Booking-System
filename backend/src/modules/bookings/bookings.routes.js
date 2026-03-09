@@ -3,10 +3,8 @@ import express from "express";
 
 import { protect } from "../../middlewares/auth.middleware.js";
 
-import * as bookingController from "./bookings.service.js";
 import { validateBooking } from "../../middlewares/bookingValidation.js"; // fix this!!!
 import * as bookingController from "../../controllers/bookingController.js";
-import { validateBooking } from "./middleware/bookingValidation.js";
 
 const router = express.Router();
 
@@ -233,19 +231,12 @@ router.put("/:id", protect, bookingController.updateBooking);
  *       401:
  *         description: Unauthorized
  */
-
-
-router.get("/", bookingController.getAllBookings);
-router.post("/lock", validateBooking, bookingController.lockSlot);
-router.delete("/lock/:token", bookingController.unlockSlot);
-
-// Create route is public for now (no token required)
-router.post("/", validateBooking, bookingController.createBooking);
-router.get("/:id", bookingController.getBookingById);
-router.put("/:id", bookingController.updateBooking);
-// router.delete("/:id", bookingController.deleteBooking);
 router.delete("/:id", protect, bookingController.deleteBooking);
 
+
+
+router.post("/lock", validateBooking, bookingController.lockSlotController);
+router.delete("/lock/:token", bookingController.unlockSlotController);
 
 
 export default router;
