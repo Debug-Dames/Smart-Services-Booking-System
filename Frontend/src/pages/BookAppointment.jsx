@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_URL, authHeaders } from '../utils/api';
+import { bookingService, getAvailableSlots, getServices } from '../api/services';
 import '../Styles/bookAppointment.css';
 
 const SERVICE_PRICES = {
@@ -12,7 +12,7 @@ const SERVICE_PRICES = {
 const INITIAL_FORM = {
   fullName: '',
   phone: '',
-  service: 'Haircut',
+  service: '',
   date: '',
   time: '',
   paymentMethod: 'Card',
@@ -27,90 +27,116 @@ export default function BookAppointment() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lockInfo, setLockInfo] = useState(null);
+  const [services, setServices] = useState([]);
+  const [serviceId, setServiceId] = useState('');
+  const [slots, setSlots] = useState([]);
+  const [message, setMessage] = useState('');
+  const today = new Date().toISOString().split('T')[0];
 
   const amount = useMemo(() => SERVICE_PRICES[formData.service] || 0, [formData.service]);
 
-  const releaseSlotLock = async (token) => {
-    if (!token) return;
-    try {
-      await fetch(`${API_URL}/api/bookings/lock/${token}`, {
-        method: 'DELETE',
-        headers: authHeaders(),
-      });
-    } catch (_) {
-      // Best-effort unlock.
-    }
-  };
+  useEffect(() => {
+    getServices()
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setServices(list);
 
-  const handleChange = (e) => {
+        if (list.length > 0) {
+          const first = list[0];
+          const firstId = first._id || first.id || '';
+          const firstName = first.name || '';
+          setServiceId(firstId);
+          setFormData((prev) => ({
+            ...prev,
+            service: firstName,
+          }));
+        }
+      })
+      .catch(() => {
+        setServices([]);
+        setServiceId('');
+      });
+  }, []);
+
+  useEffect(() => {
+    if (formData.date && serviceId) {
+      getAvailableSlots(formData.date, serviceId)
+        .then((data) => {
+          const availableSlots = Array.isArray(data) ? data : [];
+          setSlots(availableSlots);
+
+          if (availableSlots.length === 0) {
+            setMessage('This date is fully booked.');
+          } else {
+            setMessage('Slots available. Choose a time.');
+          }
+        })
+        .catch(() => {
+          setSlots([]);
+          setMessage('Error fetching slots.');
+        });
+    }
+  }, [formData.date, serviceId]);
+
+  function getBookingErrorMessage(error) {
+    if (error?.response?.data?.message) return error.response.data.message;
+    if (error?.code === 'ERR_NETWORK') {
+      return 'Cannot reach API. Start backend on http://localhost:5000 and try again.';
+    }
+    return 'Unable to complete booking. Please try again.';
+  }
+
+  function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
-  const handleSubmit = (e) => {
+    if (name === 'service') {
+      const selectedService = services.find((svc) => (svc.name || '') === value);
+      setServiceId(selectedService?._id || selectedService?.id || '');
+      setSlots([]);
+      setMessage('');
+      setFormData((prev) => ({ ...prev, time: '' }));
+    }
+
+    if (name === 'date') {
+      setFormData((prev) => ({ ...prev, time: '' }));
+      setSlots([]);
+      setMessage('');
+    }
+  }
+
+  function handleSubmit(e) {
     e.preventDefault();
     setSuccessMessage('');
     setErrorMessage('');
     setShowPaymentPopup(true);
-  };
+  }
 
-  const handleNextFromStepOne = () => {
+  function handleNextFromStepOne() {
     if (!formData.fullName.trim() || !formData.phone.trim() || !formData.service) {
       setErrorMessage('Please complete Full Name, Phone Number, and Service.');
       return;
     }
     setErrorMessage('');
     setActiveStep(2);
-  };
+  }
 
-  const handleNextFromStepTwo = () => {
+  function handleNextFromStepTwo() {
     if (!formData.date || !formData.time) {
       setErrorMessage('Please select both date and time.');
       return;
     }
-    (async () => {
-      try {
-        setErrorMessage('');
-        setIsSubmitting(true);
+    setErrorMessage('');
+    setActiveStep(3);
+  }
 
-        if (lockInfo?.lockToken) {
-          await releaseSlotLock(lockInfo.lockToken);
-          setLockInfo(null);
-        }
-
-        const lockRes = await fetch(`${API_URL}/api/bookings/lock`, {
-          method: 'POST',
-          headers: authHeaders(),
-          body: JSON.stringify({
-            service: formData.service,
-            date: formData.date,
-            time: formData.time,
-            lockMinutes: 10,
-          }),
-        });
-        const lockData = await lockRes.json();
-        if (!lockRes.ok) {
-          setErrorMessage(lockData?.message || 'Selected slot is not available right now.');
-          return;
-        }
-
-        setLockInfo(lockData);
-        setActiveStep(3);
-      } catch (_) {
-        setErrorMessage('Unable to reserve slot. Please try again.');
-      } finally {
-        setIsSubmitting(false);
-      }
-    })();
-  };
-
-  const handleConfirmPayment = async () => {
+  async function handleConfirmPayment() {
     try {
       setIsSubmitting(true);
       setErrorMessage('');
 
       const payload = {
+        ...(serviceId ? { serviceId: Number(serviceId) } : {}),
         service: formData.service,
         date: formData.date,
         time: formData.time,
@@ -118,30 +144,28 @@ export default function BookAppointment() {
         notes: `${formData.notes || ''}\nCustomer: ${formData.fullName}\nPhone: ${formData.phone}\nPayment: ${formData.paymentMethod}\nAmount: R${amount}`.trim(),
       };
 
-      const res = await fetch(`${API_URL}/api/bookings`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setErrorMessage(data?.message || 'Unable to complete booking. Please try again.');
+      if (payload.date < today) {
+        setErrorMessage('You cannot book a past date.');
         return;
       }
+
+      await bookingService.bookAppointment(payload);
 
       setShowPaymentPopup(false);
       setSuccessMessage('Booking confirmed. Payment received.');
       setLockInfo(null);
       setFormData(INITIAL_FORM);
+      setServiceId('');
+      setSlots([]);
+      setMessage('');
       setActiveStep(1);
+      navigate('/bookings');
     } catch (error) {
-      setErrorMessage('Network error. Please check your connection and try again.');
+      setErrorMessage(getBookingErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   useEffect(() => {
     return () => {
@@ -155,14 +179,14 @@ export default function BookAppointment() {
     <section className="book-page">
       <div className="book-shell">
         <div className="book-main-grid">
-          <aside className="book-phone-panel">
-            <div className="book-phone-frame">
-              <img
-                src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=900&q=80"
-                alt="Nail art inspiration"
+          <aside className="book-side-panel">
+            <div className="book-pin-embed">
+              <iframe
+                src="https://assets.pinterest.com/ext/embed.html?id=2040762328200900"
+                title="Pinterest inspiration"
+                loading="lazy"
               />
             </div>
-            <p className="book-social">@DAMESBEAUTY</p>
           </aside>
 
           <div className="book-right-panel">
@@ -196,9 +220,21 @@ export default function BookAppointment() {
 
                   <label htmlFor="service">Service</label>
                   <select id="service" name="service" value={formData.service} onChange={handleChange}>
-                    <option value="Haircut">Haircut</option>
-                    <option value="Nails">Nails</option>
-                    <option value="Braids">Braids</option>
+                    <option value="" disabled>Select a service</option>
+                    {services.length > 0 ? services.map((svc) => {
+                      const value = svc.name || '';
+                      return (
+                        <option key={svc._id || svc.id || value} value={value}>
+                          {value}
+                        </option>
+                      );
+                    }) : (
+                      <>
+                        <option value="Haircut">Haircut</option>
+                        <option value="Nails">Nails</option>
+                        <option value="Braids">Braids</option>
+                      </>
+                    )}
                   </select>
                 </>
               ) : null}
@@ -210,20 +246,31 @@ export default function BookAppointment() {
                     id="date"
                     name="date"
                     type="date"
+                    min={today}
                     value={formData.date}
                     onChange={handleChange}
                     required
                   />
 
                   <label htmlFor="time">Time</label>
-                  <input
-                    id="time"
-                    name="time"
-                    type="time"
-                    value={formData.time}
-                    onChange={handleChange}
-                    required
-                  />
+                  {slots.length > 0 ? (
+                    <select id="time" name="time" value={formData.time} onChange={handleChange} required>
+                      <option value="">Select available slot</option>
+                      {slots.map((slot) => (
+                        <option key={slot} value={slot}>{slot}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      id="time"
+                      name="time"
+                      type="time"
+                      value={formData.time}
+                      onChange={handleChange}
+                      required
+                    />
+                  )}
+                  {message ? <p className="book-error">{message}</p> : null}
                 </>
               ) : null}
 

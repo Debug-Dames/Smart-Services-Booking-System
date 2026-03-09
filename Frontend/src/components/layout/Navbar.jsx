@@ -1,23 +1,33 @@
-import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import './navbar.css'
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import './navbar.css';
 
 function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const location = useLocation()
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/services', label: 'Services' },
     { path: '/book', label: 'Book Now' },
-    { path: '/contact', label: 'contact us' },
-  ]
+    { path: '/bookings', label: 'My Bookings' },
+    { path: '/contact', label: 'Contact Us' },
+  ];
+
+  function handleLogout() {
+    logout();
+    setMenuOpen(false);
+    navigate('/');
+  }
 
   return (
     <header className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          <span className="logo-dame">Dame's</span>
+          <span className="logo-dame">Dame&apos;s</span>
           <span className="logo-salon">Salon</span>
         </Link>
 
@@ -36,22 +46,44 @@ function Navbar() {
             ))}
           </ul>
           <div className="navbar-auth-mobile">
-            <Link to="/login" className="navbar-btn navbar-btn--ghost" onClick={() => setMenuOpen(false)}>
-              Log In
-            </Link>
-            <Link to="/register" className="navbar-btn navbar-btn--primary" onClick={() => setMenuOpen(false)}>
-              Sign Up
-            </Link>
+            {user ? (
+              <>
+                <span className="navbar-user-name">Hi, {user.name || user.email}</span>
+                <button className="navbar-btn navbar-btn--ghost" onClick={handleLogout}>
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="navbar-btn navbar-btn--ghost" onClick={() => setMenuOpen(false)}>
+                  Log In
+                </Link>
+                <Link to="/register" className="navbar-btn navbar-btn--primary" onClick={() => setMenuOpen(false)}>
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </nav>
 
         <div className="navbar-actions">
-          <Link to="/login" className="navbar-btn navbar-btn--ghost">
-            Log In
-          </Link>
-          <Link to="/register" className="navbar-btn navbar-btn--primary">
-            Sign Up
-          </Link>
+          {user ? (
+            <>
+              <span className="navbar-user-name">Hi, {user.name || user.email}</span>
+              <button className="navbar-btn navbar-btn--ghost" onClick={handleLogout}>
+                Log Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="navbar-btn navbar-btn--ghost">
+                Log In
+              </Link>
+              <Link to="/register" className="navbar-btn navbar-btn--primary">
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -66,8 +98,7 @@ function Navbar() {
         </button>
       </div>
     </header>
-  )
+  );
 }
 
-export default Navbar
-
+export default Navbar;
