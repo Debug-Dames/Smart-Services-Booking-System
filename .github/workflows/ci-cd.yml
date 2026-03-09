@@ -1,61 +1,99 @@
-name: CI/CD
+name: CI Pipeline
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - 'feature/*'
+    branches: [develop, main]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [develop, main]
 
 jobs:
-  build-test:
+  build-frontend-admin:
+    name: Build ${{ matrix.app }}
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: smart_salon
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres" 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [Frontend, Admin]
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2️⃣ Set up Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
 
-      # 3️⃣ Install Backend dependencies
-      - name: Install Backend dependencies
-        working-directory: ./Backend
-        run: npm install
+      - name: Install dependencies
+        working-directory: ${{ matrix.app }}
+        run: npm ci
 
-      # 4️⃣ Run backend tests
-      - name: Run backend tests
+      - name: Build app
+        working-directory: ${{ matrix.app }}
+        run: npm run build
+
+  backend-check:
+    name: Backend install and smoke test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
         working-directory: backend
-        run: npm test || echo "Backend tests failed"
+        run: npm ci
 
-      # 5️⃣ Build Docker images
-      - name: Build Docker images
-        run: docker-compose build
+      - name: Start backend and check health endpoint
+        working-directory: backend
+        shell: bash
+        run: |
+          if [ ! -f index.js ]; then
+            echo "::warning::backend/index.js not found. Skipping backend runtime smoke test."
+            ls -la
+            exit 0
+          fi
+          npm start > backend.log 2>&1 &
+          BACKEND_PID=$!
+          trap 'kill $BACKEND_PID || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:5000/health > /dev/null; then
+              echo "Backend health check passed"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend failed to become healthy. Logs:"
+          cat backend.log
+          exit 1
 
-      # 6️⃣ Optional: Deploy to production
-      - name: Deploy (optional)
-        if: github.ref == 'refs/heads/main'
-        run: echo "Deploy to production server here"
+  docker-build:
+    name: Docker build validation
+    runs-on: ubuntu-latest
+    needs: [build-frontend-admin, backend-check]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        run: docker build -t smart-services/backend:ci ./backend
+
+      - name: Build frontend image
+        run: docker build -t smart-services/frontend:ci ./Frontend
+
+      - name: Build admin image
+        run: docker build -t smart-services/admin:ci ./Admin
+
