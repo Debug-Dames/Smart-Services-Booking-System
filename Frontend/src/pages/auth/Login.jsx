@@ -26,7 +26,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const data = await authService.login({ email, password });gi
+      const data = await authService.login({ email, password });
       login(data.user || { email }, data.token);
       navigate('/book');
     } catch (err) {

@@ -130,7 +130,7 @@ export default function BookAppointment() {
     setActiveStep(3);
   }
 
-  async function handleConfirmPayment() {
+  async function submitBooking({ payLater }) {
     try {
       setIsSubmitting(true);
       setErrorMessage('');
@@ -140,7 +140,7 @@ export default function BookAppointment() {
         service: formData.service,
         date: formData.date,
         time: formData.time,
-        notes: `${formData.notes || ''}\nCustomer: ${formData.fullName}\nPhone: ${formData.phone}\nPayment: ${formData.paymentMethod}\nAmount: R${amount}`.trim(),
+        notes: `${formData.notes || ''}\nCustomer: ${formData.fullName}\nPhone: ${formData.phone}\nPayment: ${payLater ? 'Pay later' : formData.paymentMethod}\nAmount: R${amount}\nPayment status: ${payLater ? 'Pending at salon' : 'Paid online'}`.trim(),
       };
 
       if (payload.date < today) {
@@ -151,7 +151,11 @@ export default function BookAppointment() {
       await bookingService.bookAppointment(payload);
 
       setShowPaymentPopup(false);
-      setSuccessMessage('Booking confirmed. Payment received.');
+      setSuccessMessage(
+        payLater
+          ? 'Booking confirmed. You can pay at the salon.'
+          : 'Booking confirmed. Payment received.'
+      );
       setFormData(INITIAL_FORM);
       setServiceId('');
       setSlots([]);
@@ -163,6 +167,14 @@ export default function BookAppointment() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handleConfirmPayment() {
+    await submitBooking({ payLater: false });
+  }
+
+  async function handleBookNowPayLater() {
+    await submitBooking({ payLater: true });
   }
 
   return (
@@ -329,7 +341,7 @@ export default function BookAppointment() {
                     Back
                   </button>
                   <button type="submit" className="book-btn book-btn--primary" disabled={isSubmitting}>
-                    Continue To Payment
+                    Review Booking
                   </button>
                 </div>
               ) : null}
@@ -341,7 +353,7 @@ export default function BookAppointment() {
       {showPaymentPopup ? (
         <div className="book-overlay">
           <div className="book-popup">
-            <h2>Confirm Payment</h2>
+            <h2>Confirm Booking</h2>
             <p>Service: {formData.service}</p>
             <p>
               Date/Time: {formData.date} at {formData.time}
@@ -356,6 +368,14 @@ export default function BookAppointment() {
                 disabled={isSubmitting}
               >
                 Cancel
+              </button>
+              <button
+                type="button"
+                className="book-btn book-btn--ghost"
+                onClick={handleBookNowPayLater}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Processing...' : 'Book Now, Pay Later'}
               </button>
               <button type="button" className="book-btn book-btn--primary" onClick={handleConfirmPayment} disabled={isSubmitting}>
                 {isSubmitting ? 'Processing...' : 'Pay & Confirm'}
