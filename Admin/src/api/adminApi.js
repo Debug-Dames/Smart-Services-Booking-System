@@ -178,17 +178,29 @@ export default {
         )
     },
     updateService: async (id, data) => {
-        const res = await fetch(`${API}/admin/services/${id}`, {
-            method: 'PUT',
-            headers: jsonHeaders,
-            body: JSON.stringify(data),
-        })
-        return res.json()
+        return withApiFallback(
+            async () => {
+                const res = await fetch(`${API}/admin/services/${id}`, {
+                    method: 'PUT',
+                    headers: jsonHeaders,
+                    body: JSON.stringify(data),
+                })
+                if (!res.ok) throw new Error('service update failed')
+                return res.json()
+            },
+            () => updateDemoItem('services', id, data),
+        )
     },
     deleteService: async (id) => {
-        const res = await fetch(`${API}/admin/services/${id}`, {
-            method: 'DELETE',
-        })
-        return res.ok
+        return withApiFallback(
+            async () => {
+                const res = await fetch(`${API}/admin/services/${id}`, {
+                    method: 'DELETE',
+                })
+                if (!res.ok) throw new Error('service delete failed')
+                return true
+            },
+            () => deleteDemoItem('services', id),
+        )
     },
 }

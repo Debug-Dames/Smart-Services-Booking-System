@@ -17,6 +17,11 @@ const AdminSidebar = () => {
             <nav>
                 <ul>
                     <li>
+                        <NavLink to="dashboard" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
+                            Dashboard
+                        </NavLink>
+                    </li>
+                    <li>
                         <NavLink to="bookings" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
                             Bookings
                         </NavLink>

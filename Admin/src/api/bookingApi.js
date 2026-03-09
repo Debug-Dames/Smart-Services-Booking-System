@@ -13,8 +13,14 @@ const withApiFallback = async (request, fallback) => {
 
 export default {
     fetchAllBookings: async () => {
-        const res = await fetch(`${API}/bookings`)
-        return res.ok ? res.json() : []
+        return withApiFallback(
+            async () => {
+                const res = await fetch(`${API}/bookings`)
+                if (!res.ok) throw new Error('bookings fetch failed')
+                return res.json()
+            },
+            () => getDemoCollection('bookings'),
+        )
     },
     fetchBookings: async () => {
         return withApiFallback(
@@ -41,18 +47,31 @@ export default {
         )
     },
     updateBookingStatus: async (id, status) => {
-        const res = await fetch(`${API}/bookings/${id}/status`, {
-            method: 'PATCH',
-            headers: jsonHeaders,
-            body: JSON.stringify({ status }),
-        })
-        return res.json()
+        return withApiFallback(
+            async () => {
+                const res = await fetch(`${API}/bookings/${id}`, {
+                    method: 'PUT',
+                    headers: jsonHeaders,
+                    body: JSON.stringify({ status }),
+                })
+                if (!res.ok) throw new Error('booking status update failed')
+                return res.json()
+            },
+            () => updateDemoItem('bookings', id, { status }),
+        )
     },
     cancelBooking: async (id) => {
-        const res = await fetch(`${API}/bookings/${id}/cancel`, {
-            method: 'PATCH',
-            headers: jsonHeaders,
-        })
-        return res.json()
+        return withApiFallback(
+            async () => {
+                const res = await fetch(`${API}/bookings/${id}`, {
+                    method: 'PUT',
+                    headers: jsonHeaders,
+                    body: JSON.stringify({ status: 'Cancelled' }),
+                })
+                if (!res.ok) throw new Error('booking cancel failed')
+                return res.json()
+            },
+            () => updateDemoItem('bookings', id, { status: 'Cancelled' }),
+        )
     },
 }

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL, authHeaders } from '../utils/api';
 import '../Styles/bookAppointment.css';
@@ -27,8 +27,21 @@ export default function BookAppointment() {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lockInfo, setLockInfo] = useState(null);
 
   const amount = useMemo(() => SERVICE_PRICES[formData.service] || 0, [formData.service]);
+
+  const releaseSlotLock = async (token) => {
+    if (!token) return;
+    try {
+      await fetch(`${API_URL}/api/bookings/lock/${token}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+    } catch (_) {
+      // Best-effort unlock.
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -56,8 +69,40 @@ export default function BookAppointment() {
       setErrorMessage('Please select both date and time.');
       return;
     }
-    setErrorMessage('');
-    setActiveStep(3);
+    (async () => {
+      try {
+        setErrorMessage('');
+        setIsSubmitting(true);
+
+        if (lockInfo?.lockToken) {
+          await releaseSlotLock(lockInfo.lockToken);
+          setLockInfo(null);
+        }
+
+        const lockRes = await fetch(`${API_URL}/api/bookings/lock`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({
+            service: formData.service,
+            date: formData.date,
+            time: formData.time,
+            lockMinutes: 10,
+          }),
+        });
+        const lockData = await lockRes.json();
+        if (!lockRes.ok) {
+          setErrorMessage(lockData?.message || 'Selected slot is not available right now.');
+          return;
+        }
+
+        setLockInfo(lockData);
+        setActiveStep(3);
+      } catch (_) {
+        setErrorMessage('Unable to reserve slot. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
   };
 
   const handleConfirmPayment = async () => {
@@ -69,6 +114,7 @@ export default function BookAppointment() {
         service: formData.service,
         date: formData.date,
         time: formData.time,
+        lockToken: lockInfo?.lockToken,
         notes: `${formData.notes || ''}\nCustomer: ${formData.fullName}\nPhone: ${formData.phone}\nPayment: ${formData.paymentMethod}\nAmount: R${amount}`.trim(),
       };
 
@@ -87,6 +133,7 @@ export default function BookAppointment() {
 
       setShowPaymentPopup(false);
       setSuccessMessage('Booking confirmed. Payment received.');
+      setLockInfo(null);
       setFormData(INITIAL_FORM);
       setActiveStep(1);
     } catch (error) {
@@ -95,6 +142,14 @@ export default function BookAppointment() {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (lockInfo?.lockToken) {
+        releaseSlotLock(lockInfo.lockToken);
+      }
+    };
+  }, [lockInfo]);
 
   return (
     <section className="book-page">
@@ -226,7 +281,7 @@ export default function BookAppointment() {
                     Back
                   </button>
                   <button type="button" className="book-btn book-btn--primary" onClick={handleNextFromStepTwo}>
-                    Next
+                    {isSubmitting ? 'Reserving...' : 'Next'}
                   </button>
                 </div>
               ) : null}
@@ -251,20 +306,25 @@ export default function BookAppointment() {
           <div className="book-popup">
             <h2>Confirm Payment</h2>
             <p>Service: {formData.service}</p>
-            <p>
-              Date/Time: {formData.date} at {formData.time}
-            </p>
-            <p>Method: {formData.paymentMethod}</p>
-            <p className="book-popup-amount">Amount: R{amount}</p>
-            <div className="book-popup-actions">
-              <button
-                type="button"
-                className="book-btn book-btn--ghost"
-                onClick={() => setShowPaymentPopup(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
+                <p>
+                  Date/Time: {formData.date} at {formData.time}
+                </p>
+                {lockInfo?.expiresAt ? <p>Slot reserved until: {new Date(lockInfo.expiresAt).toLocaleTimeString()}</p> : null}
+                <p>Method: {formData.paymentMethod}</p>
+                <p className="book-popup-amount">Amount: R{amount}</p>
+                <div className="book-popup-actions">
+                  <button
+                    type="button"
+                    className="book-btn book-btn--ghost"
+                    onClick={async () => {
+                      await releaseSlotLock(lockInfo?.lockToken);
+                      setLockInfo(null);
+                      setShowPaymentPopup(false);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
               <button type="button" className="book-btn book-btn--primary" onClick={handleConfirmPayment} disabled={isSubmitting}>
                 {isSubmitting ? 'Processing...' : 'Pay & Confirm'}
               </button>
