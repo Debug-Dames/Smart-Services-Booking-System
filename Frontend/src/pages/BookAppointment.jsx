@@ -107,16 +107,22 @@ export default function BookAppointment() {
 
   // Calendar tile coloring
   const tileClassName = ({ date, view }) => {
-    if (view !== "month") return null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (date < today) return "cal-tile--past";
-    const ds = formatDate(date);
-    const count = monthlyBookings[ds] || 0;
-    if (count >= MAX_BOOKINGS_PER_DAY) return "cal-tile--full";
-    if (count > 0) return "cal-tile--partial";
-    return "cal-tile--available";
-  };
+  if (view !== "month") return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (date < today) return "cal-tile--past";
+
+  const ds = formatDate(date);
+  const count = monthlyBookings[ds] || 0;
+
+  if (count >= MAX_BOOKINGS_PER_DAY) {
+    return "cal-tile--full";
+  }
+
+  return "cal-tile--available";
+};
 
   const tileDisabled = ({ date, view }) => {
     if (view !== "month") return false;
@@ -252,12 +258,11 @@ export default function BookAppointment() {
                   minDate={new Date()}
                   className="salon-calendar"
                 />
-                <div className="book-cal-legend">
-                  <span className="leg-item"><span className="leg-dot leg-available"></span>Available</span>
-                  <span className="leg-item"><span className="leg-dot leg-partial"></span>Partial</span>
-                  <span className="leg-item"><span className="leg-dot leg-full"></span>Fully Booked</span>
-                </div>
-              </div>
+              <div className="book-cal-legend">
+  <span className="leg-item"><span className="leg-dot leg-available"></span>Available</span>
+  <span className="leg-item"><span className="leg-dot leg-full"></span>Fully Booked</span>
+</div>
+</div>
 
               {/* Time slots */}
               <div className="book-slots-right">
