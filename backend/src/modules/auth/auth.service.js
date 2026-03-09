@@ -36,7 +36,8 @@ export async function register(req, res) {
     const lastName = typeof req.body?.lastName === "string" ? req.body.lastName.trim() : "";
     const name = rawName || `${firstName} ${lastName}`.trim();
     const email = req.body?.email?.trim()?.toLowerCase();
-    const password = req.body?.password;
+    const rawPassword = typeof req.body?.password === "string" ? req.body.password : "";
+    const password = rawPassword.trim();
     const phone = req.body?.phone?.trim();
     const gender = req.body?.gender || null;
 
@@ -100,8 +101,10 @@ export async function login(req, res) {
     let { email, password } = req.body;
 
     email = email?.trim().toLowerCase();
+    const rawPassword = typeof password === "string" ? password : "";
+    const normalizedPassword = rawPassword.trim();
 
-    if (!email || !password) {
+    if (!email || !rawPassword) {
       return res.status(400).json({
         message: "Email and password required",
       });
@@ -116,20 +119,29 @@ export async function login(req, res) {
     const user = users[0];
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({
+        message: "Invalid credentials",
+        ...(process.env.NODE_ENV === "development" ? { reason: "email_not_found" } : {}),
+      });
     }
 
     let isMatch = false;
     try {
-      isMatch = await bcrypt.compare(password, user.password);
+      isMatch = await bcrypt.compare(rawPassword, user.password);
+      if (!isMatch && normalizedPassword && normalizedPassword !== rawPassword) {
+        isMatch = await bcrypt.compare(normalizedPassword, user.password);
+      }
     } catch {
       isMatch = false;
     }
 
     // Backward compatibility: some older records may store plain text passwords.
-    if (!isMatch && user.password === password) {
+    if (
+      !isMatch &&
+      (user.password === rawPassword || (normalizedPassword && user.password === normalizedPassword))
+    ) {
       isMatch = true;
-      const upgradedHash = await bcrypt.hash(password, 10);
+      const upgradedHash = await bcrypt.hash(normalizedPassword || rawPassword, 10);
       await prisma.$executeRaw`
         UPDATE "User"
         SET password = ${upgradedHash}, "updatedAt" = CURRENT_TIMESTAMP
@@ -138,7 +150,10 @@ export async function login(req, res) {
     }
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({
+        message: "Invalid credentials",
+        ...(process.env.NODE_ENV === "development" ? { reason: "password_mismatch" } : {}),
+      });
     }
 
     const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, {
