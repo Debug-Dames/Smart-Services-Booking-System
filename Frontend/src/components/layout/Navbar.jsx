@@ -18,11 +18,7 @@ function Navbar() {
     ...(user ? [{ path: '/bookings', label: 'My Bookings' }] : []),
   ];
 
-  function handleLogout() {
-    logout();
-    setMenuOpen(false);
-    navigate('/');
-  }
+  
 
   const handleLogout = () => {
     logout()
