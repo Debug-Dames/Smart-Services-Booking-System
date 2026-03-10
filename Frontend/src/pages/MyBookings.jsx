@@ -68,54 +68,56 @@ export default function MyBookings() {
 
   const handleCancel = async (booking) => {
     const bookingId = booking?.id ?? booking?.bookingId;
-    if (!bookingId) return;
+    const numericId = Number(bookingId);
+    if (!Number.isInteger(numericId)) return;
     if (!window.confirm("Are you sure you want to cancel this booking?")) return;
 
     try {
       setError("");
       setActionNote("");
-      setActionFor(bookingId, "cancelling");
-      await cancelBooking(bookingId);
-      setBookings((prev) => prev.filter((b) => b.id !== bookingId));
+      setActionFor(numericId, "cancelling");
+      await cancelBooking(numericId);
+      setBookings((prev) => prev.filter((b) => b.id !== numericId));
       setActionNote("Booking cancelled.");
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to cancel booking.");
     } finally {
-      clearActionFor(bookingId);
+      clearActionFor(numericId);
     }
   };
 
   const handleUpdate = async (booking) => {
     const bookingId = booking?.id ?? booking?.bookingId;
-    if (!bookingId) return;
+    const numericId = Number(bookingId);
+    if (!Number.isInteger(numericId)) return;
 
     try {
       setError("");
       setActionNote("");
-      setActionFor(bookingId, "updating");
+      setActionFor(numericId, "updating");
       const dateValue =
-        dateDrafts[bookingId] ||
+        dateDrafts[numericId] ||
         toDateInput(booking?.date || booking?.appointment_date || booking?.startTime);
       const timeValue =
-        timeDrafts[bookingId] ||
+        timeDrafts[numericId] ||
         toTimeInput(booking?.startTime || booking?.time || booking?.appointment_time || booking?.date);
-      const updated = await updateBooking(bookingId, { date: dateValue, time: timeValue });
+      const updated = await updateBooking(numericId, { date: dateValue, time: timeValue });
       setBookings((prev) =>
-        prev.map((b) => (b.id === bookingId ? { ...b, ...updated } : b))
+        prev.map((b) => (b.id === numericId ? { ...b, ...updated } : b))
       );
       setDateDrafts((prev) => ({
         ...prev,
-        [bookingId]: toDateInput(updated?.date || dateValue),
+        [numericId]: toDateInput(updated?.date || dateValue),
       }));
       setTimeDrafts((prev) => ({
         ...prev,
-        [bookingId]: toTimeInput(updated?.startTime || timeValue),
+        [numericId]: toTimeInput(updated?.startTime || timeValue),
       }));
       setActionNote("Booking updated.");
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to update booking.");
     } finally {
-      clearActionFor(bookingId);
+      clearActionFor(numericId);
     }
   };
 
@@ -267,15 +269,17 @@ export default function MyBookings() {
             const status = normalizeStatus(booking?.status);
             const timeValue = booking?.startTime || booking?.time || booking?.appointment_time || booking?.date;
             const bookingId = booking?.id ?? booking?.bookingId;
-            const action = bookingId != null ? actionState[bookingId] : null;
+            const numericId = Number(bookingId);
+            const hasValidId = Number.isInteger(numericId);
+            const action = hasValidId ? actionState[numericId] : null;
             const isCancelled = status === "cancelled";
             const isBusy = action === "updating" || action === "cancelling";
 
             return (
               <article
                 key={
-                  bookingId != null
-                    ? bookingId
+                  hasValidId
+                    ? numericId
                     : `${serviceName}-${booking?.date || booking?.appointment_date || booking?.createdAt || timeValue || "booking"}`
                 }
                 className="my-booking-card"
@@ -303,14 +307,14 @@ export default function MyBookings() {
                     <span>Date</span>
                     <input
                       type="date"
-                      value={bookingId != null ? dateDrafts[bookingId] || "" : ""}
+                      value={hasValidId ? dateDrafts[numericId] || "" : ""}
                       onChange={(event) =>
                         setDateDrafts((prev) => ({
                           ...prev,
-                          [bookingId]: event.target.value,
+                          [numericId]: event.target.value,
                         }))
                       }
-                      disabled={isBusy || isCancelled || bookingId == null}
+                      disabled={isBusy || isCancelled || !hasValidId}
                     />
                   </label>
 
@@ -318,14 +322,14 @@ export default function MyBookings() {
                     <span>Time</span>
                     <input
                       type="time"
-                      value={bookingId != null ? timeDrafts[bookingId] || "" : ""}
+                      value={hasValidId ? timeDrafts[numericId] || "" : ""}
                       onChange={(event) =>
                         setTimeDrafts((prev) => ({
                           ...prev,
-                          [bookingId]: event.target.value,
+                          [numericId]: event.target.value,
                         }))
                       }
-                      disabled={isBusy || isCancelled || bookingId == null}
+                      disabled={isBusy || isCancelled || !hasValidId}
                     />
                   </label>
 
@@ -334,7 +338,7 @@ export default function MyBookings() {
                       type="button"
                       className="my-booking-button my-booking-button--primary"
                       onClick={() => handleUpdate(booking)}
-                      disabled={isBusy || isCancelled || bookingId == null}
+                      disabled={isBusy || isCancelled || !hasValidId}
                     >
                       {action === "updating" ? "Updating..." : "Update"}
                     </button>
@@ -342,7 +346,7 @@ export default function MyBookings() {
                       type="button"
                       className="my-booking-button my-booking-button--ghost"
                       onClick={() => handleCancel(booking)}
-                      disabled={isBusy || isCancelled || bookingId == null}
+                      disabled={isBusy || isCancelled || !hasValidId}
                     >
                       {action === "cancelling" ? "Cancelling..." : "Cancel"}
                     </button>

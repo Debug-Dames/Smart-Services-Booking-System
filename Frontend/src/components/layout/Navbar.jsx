@@ -15,7 +15,6 @@ function Navbar() {
     { path: '/book', label: 'Book Now' },
     { path: '/bookings', label: 'My Bookings' },
     { path: '/contact', label: 'Contact Us' },
-    ...(user ? [{ path: '/bookings', label: 'My Bookings' }] : []),
   ];
 
   
