@@ -11,7 +11,7 @@ const quickReplies = [
 
 const initialMessage = {
   sender: "bot",
-  text: "Hi, I am your salon assistant. Ask me about bookings, prices, add-ons, or contact details.",
+  text: "Hi,Welcome to DebugDames Salon,how can i help you today?.",
   timestamp: Date.now(),
 };
 
