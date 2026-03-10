@@ -40,6 +40,17 @@ export const bookingService = {
     });
     return data;
   },
+
+  updateBooking: async (id, payload) => {
+    const { data } = await api.put(`/bookings/${id}`, payload);
+    return data;
+  },
+
+  cancelBooking: async (id) => {
+    const { data } = await api.delete(`/bookings/${id}`);
+    return data;
+  },
+
 };
 
 // --- SERVICES ---
@@ -56,10 +67,19 @@ export const getMyBookings = async () => {
   return bookingService.getAppointments();
 };
 
+export const updateBooking = async (id, payload) => {
+  return bookingService.updateBooking(id, payload);
+};
+
+export const cancelBooking = async (id) => {
+  return bookingService.cancelBooking(id);
+};
+
 // --- CONTACT ---
 export const contactService = {
   submitMessage: async (data) => {
     const { data: resData } = await api.post('/contact', data);
     return resData;
   },
+
 };

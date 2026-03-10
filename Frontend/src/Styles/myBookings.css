@@ -61,6 +61,31 @@
   color: rgba(236, 242, 255, 0.9);
 }
 
+.my-bookings-next {
+  position: relative;
+  z-index: 1;
+  margin-top: 14px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.my-bookings-next span {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(244, 248, 255, 0.78);
+}
+
+.my-bookings-next strong {
+  font-size: 0.95rem;
+  color: #ffffff;
+}
+
 .my-bookings-count {
   position: relative;
   z-index: 1;
@@ -91,6 +116,10 @@
 
 .my-bookings-note--error {
   color: #8f2d32;
+}
+
+.my-bookings-note--success {
+  color: #11613c;
 }
 
 .my-bookings-empty {
@@ -192,6 +221,87 @@
   color: var(--text-primary);
 }
 
+.my-booking-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(34, 39, 76, 0.08);
+}
+
+.my-booking-field {
+  display: grid;
+  gap: 6px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-text);
+}
+
+.my-booking-field select {
+  border-radius: 10px;
+  border: 1px solid rgba(34, 39, 76, 0.2);
+  padding: 8px 10px;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  background: #ffffff;
+}
+
+.my-booking-field input {
+  border-radius: 10px;
+  border: 1px solid rgba(34, 39, 76, 0.2);
+  padding: 8px 10px;
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  background: #ffffff;
+}
+
+.my-booking-field select:disabled {
+  opacity: 0.7;
+  background: #f4f5f9;
+}
+
+.my-booking-field input:disabled {
+  opacity: 0.7;
+  background: #f4f5f9;
+}
+
+.my-booking-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.my-booking-button {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+
+.my-booking-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.my-booking-button--primary {
+  background: linear-gradient(135deg, #204ea8 0%, #2b7dc3 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(35, 79, 155, 0.2);
+}
+
+.my-booking-button--ghost {
+  background: #ffffff;
+  border-color: rgba(143, 45, 50, 0.3);
+  color: #8f2d32;
+}
+
 @keyframes bookingCardIn {
   from {
     opacity: 0;
@@ -221,4 +331,5 @@
   .my-bookings-grid {
     grid-template-columns: 1fr;
   }
+   
 }
