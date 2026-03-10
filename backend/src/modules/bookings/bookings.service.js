@@ -1,142 +1,242 @@
 import prisma from "../../config/database.js";
 
 const DEFAULT_SERVICE_META = {
-  Haircut: { price: 150, duration: 60 },
-  Nails: { price: 220, duration: 90 },
-  Braids: { price: 350, duration: 180 },
+    Haircut: { price: 150, duration: 60 },
+    "Hair Styling": { price: 200, duration: 60 },
+    "Hair Coloring": { price: 350, duration: 90 },
+    Nails: { price: 220, duration: 90 },
+    Braids: { price: 350, duration: 180 },
 };
 
-function isMissingTimeFieldError(err) {
-  const msg = String(err?.message || "");
-  return (
-    msg.includes("Unknown argument `startTime`") ||
-    msg.includes("Unknown argument `endTime`") ||
-    msg.includes("Unknown arg `startTime`") ||
-    msg.includes("Unknown arg `endTime`") ||
-    msg.includes('column "startTime" does not exist') ||
-    msg.includes('column "endTime" does not exist')
-  );
-}
+// ─────────────────────────────────────────────────────────────
+// GET /api/bookings?date=YYYY-MM-DD   (public – slot availability)
+// ─────────────────────────────────────────────────────────────
+export const getAllBookings = async(req, res) => {
+    try {
+        const { date } = req.query;
+        let where = {};
 
-// Create a new booking
-export const createBooking = async ({ userId, serviceId, service, date, time, startTime, endTime }) => {
-  const numericUserId = Number(userId);
-  let numericServiceId = Number(serviceId);
-  const normalizedServiceName = typeof service === "string" ? service.trim() : "";
+        if (date) {
+            const dateObj = new Date(`${date}T00:00:00.000Z`);
+            const nextDay = new Date(dateObj);
+            nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+            where = { date: { gte: dateObj, lt: nextDay } };
+        }
 
-  if (!Number.isInteger(numericUserId)) {
-    throw new Error("Invalid userId");
-  }
+        const bookings = await prisma.booking.findMany({
+            where,
+            select: {
+                id: true,
+                date: true,
+                startTime: true,
+                endTime: true,
+                status: true,
+                service: { select: { name: true } }
+            },
+            orderBy: { startTime: "asc" }
+        });
 
-  if (!date) {
-    throw new Error("Date is required");
-  }
+        const result = bookings.map(b => ({
+            id: b.id,
+            date: b.date.toISOString().split("T")[0],
+            // Time is stored as UTC – keep it UTC when displaying so it matches what was picked
+            time: b.startTime.toISOString().substring(11, 16),
+            startTime: b.startTime,
+            endTime: b.endTime,
+            status: b.status,
+            service: b.service ? .name || ""
+        }));
 
-  const bookingDate = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(bookingDate.getTime())) {
-    throw new Error("Invalid date");
-  }
-
-  const startCandidate = startTime || (date && time ? `${date}T${time}:00` : null);
-  const start = new Date(startCandidate);
-  if (!startCandidate || Number.isNaN(start.getTime())) {
-    throw new Error("Invalid start time");
-  }
-
-  const end = endTime ? new Date(endTime) : new Date(start.getTime() + 60 * 60000);
-  if (Number.isNaN(end.getTime()) || end <= start) {
-    throw new Error("Invalid time range");
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const bookingDay = new Date(bookingDate);
-  bookingDay.setHours(0, 0, 0, 0);
-  if (bookingDay < today) {
-    throw new Error("Cannot book in the past");
-  }
-
-  const user = await prisma.user.findUnique({ where: { id: numericUserId } });
-  if (!user) throw new Error("User not found");
-
-  let serviceRecord = null;
-
-  if (Number.isInteger(numericServiceId)) {
-    serviceRecord = await prisma.service.findUnique({ where: { id: numericServiceId } });
-  }
-
-  if (!serviceRecord && normalizedServiceName) {
-    serviceRecord = await prisma.service.findFirst({
-      where: {
-        name: {
-          equals: normalizedServiceName,
-          mode: "insensitive",
-        },
-      },
-    });
-  }
-
-  if (!serviceRecord && normalizedServiceName) {
-    const fallbackMeta = DEFAULT_SERVICE_META[normalizedServiceName] || { price: 200, duration: 60 };
-    serviceRecord = await prisma.service.create({
-      data: {
-        name: normalizedServiceName,
-        description: `${normalizedServiceName} service`,
-        price: fallbackMeta.price,
-        duration: fallbackMeta.duration,
-      },
-    });
-  }
-
-  if (!serviceRecord) {
-    throw new Error("Invalid userId or serviceId");
-  }
-
-  numericServiceId = serviceRecord.id;
-
-  try {
-    const existing = await prisma.booking.findFirst({
-      where: {
-        serviceId: numericServiceId,
-        startTime: { lt: end },
-        endTime: { gt: start },
-      },
-    });
-
-    if (existing) {
-      throw new Error("Time slot already booked");
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching bookings", error: err.message });
     }
-  } catch (err) {
-    if (!isMissingTimeFieldError(err)) {
-      throw err;
-    }
-  }
-
-  try {
-    return await prisma.booking.create({
-      data: {
-        userId: numericUserId,
-        serviceId: numericServiceId,
-        date: bookingDate,
-        startTime: start,
-        endTime: end,
-      },
-      include: { service: true },
-    });
-  } catch (err) {
-    if (!isMissingTimeFieldError(err)) {
-      throw err;
-    }
-
-    // Fallback for environments where Booking has no startTime/endTime columns.
-    return prisma.booking.create({
-      data: {
-        userId: numericUserId,
-        serviceId: numericServiceId,
-        date: start,
-      },
-      include: { service: true },
-    });
-  }
 };
 
+// ─────────────────────────────────────────────────────────────
+// GET /api/bookings/mine   (protected – current user's bookings)
+// ─────────────────────────────────────────────────────────────
+export const getMyBookings = async(req, res) => {
+    try {
+        const userId = req.user ? .id;
+        if (!userId) return res.status(401).json({ message: "Not authenticated" });
+
+        const bookings = await prisma.booking.findMany({
+            where: { userId },
+            select: {
+                id: true,
+                date: true,
+                startTime: true,
+                status: true,
+                service: { select: { name: true, price: true } }
+            },
+            orderBy: { date: "desc" }
+        });
+
+        const result = bookings.map(b => ({
+            id: b.id,
+            date: b.date.toISOString().split("T")[0],
+            time: b.startTime.toISOString().substring(11, 16),
+            status: b.status,
+            service: b.service ? .name || "Appointment",
+            price: b.service ? .price || 0,
+        }));
+
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching your bookings", error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/bookings/monthly?year=YYYY&month=MM   (public)
+// ─────────────────────────────────────────────────────────────
+export const getMonthlyBookings = async(req, res) => {
+    try {
+        const { year, month } = req.query;
+        const y = parseInt(year) || new Date().getUTCFullYear();
+        const m = parseInt(month) || new Date().getUTCMonth() + 1;
+
+        const start = new Date(Date.UTC(y, m - 1, 1));
+        const end = new Date(Date.UTC(y, m, 1));
+
+        const bookings = await prisma.booking.findMany({
+            where: { date: { gte: start, lt: end } },
+            select: { date: true }
+        });
+
+        const counts = {};
+        bookings.forEach(b => {
+            const day = b.date.toISOString().split("T")[0];
+            counts[day] = (counts[day] || 0) + 1;
+        });
+
+        res.json(counts);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching monthly data", error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
+// GET /api/bookings/:id
+// ─────────────────────────────────────────────────────────────
+export const getBookingById = async(req, res) => {
+    try {
+        const { id } = req.params;
+        const booking = await prisma.booking.findUnique({ where: { id: Number(id) } });
+        if (!booking) return res.status(404).json({ message: "Booking not found" });
+        res.json(booking);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching booking", error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
+// POST /api/bookings   (protected)
+// ─────────────────────────────────────────────────────────────
+export const createBooking = async(req, res) => {
+    try {
+        const { serviceId, service, date, time } = req.body;
+        const normalizedName = typeof service === "string" ? service.trim() : "";
+
+        const userId = req.user ? .id;
+        if (!userId) return res.status(401).json({ message: "Authentication required" });
+
+        // ── Resolve service ─────────────────────────────────────
+        const ensureService = async(name) => {
+            if (!name) return null;
+            const found = await prisma.service.findFirst({
+                where: { name: { equals: name, mode: "insensitive" } }
+            });
+            if (found) return found;
+            const meta = DEFAULT_SERVICE_META[name] || { price: 200, duration: 60 };
+            return prisma.service.create({
+                data: { name, description: `${name} service`, price: meta.price, duration: meta.duration }
+            });
+        };
+
+        let serviceRecord = null;
+        if (serviceId) {
+            serviceRecord = await prisma.service.findUnique({ where: { id: Number(serviceId) } });
+        }
+        if (!serviceRecord && normalizedName) {
+            serviceRecord = await ensureService(normalizedName);
+        }
+        if (!serviceRecord) {
+            return res.status(400).json({ message: "Service name or ID is required" });
+        }
+
+        // ── Build UTC-safe datetimes ─────────────────────────────
+        // Append 'Z' so the time is ALWAYS treated as UTC regardless of server timezone
+        if (!date || !time) {
+            return res.status(400).json({ message: "date (YYYY-MM-DD) and time (HH:MM) are required" });
+        }
+
+        const dateObj = new Date(`${date}T00:00:00.000Z`);
+        const startObj = new Date(`${date}T${time}:00.000Z`); // ← explicit UTC
+        const durationMins = Number(serviceRecord.duration) > 0 ? Number(serviceRecord.duration) : 60;
+        const endObj = new Date(startObj.getTime() + durationMins * 60 _000);
+
+        if (isNaN(dateObj.getTime()) || isNaN(startObj.getTime())) {
+            return res.status(400).json({ message: "Invalid date or time format" });
+        }
+
+        // ── Check daily limit ────────────────────────────────────
+        const nextDay = new Date(dateObj);
+        nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+        const dailyCount = await prisma.booking.count({
+            where: { date: { gte: dateObj, lt: nextDay } }
+        });
+        if (dailyCount >= 4) {
+            return res.status(400).json({ message: "This day is fully booked (max 4 appointments)" });
+        }
+
+        // ── Check slot conflict ──────────────────────────────────
+        const slotTaken = await prisma.booking.findFirst({
+            where: { startTime: startObj }
+        });
+        if (slotTaken) {
+            return res.status(400).json({ message: "This time slot is already booked" });
+        }
+
+        // ── Create booking ───────────────────────────────────────
+        const booking = await prisma.booking.create({
+            data: { userId, serviceId: serviceRecord.id, date: dateObj, startTime: startObj, endTime: endObj, status: "pending" }
+        });
+
+        res.status(201).json({
+            ...booking,
+            service: serviceRecord.name,
+            time: startObj.toISOString().substring(11, 16)
+        });
+
+    } catch (err) {
+        console.error("Create booking error:", err);
+        res.status(500).json({ message: "Error creating booking", error: err.message });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
+// PUT / DELETE
+// ─────────────────────────────────────────────────────────────
+export const updateBooking = async(req, res) => {
+    try {
+        const booking = await prisma.booking.update({
+            where: { id: Number(req.params.id) },
+            data: { status: req.body.status }
+        });
+        res.json(booking);
+    } catch (err) {
+        res.status(500).json({ message: "Error updating booking", error: err.message });
+    }
+};
+
+export const deleteBooking = async(req, res) => {
+    try {
+        await prisma.booking.delete({ where: { id: Number(req.params.id) } });
+        res.json({ message: "Booking deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ message: "Error deleting booking", error: err.message });
+    }
+};

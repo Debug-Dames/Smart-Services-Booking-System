@@ -15,12 +15,15 @@ function Navbar() {
     { path: '/book', label: 'Book Now' },
     { path: '/bookings', label: 'My Bookings' },
     { path: '/contact', label: 'Contact Us' },
+    ...(user ? [{ path: '/bookings', label: 'My Bookings' }] : []),
   ];
 
-  function handleLogout() {
-    logout();
-    setMenuOpen(false);
-    navigate('/');
+  
+
+  const handleLogout = () => {
+    logout()
+    setMenuOpen(false)
+    navigate('/')
   }
 
   return (
@@ -45,6 +48,8 @@ function Navbar() {
               </li>
             ))}
           </ul>
+
+          {/* Mobile auth buttons */}
           <div className="navbar-auth-mobile">
             {user ? (
               <>
@@ -66,6 +71,7 @@ function Navbar() {
           </div>
         </nav>
 
+        {/* Desktop auth buttons */}
         <div className="navbar-actions">
           {user ? (
             <>
