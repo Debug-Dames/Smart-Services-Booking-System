@@ -27,6 +27,7 @@ async function ensureUserSchemaCompatibility() {
   userSchemaEnsured = true;
 }
 
+// -------------------- REGISTER --------------------
 export async function register(req, res) {
   try {
     await ensureUserSchemaCompatibility();
@@ -64,6 +65,7 @@ export async function register(req, res) {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const createdUsers = await prisma.$queryRaw`
@@ -96,6 +98,7 @@ export async function register(req, res) {
   }
 }
 
+// -------------------- LOGIN --------------------
 export async function login(req, res) {
   try {
     let { email, password } = req.body;

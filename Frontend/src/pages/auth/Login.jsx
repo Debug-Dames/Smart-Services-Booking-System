@@ -17,6 +17,7 @@ export default function Login() {
     if (reason === 'email_not_found') return 'No account found for this email. Please register first.';
     if (reason === 'password_mismatch') return 'Incorrect password. Please try again.';
     if (err?.response?.data?.message) return err.response.data.message;
+    if (err?.message) return err.message;
     if (err?.code === 'ERR_NETWORK') {
       return 'Cannot reach API. Start backend on http://localhost:5000 and try again.';
     }
