@@ -106,7 +106,6 @@ const router = express.Router();
 
 
 router.get("/", protect, bookingController.getAllBookings);
-router.get("/mine", protect, bookingController.getMyBookings);
 
 
 /**

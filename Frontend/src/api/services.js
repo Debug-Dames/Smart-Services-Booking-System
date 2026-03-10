@@ -24,8 +24,20 @@ export const authService = {
 
 // --- BOOKINGS ---
 export const bookingService = {
-  getAppointments: async () => {
+  getBookingsByDate: async (date) => {
+    const { data } = await api.get(`/bookings?date=${date}`);
+    return data;
+  },
+  getMonthlyBookings: async (year, month) => {
+    const { data } = await api.get(`/bookings/monthly?year=${year}&month=${month}`);
+    return data;
+  },
+  getMyBookings: async () => {
     const { data } = await api.get('/bookings/mine');
+    return data;
+  },
+  createBooking: async (payload) => {
+    const { data } = await api.post('/bookings', payload);
     return data;
   },
 
@@ -50,7 +62,6 @@ export const bookingService = {
     const { data } = await api.delete(`/bookings/${id}`);
     return data;
   },
-
 };
 
 // --- SERVICES ---
@@ -64,7 +75,7 @@ export const getAvailableSlots = async (date, serviceId) => {
 };
 
 export const getMyBookings = async () => {
-  return bookingService.getAppointments();
+  return bookingService.getMyBookings();
 };
 
 export const updateBooking = async (id, payload) => {
@@ -81,5 +92,4 @@ export const contactService = {
     const { data: resData } = await api.post('/contact', data);
     return resData;
   },
-
 };

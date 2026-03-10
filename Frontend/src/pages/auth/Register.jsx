@@ -9,6 +9,7 @@ export default function Register() {
     gender: '',
     phone: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
 
@@ -165,7 +166,7 @@ export default function Register() {
           {success ? <p className="auth-success">{success}</p> : null}
 
           <button type="submit" className="auth-primary-btn" disabled={loading}>
-            {loading ? 'Creating account...' : 'Join us'}
+            {loading ? 'Creating account…' : 'Join us'}
           </button>
 
           <p className="auth-helper-text">
