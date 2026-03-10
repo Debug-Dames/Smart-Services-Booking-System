@@ -91,7 +91,15 @@ export default function BookAppointment() {
     } finally {
       setSlotsLoading(false);
     }
-  };
+  }
+
+  async function handleConfirmPayment() {
+    await submitBooking({ payLater: false });
+  }
+
+  async function handleBookNowPayLater() {
+    await submitBooking({ payLater: true });
+  }
 
   const handleDateClick = (date) => {
     const dateStr = formatDate(date);

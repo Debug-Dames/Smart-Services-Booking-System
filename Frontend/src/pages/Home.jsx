@@ -28,9 +28,9 @@ const services = [
     id: 4,
     title: 'Facial Treatments',
     description: 'Rejuvenating facials that cleanse, nourish, and restore your natural radiance.',
-     image: 'https://tse2.mm.bing.net/th/id/OIP.Yg5VKT5ecnOZNRBRy-AB4gHaEO?rs=1&pid=ImgDetMain&o=7&rm=3',
+    image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=80',
     price: 'From R1000',
-   },
+  },
 ]
 
 
@@ -181,7 +181,7 @@ export default function Home() {
                 <div className="service-card-body">
                   <h3 className="service-card-title">{service.title}</h3>
                   <p className="service-card-description">{service.description}</p>
-                  <Link to="/book" className="service-card-link">
+                  <Link to="/book-appointment" className="service-card-link">
                     Book Now
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14" />

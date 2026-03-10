@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -12,16 +12,30 @@ export function AuthProvider({ children }) {
     }
   });
 
+  // On mount, restore user from localStorage if token exists
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    }
+  }, []);
+
   const login = (userData, token) => {
     setUser(userData);
-    localStorage.setItem('salon_user', JSON.stringify(userData));
+    localStorage.setItem('user', JSON.stringify(userData));
     if (token) localStorage.setItem('token', token);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('salon_user');
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   return (

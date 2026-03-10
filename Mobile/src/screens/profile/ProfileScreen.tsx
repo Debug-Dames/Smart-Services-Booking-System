@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 
-const ChatScreen: React.FC = () => {
+const ProfileScreen: React.FC = () => {
   // …any hooks/logic…
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Chat screen</Text>
+      <Text>Profile screen</Text>
     </View>
   );
 };
 
-export default ChatScreen;
+export default ProfileScreen;

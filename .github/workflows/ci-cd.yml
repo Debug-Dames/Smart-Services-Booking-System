@@ -47,14 +47,104 @@ jobs:
         working-directory: ./Backend
         run: npm install
 
-      # 4️⃣ Run backend tests
-      - name: Run backend tests
+      - name: Build app
+        working-directory: ${{ matrix.app }}
+        run: npm run build
+
+  backend-check:
+    name: Backend install , test and smoke test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+      JWT_SECRET: testsecret
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
         working-directory: backend
         run: npm test || echo "Backend tests failed"
 
-      # 5️⃣ Build Docker images
-      - name: Build Docker images
-        run: docker-compose build
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Run database migrations
+        working-directory: backend
+        run: npx prisma migrate deploy
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
+
+      - name: Start backend and check health endpoint
+        working-directory: backend
+        shell: bash
+        run: |
+          if [ ! -f index.js ]; then
+            echo "::warning::backend/index.js not found. Skipping backend runtime smoke test."
+            ls -la
+            exit 0
+          fi
+          npm start > backend.log 2>&1 &
+          BACKEND_PID=$!
+          trap 'kill $BACKEND_PID || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:5000/health > /dev/null; then
+              echo "Backend health check passed"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Backend failed to become healthy. Logs:"
+          cat backend.log
+          exit 1
+
+  docker-build:
+    name: Docker build validation
+    runs-on: ubuntu-latest
+    needs: [build-frontend-admin, backend-check]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        run: docker build -t smart-services/backend:ci ./backend
+
+      - name: Build frontend image
+        run: docker build -t smart-services/frontend:ci ./Frontend
+
+      - name: Build admin image
+        run: docker build -t smart-services/admin:ci ./Admin
 
       # 6️⃣ Optional: Deploy to production
       - name: Deploy (optional)

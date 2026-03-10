@@ -1,21 +1,28 @@
-import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
-import './navbar.css'
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import './navbar.css';
 
 function Navbar() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const location = useLocation()
-  const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/services', label: 'Services' },
     { path: '/book', label: 'Book Now' },
+    { path: '/bookings', label: 'My Bookings' },
     { path: '/contact', label: 'Contact Us' },
     ...(user ? [{ path: '/bookings', label: 'My Bookings' }] : []),
-  ]
+  ];
+
+  function handleLogout() {
+    logout();
+    setMenuOpen(false);
+    navigate('/');
+  }
 
   const handleLogout = () => {
     logout()
@@ -27,7 +34,7 @@ function Navbar() {
     <header className="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
-          <span className="logo-dame">Dame's</span>
+          <span className="logo-dame">Dame&apos;s</span>
           <span className="logo-salon">Salon</span>
         </Link>
 
@@ -50,7 +57,7 @@ function Navbar() {
           <div className="navbar-auth-mobile">
             {user ? (
               <>
-                <span className="navbar-user-greeting">Hi, {user.name?.split(' ')[0]}</span>
+                <span className="navbar-user-name">Hi, {user.name || user.email}</span>
                 <button className="navbar-btn navbar-btn--ghost" onClick={handleLogout}>
                   Log Out
                 </button>
@@ -72,15 +79,19 @@ function Navbar() {
         <div className="navbar-actions">
           {user ? (
             <>
-              <span className="navbar-user-greeting">Hi, {user.name?.split(' ')[0]} 👋</span>
+              <span className="navbar-user-name">Hi, {user.name || user.email}</span>
               <button className="navbar-btn navbar-btn--ghost" onClick={handleLogout}>
                 Log Out
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="navbar-btn navbar-btn--ghost">Log In</Link>
-              <Link to="/register" className="navbar-btn navbar-btn--primary">Sign Up</Link>
+              <Link to="/login" className="navbar-btn navbar-btn--ghost">
+                Log In
+              </Link>
+              <Link to="/register" className="navbar-btn navbar-btn--primary">
+                Sign Up
+              </Link>
             </>
           )}
         </div>
@@ -97,7 +108,7 @@ function Navbar() {
         </button>
       </div>
     </header>
-  )
+  );
 }
 
-export default Navbar
+export default Navbar;

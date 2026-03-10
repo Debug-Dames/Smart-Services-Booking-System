@@ -1,100 +1,118 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { bookingService } from '../api/services';
-import '../Styles/myBookings.css';
-
-const STATUS = {
-  pending:   { label: 'Pending',   cls: 'status--pending' },
-  confirmed: { label: 'Confirmed', cls: 'status--confirmed' },
-  cancelled: { label: 'Cancelled', cls: 'status--cancelled' },
-};
-
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-function fmtDate(str) {
-  if (!str) return '—';
-  const [y, m, d] = str.split('-');
-  return `${parseInt(d)} ${MONTHS[parseInt(m) - 1]} ${y}`;
-}
+import { useEffect, useState } from "react";
+import { getMyBookings } from "../api/services";
+import "../Styles/myBookings.css";
 
 export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState('');
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    bookingService.getMyBookings()
-      .then(res  => setBookings(res.data || []))
-      .catch(err => setError(err?.response?.data?.message || 'Could not load bookings. Please try again.'))
-      .finally(() => setLoading(false));
+    setLoading(true);
+    getMyBookings()
+      .then((data) => {
+        setBookings(Array.isArray(data) ? data : []);
+        setError("");
+      })
+      .catch((err) => {
+        setBookings([]);
+        setError(err?.response?.data?.message || "Failed to load your bookings.");
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
-  const today = new Date().toISOString().split('T')[0];
+  function formatDate(value) {
+    if (!value) return "N/A";
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return String(value);
+    return dt.toLocaleDateString(undefined, {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  function formatTime(value) {
+    if (!value) return "N/A";
+    const dt = new Date(value);
+    if (!Number.isNaN(dt.getTime())) {
+      return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    if (typeof value === "string") {
+      const match = value.match(/^(\d{2}):(\d{2})/);
+      if (match) {
+        const today = new Date();
+        today.setHours(Number(match[1]), Number(match[2]), 0, 0);
+        return today.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      }
+    }
+
+    return String(value);
+  }
+
+  function normalizeStatus(status) {
+    return String(status || "pending").toLowerCase();
+  }
 
   return (
-    <div className="mybookings-page">
-      <div className="mybookings-shell">
-        <div className="mybookings-header">
-          <div>
-            <h1>My Bookings</h1>
-            <p>All your upcoming and past appointments</p>
+    <section className="my-bookings-page">
+      <div className="my-bookings-shell">
+        <header className="my-bookings-header">
+          <p className="my-bookings-kicker">Your Schedule</p>
+          <h2>My Bookings</h2>
+          <p className="my-bookings-subtitle">
+            Keep track of upcoming visits, status updates, and appointment times.
+          </p>
+          <div className="my-bookings-count">
+            <span>{bookings.length}</span>
+            <p>Total appointments</p>
           </div>
-          <Link to="/book" className="mybookings-new-btn">+ New Booking</Link>
-        </div>
+        </header>
 
-        {loading && (
-          <div className="mybookings-state">
-            <div className="mybookings-spinner" />
-            <span>Loading your bookings…</span>
-          </div>
-        )}
+        {loading ? <p className="my-bookings-note">Loading bookings...</p> : null}
+        {error ? <p className="my-bookings-note my-bookings-note--error">{error}</p> : null}
 
-        {error && (
-          <div className="mybookings-state mybookings-state--error">⚠️ {error}</div>
-        )}
-
-        {!loading && !error && bookings.length === 0 && (
-          <div className="mybookings-empty">
-            <div className="mybookings-empty-icon">📅</div>
+        {!loading && !error && bookings.length === 0 ? (
+          <div className="my-bookings-empty">
             <h3>No bookings yet</h3>
-            <p>You haven't booked any appointments. Ready to treat yourself?</p>
-            <Link to="/book" className="mybookings-new-btn" style={{ marginTop: 8 }}>
-              Book an Appointment
-            </Link>
+            <p>Your confirmed appointments will appear here once you book a service.</p>
           </div>
-        )}
+        ) : null}
 
-        {!loading && bookings.length > 0 && (
-          <div className="mybookings-grid">
-            {bookings.map(b => {
-              const info   = STATUS[b.status?.toLowerCase()] || STATUS.pending;
-              const isPast = b.date < today;
-              return (
-                <div key={b.id} className={`mybooking-card ${isPast ? 'mybooking-card--past' : ''}`}>
-                  <div className="mybooking-card-top">
-                    <div className="mybooking-service">
-                      <span className="mybooking-service-icon">✂</span>
-                      {b.service}
-                    </div>
-                    <span className={`mybooking-status ${info.cls}`}>{info.label}</span>
-                  </div>
+        <div className="my-bookings-grid">
+          {bookings.map((booking) => {
+            const serviceName = booking?.service?.name || booking?.service || "N/A";
+            const status = normalizeStatus(booking?.status);
+            const timeValue = booking?.startTime || booking?.time || booking?.appointment_time || booking?.date;
 
-                  <div className="mybooking-details">
-                    <div className="mybooking-detail"><span>📅</span><span>{fmtDate(b.date)}</span></div>
-                    <div className="mybooking-detail"><span>🕐</span><span>{b.time}</span></div>
-                    {b.price > 0 && (
-                      <div className="mybooking-detail"><span>💰</span><span>R{b.price}</span></div>
-                    )}
-                    <div className="mybooking-detail mybooking-ref"><span>#</span><span>Ref {b.id}</span></div>
-                  </div>
-
-                  {isPast && <div className="mybooking-past-badge">Past appointment</div>}
+            return (
+              <article key={booking.id} className="my-booking-card">
+                <div className="my-booking-card-top">
+                  <h3>{serviceName}</h3>
+                  <span className={`my-booking-status my-booking-status--${status}`}>
+                    {status}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                <div className="my-booking-meta">
+                  <div>
+                    <p>Date</p>
+                    <strong>{formatDate(booking?.date || booking?.appointment_date)}</strong>
+                  </div>
+                  <div>
+                    <p>Time</p>
+                    <strong>{formatTime(timeValue)}</strong>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

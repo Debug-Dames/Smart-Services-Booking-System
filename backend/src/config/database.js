@@ -7,7 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Ensure Prisma always gets DATABASE_URL from backend/.env.
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+// Use override so Prisma does not connect to an unintended database from machine-level env vars.
+dotenv.config({ path: path.resolve(__dirname, "../../.env"), override: true });
 
 const prisma = new PrismaClient({
   datasources: {
