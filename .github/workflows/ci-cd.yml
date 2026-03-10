@@ -77,9 +77,9 @@ jobs:
         working-directory: backend
         run: npx prisma generate
 
-      - name: Reset database and apply migrations
+      - name: Apply database migrations
         working-directory: backend
-        run: npx prisma migrate reset --force
+        run: npx prisma migrate deploy
 
       - name: Run backend tests
         working-directory: backend
