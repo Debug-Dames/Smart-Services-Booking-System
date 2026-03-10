@@ -23,7 +23,7 @@ export default function Chatbot() {
   const messagesEndRef = useRef(null);
 
   const apiBase = useMemo(
-    () => import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+    () => import.meta.env.VITE_API_BASE_URL || "https://smart-services-booking-system-backend-uzip.onrender.com",
     []
   );
 
