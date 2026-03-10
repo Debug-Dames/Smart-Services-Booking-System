@@ -1,6 +1,7 @@
 import prisma from "../../config/database.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { env } from "../../config/env.js";
 
 let userSchemaEnsured = false;
 
@@ -156,7 +157,7 @@ export async function login(req, res) {
       });
     }
 
-    const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user.id, role: user.role }, env.JWT_SECRET, {
       expiresIn: "1d",
     });
 

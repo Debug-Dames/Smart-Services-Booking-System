@@ -41,7 +41,6 @@ export default function MyBookings() {
     if (!Number.isNaN(dt.getTime())) {
       return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
-
     if (typeof value === "string") {
       const match = value.match(/^(\d{2}):(\d{2})/);
       if (match) {
