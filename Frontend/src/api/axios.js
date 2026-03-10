@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://smart-services-booking-system-backend-uzip.onrender.com',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://smart-services-booking-system-backend-uzip.onrender.com/api',
 });
 
 api.interceptors.request.use((config) => {
