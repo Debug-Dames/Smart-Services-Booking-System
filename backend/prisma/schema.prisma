@@ -6,47 +6,29 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-<<<<<<< HEAD
 model User {
   id               Int       @id @default(autoincrement())
   name             String
   email            String    @unique
   password         String
+  role             Role      @default(CUSTOMER)
   createdAt        DateTime  @default(now())
-  gender           String?
   phone            String
+  gender           String?
   resetToken       String?
   resetTokenExpiry DateTime?
   updatedAt        DateTime  @default(now())
-  role             Role      @default(CUSTOMER)
   bookings         Booking[]
 }
 
-=======
-
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  phone     String
-  gender    String?
-  role      Role     @default(CUSTOMER)
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  bookings    Booking[]
-}
-
-
->>>>>>> 999976a92e607cd8ceb8fc74836c2e2a3a3e478f
 model Service {
-  id        Int      @id @default(autoincrement())
-  name      String
-  price     Float
-  bookings  Booking[]
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  duration    Int
+  createdAt   DateTime  @default(now())
+  bookings    Booking[]
 }
 model Booking {
   id        Int      @id @default(autoincrement())
@@ -54,6 +36,16 @@ model Booking {
   status    String   @default("pending")
   userId    Int
   serviceId Int
+  createdAt DateTime @default(now())
+  startTime DateTime @default(now())
+  endTime   DateTime @default(now())
   service   Service  @relation(fields: [serviceId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, serviceId, date, startTime])
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
 }

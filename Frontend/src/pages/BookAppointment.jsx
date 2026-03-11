@@ -1,369 +1,459 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { bookingService, getAvailableSlots, getServices } from '../api/services';
-import '../Styles/bookAppointment.css';
+import React, { useState, useEffect, useCallback } from "react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import { bookingService } from "../api/services";
+import { useAuth } from "../context/AuthContext";
+import "../Styles/bookAppointment.css";
+import "../Styles/calendar.css";
 
-const SERVICE_PRICES = {
-  Haircut: 150,
-  Nails: 220,
-  Braids: 350,
-};
+const TIME_SLOTS = [
+  "08:00", "09:00", "10:00", "11:00",
+  "12:00", "13:00", "14:00", "15:00", "16:00",
+];
 
-const INITIAL_FORM = {
-  fullName: '',
-  phone: '',
-  service: '',
-  date: '',
-  time: '',
-  paymentMethod: 'Card',
-  notes: '',
-};
+const MAX_BOOKINGS_PER_DAY = 4;
+
+const SERVICES = [
+  { value: "Haircut", label: "Haircut — R150", price: 150 },
+  { value: "Hair Styling", label: "Hair Styling — R200", price: 200 },
+  { value: "Hair Coloring", label: "Hair Coloring — R350", price: 350 },
+  { value: "Nails", label: "Nails — R220", price: 220 },
+  { value: "Braids", label: "Braids — R350", price: 350 },
+];
+
+function pad(n) { return String(n).padStart(2, "0"); }
+
+function formatDate(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return "";
+  const [y, m, d] = dateStr.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${d} ${months[parseInt(m) - 1]} ${y}`;
+}
 
 export default function BookAppointment() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState(INITIAL_FORM);
-  const [activeStep, setActiveStep] = useState(1);
-  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [services, setServices] = useState([]);
-  const [serviceId, setServiceId] = useState('');
-  const [slots, setSlots] = useState([]);
-  const [message, setMessage] = useState('');
-  const today = new Date().toISOString().split('T')[0];
+  const { user } = useAuth();
+  const [step, setStep] = useState(1);
 
-  const amount = useMemo(() => SERVICE_PRICES[formData.service] || 0, [formData.service]);
+  // Step 1 form data
+  const [details, setDetails] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    service: "",
+  });
 
-  useEffect(() => {
-    getServices()
-      .then((data) => {
-        const list = Array.isArray(data) ? data : [];
-        setServices(list);
+  // Step 2 calendar/slots
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [dayBookingCount, setDayBookingCount] = useState(0);
+  const [monthlyBookings, setMonthlyBookings] = useState({});
+  const [slotsLoading, setSlotsLoading] = useState(false);
 
-        if (list.length > 0) {
-          const first = list[0];
-          const firstId = first._id || first.id || '';
-          const firstName = first.name || '';
-          setServiceId(firstId);
-          setFormData((prev) => ({
-            ...prev,
-            service: firstName,
-          }));
-        }
-      })
-      .catch(() => {
-        setServices([]);
-        setServiceId('');
-      });
+  // Step 3 state
+  const [confirming, setConfirming] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
+  const [bookingResult, setBookingResult] = useState(null);
+  const [bookingError, setBookingError] = useState("");
+
+  // Fetch monthly booking counts when month changes
+  const fetchMonthly = useCallback(async (date) => {
+    try {
+      const y = date.getFullYear();
+      const m = date.getMonth() + 1;
+      const res = await bookingService.getMonthlyBookings(y, m);
+      setMonthlyBookings(res.data || {});
+    } catch {
+      // silent – calendar will just show no color info
+    }
   }, []);
 
   useEffect(() => {
-    if (formData.date && serviceId) {
-      getAvailableSlots(formData.date, serviceId)
-        .then((data) => {
-          const availableSlots = Array.isArray(data) ? data : [];
-          setSlots(availableSlots);
+    fetchMonthly(calendarDate);
+  }, []);
 
-          if (availableSlots.length === 0) {
-            setMessage('This date is fully booked.');
-          } else {
-            setMessage('Slots available. Choose a time.');
-          }
-        })
-        .catch(() => {
-          setSlots([]);
-          setMessage('Error fetching slots.');
-        });
+  // Fetch slots for a selected day
+  const fetchSlots = async (dateStr) => {
+    setSlotsLoading(true);
+    try {
+      const res = await bookingService.getBookingsByDate(dateStr);
+      const bookings = res.data || [];
+      setBookedSlots(bookings.map(b => b.time));
+      setDayBookingCount(bookings.length);
+    } catch {
+      setBookedSlots([]);
+      setDayBookingCount(0);
+    } finally {
+      setSlotsLoading(false);
     }
-  }, [formData.date, serviceId]);
-
-  function getBookingErrorMessage(error) {
-    if (error?.response?.data?.message) return error.response.data.message;
-    if (error?.code === 'ERR_NETWORK') {
-      return 'Cannot reach API. Start backend on http://localhost:5000 and try again.';
-    }
-    return 'Unable to complete booking. Please try again.';
-  }
-
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (name === 'service') {
-      const selectedService = services.find((svc) => (svc.name || '') === value);
-      setServiceId(selectedService?._id || selectedService?.id || '');
-      setSlots([]);
-      setMessage('');
-      setFormData((prev) => ({ ...prev, time: '' }));
-    }
-
-    if (name === 'date') {
-      setFormData((prev) => ({ ...prev, time: '' }));
-      setSlots([]);
-      setMessage('');
-    }
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    setSuccessMessage('');
-    setErrorMessage('');
-    setShowPaymentPopup(true);
-  }
-
-  function handleNextFromStepOne() {
-    if (!formData.fullName.trim() || !formData.phone.trim() || !formData.service) {
-      setErrorMessage('Please complete Full Name, Phone Number, and Service.');
-      return;
-    }
-    setErrorMessage('');
-    setActiveStep(2);
-  }
-
-  function handleNextFromStepTwo() {
-    if (!formData.date || !formData.time) {
-      setErrorMessage('Please select both date and time.');
-      return;
-    }
-    setErrorMessage('');
-    setActiveStep(3);
   }
 
   async function handleConfirmPayment() {
-    try {
-      setIsSubmitting(true);
-      setErrorMessage('');
-
-      const payload = {
-        ...(serviceId ? { serviceId: Number(serviceId) } : {}),
-        service: formData.service,
-        date: formData.date,
-        time: formData.time,
-        notes: `${formData.notes || ''}\nCustomer: ${formData.fullName}\nPhone: ${formData.phone}\nPayment: ${formData.paymentMethod}\nAmount: R${amount}`.trim(),
-      };
-
-      if (payload.date < today) {
-        setErrorMessage('You cannot book a past date.');
-        return;
-      }
-
-      await bookingService.bookAppointment(payload);
-
-      setShowPaymentPopup(false);
-      setSuccessMessage('Booking confirmed. Payment received.');
-      setFormData(INITIAL_FORM);
-      setServiceId('');
-      setSlots([]);
-      setMessage('');
-      setActiveStep(1);
-      navigate('/bookings');
-    } catch (error) {
-      setErrorMessage(getBookingErrorMessage(error));
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submitBooking({ payLater: false });
   }
 
+  async function handleBookNowPayLater() {
+    await submitBooking({ payLater: true });
+  }
+
+  const handleDateClick = (date) => {
+    const dateStr = formatDate(date);
+    setSelectedDate(dateStr);
+    setSelectedTime(null);
+    fetchSlots(dateStr);
+  };
+
+  const handleActiveStartDateChange = ({ activeStartDate }) => {
+    setCalendarDate(activeStartDate);
+    fetchMonthly(activeStartDate);
+  };
+
+  // Calendar tile coloring
+  const tileClassName = ({ date, view }) => {
+  if (view !== "month") return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (date < today) return "cal-tile--past";
+
+  const ds = formatDate(date);
+  const count = monthlyBookings[ds] || 0;
+
+  if (count >= MAX_BOOKINGS_PER_DAY) {
+    return "cal-tile--full";
+  }
+
+  return "cal-tile--available";
+};
+
+  const tileDisabled = ({ date, view }) => {
+    if (view !== "month") return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date < today;
+  };
+
+  // Step 1 validation
+  const canProceedStep1 = details.name.trim() && details.email.trim() && details.service;
+
+  // Step 2 validation
+  const isFullyBooked = dayBookingCount >= MAX_BOOKINGS_PER_DAY;
+  const isSlotBooked = (slot) => bookedSlots.includes(slot);
+  const isSlotDisabled = (slot) => isSlotBooked(slot) || isFullyBooked;
+
+  const handleConfirmBooking = async () => {
+    setBookingError("");
+    setConfirming(true);
+    try {
+      const res = await bookingService.createBooking({
+        service: details.service,
+        date: selectedDate,
+        time: selectedTime,
+      });
+      setBookingResult(res.data);
+      setConfirmed(true);
+    } catch (err) {
+      const msg = err?.response?.data?.message || "Booking failed. Please try again.";
+      setBookingError(msg);
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const selectedService = SERVICES.find(s => s.value === details.service);
+
   return (
-    <section className="book-page">
+    <div className="book-page">
       <div className="book-shell">
-        <div className="book-main-grid">
-          <aside className="book-side-panel">
-            <div className="book-pin-embed">
-              <iframe
-                src="https://assets.pinterest.com/ext/embed.html?id=2040762328200900"
-                title="Pinterest inspiration"
-                loading="lazy"
-              />
-            </div>
-          </aside>
-
-          <div className="book-right-panel">
-            <form className="book-form" onSubmit={handleSubmit}>
-              <div className="book-form-head">
-                <h1>Book Appointment</h1>
-                <p>Step {activeStep} of 3</p>
+        {/* Progress bar */}
+        <div className="book-progress">
+          {["Your Details", "Date & Time", "Confirmation"].map((label, i) => (
+            <div key={i} className={`book-progress-step ${step > i + 1 ? "done" : ""} ${step === i + 1 ? "active" : ""}`}>
+              <div className="book-progress-dot">
+                {step > i + 1 ? <span>✓</span> : <span>{i + 1}</span>}
               </div>
-
-              {activeStep === 1 ? (
-                <>
-                  <label htmlFor="fullName">Full Name</label>
-                  <input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    required
-                  />
-
-                  <label htmlFor="phone">Phone Number</label>
-                  <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                  />
-
-                  <label htmlFor="service">Service</label>
-                  <select id="service" name="service" value={formData.service} onChange={handleChange}>
-                    <option value="" disabled>Select a service</option>
-                    {services.length > 0 ? services.map((svc) => {
-                      const value = svc.name || '';
-                      return (
-                        <option key={svc._id || svc.id || value} value={value}>
-                          {value}
-                        </option>
-                      );
-                    }) : (
-                      <>
-                        <option value="Haircut">Haircut</option>
-                        <option value="Nails">Nails</option>
-                        <option value="Braids">Braids</option>
-                      </>
-                    )}
-                  </select>
-                </>
-              ) : null}
-
-              {activeStep === 2 ? (
-                <>
-                  <label htmlFor="date">Date</label>
-                  <input
-                    id="date"
-                    name="date"
-                    type="date"
-                    min={today}
-                    value={formData.date}
-                    onChange={handleChange}
-                    required
-                  />
-
-                  <label htmlFor="time">Time</label>
-                  {slots.length > 0 ? (
-                    <select id="time" name="time" value={formData.time} onChange={handleChange} required>
-                      <option value="">Select available slot</option>
-                      {slots.map((slot) => (
-                        <option key={slot} value={slot}>{slot}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      id="time"
-                      name="time"
-                      type="time"
-                      value={formData.time}
-                      onChange={handleChange}
-                      required
-                    />
-                  )}
-                  {message ? <p className="book-error">{message}</p> : null}
-                </>
-              ) : null}
-
-              {activeStep === 3 ? (
-                <>
-                  <label htmlFor="paymentMethod">Payment Method</label>
-                  <select
-                    id="paymentMethod"
-                    name="paymentMethod"
-                    value={formData.paymentMethod}
-                    onChange={handleChange}
-                  >
-                    <option value="Card">Card</option>
-                    <option value="Cash">Cash</option>
-                    <option value="EFT">EFT</option>
-                  </select>
-
-                  <label htmlFor="notes">Notes (Optional)</label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    rows={3}
-                    value={formData.notes}
-                    onChange={handleChange}
-                    placeholder="Any preferences or special requests"
-                  />
-                </>
-              ) : null}
-
-              <div className="book-total">Estimated Total: <strong>R{amount}</strong></div>
-
-              {successMessage ? (
-                <div className="book-feedback-row">
-                  <p className="book-success">{successMessage}</p>
-                  <button
-                    type="button"
-                    className="book-btn book-btn--ghost"
-                    onClick={() => navigate(-1)}
-                  >
-                    Go Back
-                  </button>
-                </div>
-              ) : null}
-              {errorMessage ? <p className="book-error">{errorMessage}</p> : null}
-
-              {activeStep === 1 ? (
-                <button type="button" className="book-btn book-btn--primary" onClick={handleNextFromStepOne}>
-                  Next
-                </button>
-              ) : null}
-
-              {activeStep === 2 ? (
-                <div className="book-step-actions">
-                  <button type="button" className="book-btn book-btn--ghost" onClick={() => setActiveStep(1)}>
-                    Back
-                  </button>
-                  <button type="button" className="book-btn book-btn--primary" onClick={handleNextFromStepTwo}>
-                    Next
-                  </button>
-                </div>
-              ) : null}
-
-              {activeStep === 3 ? (
-                <div className="book-step-actions">
-                  <button type="button" className="book-btn book-btn--ghost" onClick={() => setActiveStep(2)} disabled={isSubmitting}>
-                    Back
-                  </button>
-                  <button type="submit" className="book-btn book-btn--primary" disabled={isSubmitting}>
-                    Continue To Payment
-                  </button>
-                </div>
-              ) : null}
-            </form>
-          </div>
+              <span className="book-progress-label">{label}</span>
+            </div>
+          ))}
         </div>
-      </div>
 
-      {showPaymentPopup ? (
-        <div className="book-overlay">
-          <div className="book-popup">
-            <h2>Confirm Payment</h2>
-            <p>Service: {formData.service}</p>
-            <p>
-              Date/Time: {formData.date} at {formData.time}
-            </p>
-            <p>Method: {formData.paymentMethod}</p>
-            <p className="book-popup-amount">Amount: R{amount}</p>
-            <div className="book-popup-actions">
+        {/* ─── STEP 1: DETAILS ─── */}
+        {step === 1 && (
+          <div className="book-card">
+            <div className="book-card-header">
+              <h1>Your Details</h1>
+              <p>Tell us a bit about yourself to get started</p>
+            </div>
+            <div className="book-fields">
+              <div className="book-field-row">
+                <div className="book-field">
+                  <label>Full Name *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Thabo Mokoena"
+                    value={details.name}
+                    onChange={e => setDetails(p => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+                <div className="book-field">
+                  <label>Email Address *</label>
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={details.email}
+                    onChange={e => setDetails(p => ({ ...p, email: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="book-field-row">
+                <div className="book-field">
+                  <label>Phone Number</label>
+                  <input
+                    type="tel"
+                    placeholder="+27 XX XXX XXXX"
+                    value={details.phone}
+                    onChange={e => setDetails(p => ({ ...p, phone: e.target.value }))}
+                  />
+                </div>
+                <div className="book-field">
+                  <label>Service *</label>
+                  <select
+                    value={details.service}
+                    onChange={e => setDetails(p => ({ ...p, service: e.target.value }))}
+                  >
+                    <option value="">— Select a service —</option>
+                    {SERVICES.map(s => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="book-actions">
               <button
-                type="button"
-                className="book-btn book-btn--ghost"
-                onClick={() => setShowPaymentPopup(false)}
-                disabled={isSubmitting}
+                className="book-btn book-btn--primary"
+                onClick={() => setStep(2)}
+                disabled={!canProceedStep1}
               >
-                Cancel
-              </button>
-              <button type="button" className="book-btn book-btn--primary" onClick={handleConfirmPayment} disabled={isSubmitting}>
-                {isSubmitting ? 'Processing...' : 'Pay & Confirm'}
+                Next: Choose a Date →
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
-    </section>
+        )}
+
+        {/* ─── STEP 2: CALENDAR + SLOTS ─── */}
+        {step === 2 && (
+          <div className="book-card book-card--wide">
+            <div className="book-card-header">
+              <h1>Choose Date &amp; Time</h1>
+              <p>Select an available date then pick your preferred slot</p>
+            </div>
+
+            <div className="book-cal-layout">
+              {/* Calendar */}
+              <div className="book-cal-left">
+                <Calendar
+                  onChange={handleDateClick}
+                  onActiveStartDateChange={handleActiveStartDateChange}
+                  tileClassName={tileClassName}
+                  tileDisabled={tileDisabled}
+                  minDate={new Date()}
+                  className="salon-calendar"
+                />
+              <div className="book-cal-legend">
+  <span className="leg-item"><span className="leg-dot leg-available"></span>Available</span>
+  <span className="leg-item"><span className="leg-dot leg-full"></span>Fully Booked</span>
+</div>
+</div>
+
+              {/* Time slots */}
+              <div className="book-slots-right">
+                {!selectedDate && (
+                  <div className="book-slots-placeholder">
+                    <span className="book-slots-icon">📅</span>
+                    <p>Select a date on the calendar to view available time slots</p>
+                  </div>
+                )}
+
+                {selectedDate && (
+                  <>
+                    <div className="book-slots-header">
+                      <h3>{formatDisplayDate(selectedDate)}</h3>
+                      {isFullyBooked && (
+                        <div className="book-slots-full-badge">Fully Booked</div>
+                      )}
+                      {!isFullyBooked && (
+                        <div className="book-slots-avail-badge">
+                          {MAX_BOOKINGS_PER_DAY - dayBookingCount} slot{MAX_BOOKINGS_PER_DAY - dayBookingCount !== 1 ? 's' : ''} remaining
+                        </div>
+                      )}
+                    </div>
+
+                    {slotsLoading ? (
+                      <div className="book-slots-loading">
+                        <div className="book-spinner"></div>
+                        <span>Loading slots...</span>
+                      </div>
+                    ) : (
+                      <div className="book-slots-grid">
+                        {TIME_SLOTS.map(slot => {
+                          const booked = isSlotBooked(slot);
+                          const disabled = isSlotDisabled(slot);
+                          const selected = selectedTime === slot;
+                          return (
+                            <button
+                              key={slot}
+                              className={`book-slot ${booked ? "book-slot--booked" : disabled ? "book-slot--booked" : "book-slot--open"} ${selected ? "book-slot--selected" : ""}`}
+                              disabled={disabled}
+                              onClick={() => setSelectedTime(slot)}
+                            >
+                              <span className="book-slot-time">{slot}</span>
+                              <span className="book-slot-status">
+                                {booked ? "Booked" : disabled ? "Full" : "Open"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="book-actions book-actions--between">
+              <button className="book-btn book-btn--ghost" onClick={() => setStep(1)}>
+                ← Back
+              </button>
+              <button
+                className="book-btn book-btn--primary"
+                disabled={!selectedDate || !selectedTime}
+                onClick={() => setStep(3)}
+              >
+                Continue to Confirmation →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─── STEP 3: CONFIRMATION / PAYMENT ─── */}
+        {step === 3 && (
+          <div className="book-card book-card--confirm">
+            {!confirmed ? (
+              <>
+                <div className="book-card-header">
+                  <h1>Confirm Your Booking</h1>
+                  <p>Review your appointment details below</p>
+                </div>
+
+                <div className="book-summary">
+                  <div className="book-summary-row">
+                    <span>Name</span>
+                    <strong>{details.name}</strong>
+                  </div>
+                  <div className="book-summary-row">
+                    <span>Email</span>
+                    <strong>{details.email}</strong>
+                  </div>
+                  {details.phone && (
+                    <div className="book-summary-row">
+                      <span>Phone</span>
+                      <strong>{details.phone}</strong>
+                    </div>
+                  )}
+                  <div className="book-summary-row">
+                    <span>Service</span>
+                    <strong>{details.service}</strong>
+                  </div>
+                  <div className="book-summary-row">
+                    <span>Date</span>
+                    <strong>{formatDisplayDate(selectedDate)}</strong>
+                  </div>
+                  <div className="book-summary-row">
+                    <span>Time</span>
+                    <strong>{selectedTime}</strong>
+                  </div>
+                  {selectedService && (
+                    <div className="book-summary-row book-summary-row--total">
+                      <span>Total</span>
+                      <strong>R{selectedService.price}</strong>
+                    </div>
+                  )}
+                </div>
+
+                {bookingError && (
+                  <p className="book-error-msg">{bookingError}</p>
+                )}
+
+                <div className="book-actions book-actions--between">
+                  <button className="book-btn book-btn--ghost" onClick={() => setStep(2)}>
+                    ← Back
+                  </button>
+                  <button
+                    className="book-btn book-btn--primary"
+                    onClick={handleConfirmBooking}
+                    disabled={confirming}
+                  >
+                    {confirming ? "Processing..." : "Confirm Booking ✓"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* ── Success screen ── */
+              <div className="book-success-screen">
+                <div className="book-success-icon">✓</div>
+                <h2>Booking Confirmed!</h2>
+                <p className="book-success-sub">
+                  Your appointment has been successfully booked.
+                </p>
+                <div className="book-success-details">
+                  <div className="book-summary-row">
+                    <span>Service</span>
+                    <strong>{details.service}</strong>
+                  </div>
+                  <div className="book-summary-row">
+                    <span>Date</span>
+                    <strong>{formatDisplayDate(selectedDate)}</strong>
+                  </div>
+                  <div className="book-summary-row">
+                    <span>Time</span>
+                    <strong>{selectedTime}</strong>
+                  </div>
+                  <div className="book-summary-row">
+                    <span>Reference</span>
+                    <strong>#{bookingResult?.id || "—"}</strong>
+                  </div>
+                </div>
+                <p className="book-success-note">
+                  A confirmation has been noted for <strong>{details.email}</strong>.<br />
+                  We look forward to seeing you!
+                </p>
+                <div className="book-success-actions">
+                  <button
+                    className="book-btn book-btn--primary"
+                    onClick={() => {
+                      setStep(1);
+                      setDetails({ name: user?.name || "", email: user?.email || "", phone: user?.phone || "", service: "" });
+                      setSelectedDate(null);
+                      setSelectedTime(null);
+                      setConfirmed(false);
+                      setBookingResult(null);
+                    }}
+                  >
+                    Book Another Appointment
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

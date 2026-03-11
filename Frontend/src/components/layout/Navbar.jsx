@@ -17,10 +17,12 @@ function Navbar() {
     { path: '/contact', label: 'Contact Us' },
   ];
 
-  function handleLogout() {
-    logout();
-    setMenuOpen(false);
-    navigate('/');
+  
+
+  const handleLogout = () => {
+    logout()
+    setMenuOpen(false)
+    navigate('/')
   }
 
   return (
@@ -45,6 +47,8 @@ function Navbar() {
               </li>
             ))}
           </ul>
+
+          {/* Mobile auth buttons */}
           <div className="navbar-auth-mobile">
             {user ? (
               <>
@@ -66,6 +70,7 @@ function Navbar() {
           </div>
         </nav>
 
+        {/* Desktop auth buttons */}
         <div className="navbar-actions">
           {user ? (
             <>

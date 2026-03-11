@@ -1,43 +1,36 @@
-// backend/src/middlewares/auth.middleware.js
 import jwt from "jsonwebtoken";
 import prisma from "../config/database.js";
 import { env } from "../config/env.js";
 
-// Named export "protect" to use in routes
 export const protect = async (req, res, next) => {
   try {
-    // Get token from Authorization header
     const authHeader = req.headers.authorization;
-    let token;
 
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      token = authHeader.split(" ")[1];
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "No token provided" });
     }
 
-    // If no token, reject
-    if (!token) {
-      return res.status(401).json({ message: "Not authorized, token missing" });
-    }
+    const token = authHeader.split(" ")[1];
 
-    // Verify token
     const decoded = jwt.verify(token, env.JWT_SECRET);
+    const decodedUserId = Number(decoded?.userId ?? decoded?.id);
 
-    // Find user in database
+    if (Number.isNaN(decodedUserId)) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: decodedUserId },
     });
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    // Attach user to request object
     req.user = user;
-
-    // Proceed to next middleware/controller
     next();
   } catch (err) {
     console.error("Auth middleware error:", err);
-    res.status(401).json({ message: "Not authorized", error: err.message });
+    res.status(401).json({ message: "Not authorized" });
   }
 };

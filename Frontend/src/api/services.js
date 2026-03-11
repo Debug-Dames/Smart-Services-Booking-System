@@ -24,8 +24,20 @@ export const authService = {
 
 // --- BOOKINGS ---
 export const bookingService = {
-  getAppointments: async () => {
+  getBookingsByDate: async (date) => {
+    const { data } = await api.get(`/bookings?date=${date}`);
+    return data;
+  },
+  getMonthlyBookings: async (year, month) => {
+    const { data } = await api.get(`/bookings/monthly?year=${year}&month=${month}`);
+    return data;
+  },
+  getMyBookings: async () => {
     const { data } = await api.get('/bookings/mine');
+    return data;
+  },
+  createBooking: async (payload) => {
+    const { data } = await api.post('/bookings', payload);
     return data;
   },
 
@@ -38,6 +50,16 @@ export const bookingService = {
     const { data } = await api.get('/bookings/slots', {
       params: { date, serviceId },
     });
+    return data;
+  },
+
+  updateBooking: async (id, payload) => {
+    const { data } = await api.put(`/bookings/${id}`, payload);
+    return data;
+  },
+
+  cancelBooking: async (id) => {
+    const { data } = await api.delete(`/bookings/${id}`);
     return data;
   },
 };
@@ -53,7 +75,15 @@ export const getAvailableSlots = async (date, serviceId) => {
 };
 
 export const getMyBookings = async () => {
-  return bookingService.getAppointments();
+  return bookingService.getMyBookings();
+};
+
+export const updateBooking = async (id, payload) => {
+  return bookingService.updateBooking(id, payload);
+};
+
+export const cancelBooking = async (id) => {
+  return bookingService.cancelBooking(id);
 };
 
 // --- CONTACT ---
