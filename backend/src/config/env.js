@@ -12,4 +12,7 @@ export const env = {
   PORT: process.env.PORT || 5000,
   JWT_SECRET: process.env.JWT_SECRET || "super_secret_key",
   DATABASE_URL: process.env.DATABASE_URL,
+  GEMINI_API_KEY: (process.env.GEMINI_API_KEY || "").trim(),
+  GEMINI_MODEL: (process.env.GEMINI_MODEL || "gemini-2.5-flash").trim(),
+  GEMINI_DAILY_LIMIT: Number(process.env.GEMINI_DAILY_LIMIT) || 5,
 };

@@ -9,6 +9,7 @@ import contactRoutes from "./modules/contact/contact.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
+import prisma from "./config/database.js";
 
 
 const app = express();
@@ -24,6 +25,17 @@ app.get("/", (_, res) => {
     res.json({ message: "Smart Services API is running" });
 });
 
+app.get("/api/services", async (_req, res) => {
+  try {
+    const services = await prisma.service.findMany({
+      select: { id: true, name: true, price: true },
+      orderBy: { id: "asc" },
+    });
+    res.json(services);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load services" });
+  }
+});
 
 
 app.use("/api/auth", authRoutes);

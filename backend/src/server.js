@@ -13,6 +13,7 @@ app.use(cors({
 app.use(express.json());
 
 app.use("/api", chatbotRoutes);
+
 const prisma = new PrismaClient();
 const PORT = env.PORT || 5000;
 
