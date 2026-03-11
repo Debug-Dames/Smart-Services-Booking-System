@@ -103,7 +103,23 @@ export default function MyBookings() {
         toTimeInput(booking?.startTime || booking?.time || booking?.appointment_time || booking?.date);
       const updated = await updateBooking(numericId, { date: dateValue, time: timeValue });
       setBookings((prev) =>
-        prev.map((b) => (b.id === numericId ? { ...b, ...updated } : b))
+        prev.map((b) => {
+          if (b.id !== numericId) return b;
+          const next = { ...b, ...updated };
+          if (timeValue) {
+            next.time = timeValue;
+            const baseDate =
+              dateValue ||
+              toDateInput(b?.date || b?.appointment_date || b?.startTime || b?.time);
+            if (baseDate) {
+              next.startTime = `${baseDate}T${timeValue}:00`;
+            }
+          }
+          if (!updated?.date && dateValue) {
+            next.date = dateValue;
+          }
+          return next;
+        })
       );
       setDateDrafts((prev) => ({
         ...prev,
