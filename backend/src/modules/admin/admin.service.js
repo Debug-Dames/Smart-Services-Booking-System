@@ -1,8 +1,5 @@
-// import dbPromise, { initDB } from "../../config/database.js";
-
-// await initDB();
-import prisma from "../../config/database.js";
-
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 const normalizeActive = (value) => {
   if (typeof value === "boolean") return value;
@@ -12,124 +9,104 @@ const normalizeActive = (value) => {
 };
 
 export async function getUsers(_req, res) {
-  const db = await dbPromise;
-  const users = await db.all(
-    `SELECT id, name, email, role FROM users ORDER BY id DESC`
-  );
-  res.json(users);
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { id: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+      },
+    });
+
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch users" });
+  }
 }
 
 export async function getServices(_req, res) {
-  const db = await dbPromise;
-  const services = await db.all(`
-    SELECT
-      id,
-      name,
-      category,
-      price,
-      duration,
-      availability,
-      is_active AS isActive,
-      created_at AS createdAt
-    FROM services
-    ORDER BY created_at DESC, id DESC
-  `);
+  try {
+    const services = await prisma.service.findMany({
+      orderBy: [
+        { createdAt: "desc" },
+        { id: "desc" },
+      ],
+    });
 
-  res.json(
-    services.map((service) => ({
-      ...service,
-      isActive: Boolean(service.isActive),
-    }))
-  );
+    res.json(services);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch services" });
+  }
 }
 
 export async function createService(req, res) {
-  const { name, category, price, duration, availability, isActive } = req.body;
-  const db = await dbPromise;
+  try {
+    const { name, category, price, duration, availability, isActive } = req.body;
 
-  const serviceName = String(name || "").trim();
-  const servicePrice = Number(price);
-  const serviceDuration = Number(duration);
+    if (!name || !price || !duration || duration <= 0) {
+      return res.status(400).json({ message: "Invalid service payload" });
+    }
 
-  if (!serviceName || !Number.isFinite(servicePrice) || !Number.isFinite(serviceDuration) || serviceDuration <= 0) {
-    return res.status(400).json({ message: "Invalid service payload" });
+    const service = await prisma.service.create({
+      data: {
+        name: name.trim(),
+        category: category || "General",
+        price: Number(price),
+        duration: Number(duration),
+        availability: availability || "Available",
+        isActive: isActive ?? true,
+      },
+    });
+
+    res.status(201).json(service);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to create service" });
   }
-
-  const result = await db.run(
-    `INSERT INTO services (name, category, price, duration, availability, is_active)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      serviceName,
-      category || "General",
-      servicePrice,
-      serviceDuration,
-      availability || "Available",
-      normalizeActive(isActive ?? true),
-    ]
-  );
-
-  const created = await db.get(
-    `SELECT id, name, category, price, duration, availability, is_active AS isActive
-     FROM services
-     WHERE id = ?`,
-    [result.lastID]
-  );
-
-  res.status(201).json({
-    ...created,
-    isActive: Boolean(created.isActive),
-  });
 }
 
 export async function updateService(req, res) {
   const { id } = req.params;
-  const db = await dbPromise;
-  const current = await db.get(`SELECT * FROM services WHERE id = ?`, [id]);
 
-  if (!current) {
-    return res.status(404).json({ message: "Service not found" });
+  try {
+    const existing = await prisma.service.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: "Service not found" });
+    }
+
+    const updated = await prisma.service.update({
+      where: { id: Number(id) },
+      data: {
+        name: req.body.name ?? existing.name,
+        category: req.body.category ?? existing.category,
+        price: req.body.price ? Number(req.body.price) : existing.price,
+        duration: req.body.duration ? Number(req.body.duration) : existing.duration,
+        availability: req.body.availability ?? existing.availability,
+        isActive: req.body.isActive ?? existing.isActive,
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update service" });
   }
-
-  const nextName = String(req.body.name ?? current.name).trim();
-  const nextCategory = req.body.category ?? current.category;
-  const nextPrice = Number(req.body.price ?? current.price);
-  const nextDuration = Number(req.body.duration ?? current.duration);
-  const nextAvailability = req.body.availability ?? current.availability;
-  const nextIsActive = normalizeActive(req.body.isActive ?? current.is_active);
-
-  if (!nextName || !Number.isFinite(nextPrice) || !Number.isFinite(nextDuration) || nextDuration <= 0) {
-    return res.status(400).json({ message: "Invalid service payload" });
-  }
-
-  await db.run(
-    `UPDATE services
-     SET name = ?, category = ?, price = ?, duration = ?, availability = ?, is_active = ?
-     WHERE id = ?`,
-    [nextName, nextCategory, nextPrice, nextDuration, nextAvailability, nextIsActive, id]
-  );
-
-  const updated = await db.get(
-    `SELECT id, name, category, price, duration, availability, is_active AS isActive
-     FROM services
-     WHERE id = ?`,
-    [id]
-  );
-
-  res.json({
-    ...updated,
-    isActive: Boolean(updated.isActive),
-  });
 }
 
 export async function deleteService(req, res) {
   const { id } = req.params;
-  const db = await dbPromise;
 
-  const current = await db.get(`SELECT id FROM services WHERE id = ?`, [id]);
-  if (!current) {
-    return res.status(404).json({ message: "Service not found" });
+  try {
+    await prisma.service.delete({
+      where: { id: Number(id) },
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    res.status(404).json({ message: "Service not found" });
   }
-
-  await db.run(`DELETE FROM services WHERE id = ?`, [id]);
-  res.status(204).send();
 }
+
