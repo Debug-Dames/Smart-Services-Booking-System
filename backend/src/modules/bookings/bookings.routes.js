@@ -1,26 +1,30 @@
 import express from "express";
 import { protect } from "../../middlewares/auth.middleware.js";
-import * as ctrl from "./bookings.service.js";
+import * as ctrl from "../../controllers/bookingController.js";
+
 
 const router = express.Router();
 
 // Public – slot availability check
-router.get("/", ctrl.getAllBookings);
+// Get all bookings
+router.get("/", protect, bookingController.getAllBookings);
 
-// Public – calendar day-count coloring  (MUST be before /:id)
-router.get("/monthly", ctrl.getMonthlyBookings);
+// Calendar monthly data
+router.get("/monthly", bookingController.getMonthlyBookings);
 
-// Protected – current user's own bookings  (MUST be before /:id)
-router.get("/mine", protect, ctrl.getMyBookings);
+// Current user bookings
+router.get("/mine", protect, bookingController.getMyBookings);
 
-// Public – single booking by id
-router.get("/:id", ctrl.getBookingById);
+// Get booking by id
+router.get("/:id", protect, bookingController.getBookingById);
 
-// Protected – create
-router.post("/", protect, ctrl.createBooking);
+// Create booking
+router.post("/", protect, bookingController.createBookingController);
 
-// Admin-ish – update / delete
-router.put("/:id", ctrl.updateBooking);
-router.delete("/:id", ctrl.deleteBooking);
+// Update booking
+router.put("/:id", protect, bookingController.updateBooking);
+
+// Delete booking
+router.delete("/:id", protect, bookingController.deleteBooking);
 
 export default router;
