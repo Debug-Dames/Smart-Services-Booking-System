@@ -1,6 +1,7 @@
 import prisma from "../../config/database.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { env } from "../../config/env.js";
 
 // 🔐 REGISTER
 export async function register(req, res) {
@@ -54,7 +55,7 @@ export async function register(req, res) {
         console.error("Register error:", error);
         res.status(500).json({ message: "Server error" });
     }
-}
+} 
 
 export async function login(req, res) {
     try {

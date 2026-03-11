@@ -87,6 +87,7 @@ export const unlockSlot = async (token) => {
   };
 };
 
+
 /**
  * Create a new booking
  * Accepts either locked slots (preferred) or direct booking (for tests)
@@ -97,6 +98,7 @@ export const createBooking = async (data, user) => {
   // Support test-friendly direct booking without user object
   const bookingUserId = user?.id || userId;
   if (!bookingUserId || !serviceId || !startTime || !endTime) {
+    console.log("Missing required fields:", { bookingUserId, serviceId, startTime, endTime });
     throw new Error("userId, serviceId, startTime, and endTime are required");
   }
 
