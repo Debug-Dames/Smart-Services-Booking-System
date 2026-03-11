@@ -148,22 +148,26 @@ export default function BookAppointment() {
   const isSlotDisabled = (slot) => isSlotBooked(slot) || isFullyBooked;
 
   const handleConfirmBooking = async () => {
-    setBookingError("");
-    setConfirming(true);
-    try {
-      const res = await bookingService.createBooking({
-        service: details.service,
-        date: selectedDate,
-        time: selectedTime,
-      });
-      setBookingResult(res.data);
-      setConfirmed(true);
-    } catch (err) {
-      const msg = err?.response?.data?.message || "Booking failed. Please try again.";
-      setBookingError(msg);
-    } finally {
-      setConfirming(false);
-    }
+  setBookingError("");
+  setConfirming(true);
+
+  try {
+    const res = await bookingService.createBooking({
+      service: details.service,
+      date: selectedDate,
+      time: selectedTime,
+    });
+
+    setBookingResult(res);   // ✅ FIX
+    setConfirmed(true);
+
+  } catch (err) {
+    console.log(err.response?.data); // helps debug errors
+    const msg = err?.response?.data?.message || "Booking failed. Please try again.";
+    setBookingError(msg);
+  } finally {
+    setConfirming(false);
+  }
   };
 
   const selectedService = SERVICES.find(s => s.value === details.service);
