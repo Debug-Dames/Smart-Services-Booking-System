@@ -1,5 +1,5 @@
 import prisma from "../config/database.js";
-import { createBooking } from "../modules/bookings/bookings.service.js"
+import { createBooking, getBookingsByDate, getMonthlyBookings } from "../modules/bookings/bookings.service.js"
 
 export const getAllBookings = async(req, res) => {
     try {
@@ -9,6 +9,38 @@ export const getAllBookings = async(req, res) => {
         res.status(500).json({ message: err.message })
     }
 }
+
+export const getBookingsByDateController = async(req, res) => {
+    try {
+
+        const { date } = req.query;
+
+        if (!date) {
+            return res.status(400).json({ message: "date is required" });
+        }
+
+        const bookings = await getBookingsByDate(date);
+
+        res.json(bookings);
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+
+export const getMonthlyBookingsController = async(req, res) => {
+    try {
+
+        const data = await getMonthlyBookings(req.query);
+
+        res.json(data);
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 
 export const getMyBookings = async(req, res) => {
     try {
