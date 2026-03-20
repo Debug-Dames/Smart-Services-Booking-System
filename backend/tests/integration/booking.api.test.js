@@ -1,3 +1,4 @@
+
 import request from "supertest";
 import jwt from "jsonwebtoken";
 import app from "../../src/app.js";
@@ -57,9 +58,9 @@ describe("Booking API Integration Tests", () => {
       .send({
         userId: user.id,
         serviceId: service.id,
-        date: "2026-03-10",
-        startTime: "2026-03-10T10:00:00",
-        endTime: "2026-03-10T11:00:00",
+        date: "2026-03-18",
+        startTime: "2026-03-18T10:10:00",
+        endTime: "2026-03-18T11:10:00",
       });
 
     expect(res.statusCode).toBe(201);
@@ -72,9 +73,9 @@ describe("Booking API Integration Tests", () => {
       data: {
         userId: user.id,
         serviceId: service.id,
-        date: new Date("2026-03-10"),
-        startTime: new Date("2026-03-10T10:00:00"),
-        endTime: new Date("2026-03-10T11:00:00"),
+        date: new Date("2026-03-18"),
+        startTime: new Date("2026-03-18T10:10:00"),
+        endTime: new Date("2026-03-18T11:10:00"),
       },
     });
 
@@ -85,9 +86,9 @@ describe("Booking API Integration Tests", () => {
       .send({
         userId: user.id,
         serviceId: service.id,
-        date: "2026-03-10",
-        startTime: "2026-03-10T10:00:00",
-        endTime: "2026-03-10T11:00:00",
+        date: "2026-03-18",
+        startTime: "2026-03-18T10:10:00",
+        endTime: "2026-03-18T11:10:00",
       });
 
     expect(res.statusCode).toBe(409);
@@ -98,9 +99,9 @@ describe("Booking API Integration Tests", () => {
       data: {
         userId: user.id,
         serviceId: service.id,
-        date: new Date("2026-03-10"),
-        startTime: new Date("2026-03-10T10:00:00"),
-        endTime: new Date("2026-03-10T11:00:00"),
+        date: new Date("2026-03-18"),
+        startTime: new Date("2026-03-18T10:10:00"),
+        endTime: new Date("2026-03-18T11:10:00"),
       },
     });
 
@@ -117,9 +118,9 @@ describe("Booking API Integration Tests", () => {
       data: {
         userId: user.id,
         serviceId: service.id,
-        date: new Date("2026-03-10"),
-        startTime: new Date("2026-03-10T10:00:00"),
-        endTime: new Date("2026-03-10T11:00:00"),
+        date: new Date("2026-03-18"),
+        startTime: new Date("2026-03-18T10:10:00"),
+        endTime: new Date("2026-03-18T11:10:00"),
       },
     });
 
@@ -127,8 +128,8 @@ describe("Booking API Integration Tests", () => {
       .put(`/bookings/${booking.id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
-        startTime: "2026-03-10T12:00:00",
-        endTime: "2026-03-10T13:00:00",
+        startTime: "2026-03-18T12:10:00",
+        endTime: "2026-03-18T13:10:00",
       });
 
     expect(res.statusCode).toBe(200);
@@ -139,9 +140,9 @@ describe("Booking API Integration Tests", () => {
       data: {
         userId: user.id,
         serviceId: service.id,
-        date: new Date("2026-03-10"),
-        startTime: new Date("2026-03-10T10:00:00"),
-        endTime: new Date("2026-03-10T11:00:00"),
+        date: new Date("2026-03-18"),
+        startTime: new Date("2026-03-18T10:10:00"),
+        endTime: new Date("2026-03-18T11:10:00"),
       },
     });
 

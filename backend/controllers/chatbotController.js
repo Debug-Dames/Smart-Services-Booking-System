@@ -8,8 +8,8 @@ export const chatWithBot = async (req, res) => {
     const { message } = req.body;
     const userId = req.user?.id ? Number(req.user.id) : null;
     const userKey = req.user?.id ? `user:${req.user.id}` : `ip:${req.ip}`;
-    const reply = await processMessage(message, { userId, userKey });
-    res.json({ reply });
+    const response = await processMessage(message, { userId, userKey });
+    res.json({ reply: response, response });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });

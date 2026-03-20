@@ -5,12 +5,20 @@ import { ensureBookingTimeColumns } from "./config/database.js";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import chatbotRoutes from '../routes/chatbotRoutes.js';
+import chatbotRoutes from "../routes/chatbotRoutes.js";
 
 dotenv.config();
 
-app.use(cors({
-  allowedorigin: "https://smart-services-booking-system-frontend.onrender.com",}));
+const allowedOrigins = env.FRONTEND_ORIGIN
+  ? env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean)
+  : [];
+
+app.use(
+  cors({
+    origin: allowedOrigins.length > 0 ? allowedOrigins : false,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 app.use("/api", chatbotRoutes);

@@ -16,4 +16,5 @@ export const env = {
   GEMINI_API_KEY: (process.env.GEMINI_API_KEY || "").trim(),
   GEMINI_MODEL: (process.env.GEMINI_MODEL || "gemini-2.5-flash").trim(),
   GEMINI_DAILY_LIMIT: Number(process.env.GEMINI_DAILY_LIMIT) || 5,
+  FRONTEND_ORIGIN: (process.env.FRONTEND_ORIGIN || "").trim(),
 };

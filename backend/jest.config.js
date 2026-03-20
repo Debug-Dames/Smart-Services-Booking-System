@@ -3,7 +3,7 @@
 //   transform: {
 //     "^.+\\.js$": "babel-jest"
 //   },
-//   setupFiles: ["<rootDir>/tests/setupTests.js"], 
+//   setupFiles: ["<rootDir>/tests/setupTests.js"],
 // };
 
 // module.exports = {
