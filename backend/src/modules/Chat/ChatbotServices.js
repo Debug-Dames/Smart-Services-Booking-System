@@ -26,8 +26,12 @@ let lastGeminiErrorLogAt = 0;
 const getSessionKey = (userKey) => {
   const base = userKey || "anonymous";
   if (isTestEnv()) {
+<<<<<<< HEAD
     const workerId = process.env.JEST_WORKER_ID || "0";
     return `${base}:test:${workerId}`;
+=======
+    return `${base}:test:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+>>>>>>> 0a4a8a9 (intergration test)
   }
   return base;
 };
@@ -91,13 +95,22 @@ const incrementGeminiUsage = (userKey) => {
   const current = dailyUsage.get(userKey);
   if (!current || current.date !== today) {
     dailyUsage.set(userKey, { date: today, count: 1 });
-    return;
+  } else {
+    current.count += 1;
+    dailyUsage.set(userKey, current);
   }
-  current.count += 1;
-  dailyUsage.set(userKey, current);
+
+  const globalRecord = getWindowRecord(globalShortTermUsage, "__global__", now);
+  globalRecord.count += 1;
+  globalShortTermUsage.set("__global__", globalRecord);
+
+  const windowRecord = getWindowRecord(shortTermUsage, userKey, now);
+  windowRecord.count += 1;
+  shortTermUsage.set(userKey, windowRecord);
 };
 
 const getGeminiModel = () => {
+  if (isTestEnv()) return null;
   if (!GEMINI_API_KEY) return null;
   const client = new GoogleGenerativeAI(GEMINI_API_KEY);
   return client.getGenerativeModel({ model: GEMINI_MODEL });
@@ -388,7 +401,11 @@ const handleBookingFlow = async (message, { userId, userKey, sessionKey }) => {
 
   if (!userId) {
     bookingSessions.delete(sessionKey);
+<<<<<<< HEAD
     return `Great! I have your appointment for ${serviceRecord.name} on ${session.date} at ${session.time}. Thank you, bye.`;
+=======
+    return `Great! I have your appointment details for ${serviceRecord.name} on ${session.date} at ${session.time}. Click here to proceed to book your appointment.`;
+>>>>>>> 0a4a8a9 (intergration test)
   }
 
   try {
@@ -400,7 +417,11 @@ const handleBookingFlow = async (message, { userId, userKey, sessionKey }) => {
       endTime: end.toISOString(),
     });
     bookingSessions.delete(sessionKey);
+<<<<<<< HEAD
     return `Great! Your appointment is booked for ${session.date} at ${session.time}. Thank you, bye.`;
+=======
+    return `Your appointment is booked for ${session.date} at ${session.time}. Click here to proceed to book your appointment.`;
+>>>>>>> 0a4a8a9 (intergration test)
   } catch (err) {
     return err?.message || "I couldn't complete the booking. Please try again.";
   }
@@ -433,6 +454,7 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
     text
   );
   const inferredService = extractServiceFallback(message);
+<<<<<<< HEAD
 
   const nonBookingIntent =
     containsAny(["hello", "hi", "hey"], text) ||
@@ -461,6 +483,8 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
       "all good",
     ], text);
   const isBookingRequest = bookingIntent && !nonBookingIntent;
+=======
+>>>>>>> 0a4a8a9 (intergration test)
 
   if (activeSession?.active) {
     if (containsAny(["cancel", "stop", "never mind", "nevermind"], text)) {
@@ -472,7 +496,11 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
 
   // now use `text` in all checks
 
+<<<<<<< HEAD
   if (isBookingRequest && inferredService) {
+=======
+  if (bookingIntent && inferredService) {
+>>>>>>> 0a4a8a9 (intergration test)
     const session = {
       active: true,
       service: inferredService,
@@ -533,7 +561,13 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
   }
 
   // 3️⃣ Booking & Appointments
+<<<<<<< HEAD
   if (isBookingRequest) {
+=======
+  if (
+    bookingIntent
+  ) {
+>>>>>>> 0a4a8a9 (intergration test)
     return handleBookingFlow(message, { userId, userKey, sessionKey });
   }
 

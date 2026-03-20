@@ -31,14 +31,14 @@ describe("Booking Service Unit Tests", () => {
   it("should reject booking in the past", async () => {
     await expect(createBooking({
       userId: 1, serviceId: 1,
-      date: getRelativeDate(-1), startTime: "10:00", endTime: "11:00"
+      date: "2020-03-18", startTime: "10:00", endTime: "11:00"
     })).rejects.toThrow("Cannot book in the past")
   })
 
   it("should reject if end time is before start time", async () => {
     await expect(createBooking({
       userId: 1, serviceId: 1,
-      date: getRelativeDate(1), startTime: "11:00", endTime: "10:00"
+      date: "2026-03-18", startTime: "11:00", endTime: "10:00"
     })).rejects.toThrow("Invalid time range")
   })
 
@@ -46,7 +46,7 @@ describe("Booking Service Unit Tests", () => {
     mockBooking.findFirst.mockResolvedValue({ id: 1 })
     await expect(createBooking({
       userId: 1, serviceId: 1,
-      date: getRelativeDate(1), startTime: "10:00", endTime: "11:00"
+      date: "2026-03-18", startTime: "10:00", endTime: "11:00"
     })).rejects.toThrow("Time slot already booked")
   })
 
@@ -56,7 +56,7 @@ describe("Booking Service Unit Tests", () => {
 
     const result = await createBooking({
       userId: 1, serviceId: 1,
-      date: getRelativeDate(1), startTime: "10:00", endTime: "11:00"
+      date: "2026-03-18", startTime: "10:00", endTime: "11:00"
     })
 
     expect(prisma.booking.findFirst).toHaveBeenCalled()
@@ -68,7 +68,7 @@ describe("Booking Service Unit Tests", () => {
     mockBooking.findFirst.mockResolvedValue({ id: 2 })
     await expect(createBooking({
       userId: 1, serviceId: 1,
-      date: getRelativeDate(1), startTime: "10:30", endTime: "11:30"
+      date: "2026-03-18", startTime: "10:30", endTime: "11:30"
     })).rejects.toThrow("Time slot already booked")
   })
 })
