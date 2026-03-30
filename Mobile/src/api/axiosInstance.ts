@@ -2,7 +2,7 @@ import axios from 'axios';
 import { loadToken, deleteToken } from '../app/tokenStorage';
 
 const axiosInstance = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'https://smart-services-booking-system-backend-uzip.onrender.com/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
