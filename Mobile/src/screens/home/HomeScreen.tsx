@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,24 @@ import {
   Platform,
 } from 'react-native';
 import Colors from '../../contants/colors';
+import { useAppDispatch, useAppSelector } from '../../app/store';
+import { selectUser } from '../../features/auth/authSlice';
+import { restoreSession } from '../../features/auth/authThunks';
 
 const { width } = Dimensions.get('window');
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+};
+
+const getFirstName = (fullName?: string | null) => {
+  if (!fullName) return 'there';
+  return fullName.trim().split(' ')[0];
+};
 
 // ─── Animated Section Wrapper ────────────────────────────────────────────────
 const FadeInView: React.FC<{ delay?: number; children: React.ReactNode }> = ({
@@ -99,9 +115,75 @@ const AppointmentRow: React.FC<{
   </View>
 );
 
+
+// ─── Floating Chat Button ─────────────────────────────────────────────────────
+const FloatingChatButton: React.FC<{ onPress: () => void; theme: typeof Colors.light }> = ({ onPress, theme }) => {
+  const popScale   = useRef(new Animated.Value(0)).current;
+  const popOpacity = useRef(new Animated.Value(0)).current;
+  const btnScale   = useRef(new Animated.Value(0)).current;
+  const [popVisible, setPopVisible] = useState(true);
+ 
+  useEffect(() => {
+    // FAB bounces in
+    Animated.spring(btnScale, {
+      toValue: 1, delay: 800, tension: 80, friction: 6, useNativeDriver: true,
+    }).start();
+ 
+    // Pop bubble appears after FAB
+    Animated.sequence([
+      Animated.delay(1400),
+      Animated.parallel([
+        Animated.spring(popScale,   { toValue: 1, tension: 100, friction: 7, useNativeDriver: true }),
+        Animated.timing(popOpacity, { toValue: 1, duration: 200,              useNativeDriver: true }),
+      ]),
+    ]).start();
+ 
+    // Auto-dismiss bubble after 5s
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(popScale,   { toValue: 0.8, duration: 200, useNativeDriver: true }),
+        Animated.timing(popOpacity, { toValue: 0,   duration: 200, useNativeDriver: true }),
+      ]).start(() => setPopVisible(false));
+    }, 5400);
+ 
+    return () => clearTimeout(timer);
+  }, []);
+ 
+  return (
+    <View style={styles.fabWrap} pointerEvents="box-none">
+      {popVisible && (
+        <Animated.View style={[styles.popBubble, { opacity: popOpacity, transform: [{ scale: popScale }] }]}>
+          <Text style={styles.popText}>✨ Want to book a service?</Text>
+          <View style={styles.popTail} />
+        </Animated.View>
+      )}
+      <Animated.View style={{ transform: [{ scale: btnScale }] }}>
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: theme.primary }]}
+          onPress={onPress}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.fabIcon}>💬</Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+};
+
+
 // ─── Main Screen ──────────────────────────────────────────────────────────────
-const HomeScreen: React.FC = () => {
+const HomeScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const theme = Colors.light;
+  const dispatch = useAppDispatch();
+  const user     = useAppSelector(selectUser);
+
+  // If user data is missing after session restore, fetch fresh profile
+  useEffect(() => {
+    if (!user) dispatch(restoreSession());
+  }, []);
+
+  const greeting  = getGreeting();
+  const firstName = getFirstName(user?.name);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background }}>
@@ -119,7 +201,7 @@ const HomeScreen: React.FC = () => {
           <View style={styles.heroBubble2} />
 
           <FadeInView delay={0}>
-            <Text style={styles.heroGreeting}>Good morning, Sarah ✨</Text>
+            <Text style={styles.heroGreeting}>{greeting}, {firstName} ✨</Text>
             <Text style={styles.heroHeadline}>
               Your next{'\n'}
               <Text style={{ color: '#BDC2DB' }}>appointment</Text>
@@ -170,6 +252,7 @@ const HomeScreen: React.FC = () => {
             <TouchableOpacity
               style={[styles.bookBtn, { backgroundColor: theme.primary }]}
               activeOpacity={0.85}
+              onPress={() => navigation?.navigate('Bookings')}
             >
               <Text style={styles.bookBtnText}>Book Now</Text>
             </TouchableOpacity>
@@ -224,7 +307,7 @@ const HomeScreen: React.FC = () => {
               <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>
                 Upcoming
               </Text>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation?.navigate('My Bookings')}>
                 <Text style={[styles.seeAll, { color: theme.primary }]}>Manage</Text>
               </TouchableOpacity>
             </View>
@@ -250,7 +333,14 @@ const HomeScreen: React.FC = () => {
             </View>
           </View>
         </FadeInView>
+        {/* Extra padding so FAB does not overlap last row */}
+        <View style={{ height: 100 }} />
       </ScrollView>
+      {/* ── Floating Chat Button ──────────────────────────────────── */}
+      <FloatingChatButton
+        theme={theme}
+        onPress={() => navigation?.navigate('Chat')}
+      />
     </View>
   );
 };
@@ -448,6 +538,55 @@ const styles = StyleSheet.create({
   appointmentService: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
   appointmentMeta: { fontSize: 13 },
   appointmentTime: { fontSize: 13, fontWeight: '700' },
+  // FAB
+  fabWrap: {
+    position: 'absolute',
+    bottom: 24, right: 24,
+    alignItems: 'flex-end'
+  },
+  fab: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#1952A6',
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 8
+  },
+  fabIcon: {
+    fontSize: 24
+  },
+
+  // Pop bubble
+  popBubble: {
+    backgroundColor: '#22274C',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 10,
+    maxWidth: 210
+  },
+  popText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18
+  },
+  popTail: { position: 'absolute',
+    bottom: -7,
+    right: 18,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 7,
+    borderRightWidth: 7,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#22274C'
+  },
 });
 
 export default HomeScreen;
