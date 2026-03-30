@@ -44,7 +44,7 @@ export const getMonthlyBookingsController = async(req, res) => {
 
 export const getMyBookings = async(req, res) => {
     try {
-        const userId = Number(req.user ? .id);
+        const userId = Number(req.user?.id);
 
         if (!Number.isInteger(userId)) {
             return res.status(401).json({ message: "Not authorized" });
@@ -87,7 +87,7 @@ export const createBookingController = async(req, res) => {
     try {
         const payload = {
             ...req.body,
-            userId: req.user ? .id ? ? req.body ? .userId,
+            userId: req.user ?.id ?? req.body?.userId,
         };
 
         const booking = await createBooking(payload);

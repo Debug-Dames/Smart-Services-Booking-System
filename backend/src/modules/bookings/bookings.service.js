@@ -155,6 +155,6 @@ export const getBookingsByDate = async(date) => {
         date: b.date.toISOString().split("T")[0],
         time: b.startTime.toISOString().substring(11, 16),
         status: b.status,
-        service: b.service ? .name || "",
+        service: b.service ?.name || "",
     }));
 };
