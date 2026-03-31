@@ -1,32 +1,20 @@
-export interface Message {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  createdAt: string;
-  read: boolean;
+export interface ChatMessage {
+  id:        string;
+  role:      'user' | 'bot';
+  text:      string;
+  timestamp: number;
 }
 
-export interface Conversation {
-  id: string;
-  participantIds: string[];
-  lastMessage?: Message;
-  updatedAt: string;
+export interface ChatbotState {
+  messages: ChatMessage[];
+  loading:  boolean;
+  error:    string | null;
 }
 
-export interface SendMessagePayload {
-  conversationId: string;
-  text: string;
+export interface ChatbotPayload {
+  message: string;
 }
 
-export interface ChatState {
-  conversations:   Conversation[];
-  activeConversationId: string | null;
-  messages:        Record<string, Message[]>; // keyed by conversationId
-  loading:         boolean;
-  sending:         boolean;
-  error:           string | null;
-  // Socket hook-in: set to true once socket is connected
-  socketConnected: boolean;
+export interface ChatbotResponse {
+  reply: string;
 }

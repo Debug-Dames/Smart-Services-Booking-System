@@ -1,131 +1,74 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ChatState, Message } from './chatTypes';
-import { fetchConversations, fetchMessages, sendMessage, markConversationRead } from './chatThunks';
+import { ChatbotState, ChatMessage } from './chatTypes';
+import { sendChatbotMessage } from './chatThunks';
 import { RootState } from '../../app/store';
 
-const initialState: ChatState = {
-  conversations:        [],
-  activeConversationId: null,
-  messages:             {},
-  loading:              false,
-  sending:              false,
-  error:                null,
-  socketConnected:      false,
+const WELCOME: ChatMessage = {
+  id:        'welcome',
+  role:      'bot',
+  text:      "Hello! 👋 Welcome to Dames Salon. How can I help you today?\n\nYou can ask me about services, prices, bookings, or anything else!",
+  timestamp: Date.now(),
 };
 
-const chatSlice = createSlice({
-  name: 'chat',
+const initialState: ChatbotState = {
+  messages: [WELCOME],
+  loading:  false,
+  error:    null,
+};
+
+const chatbotSlice = createSlice({
+  name: 'chatbot',
   initialState,
   reducers: {
-    setActiveConversation(state, action: PayloadAction<string>) {
-      state.activeConversationId = action.payload;
+    addUserMessage(state, action: PayloadAction<string>) {
+      state.messages.push({
+        id:        Date.now().toString(),
+        role:      'user',
+        text:      action.payload,
+        timestamp: Date.now(),
+      });
     },
-    clearActiveConversation(state) {
-      state.activeConversationId = null;
+    clearChat(state) {
+      state.messages = [WELCOME];
+      state.error    = null;
     },
-    clearChatError(state) {
+    clearChatbotError(state) {
       state.error = null;
-    },
-
-    // ── Socket hook-ins ──────────────────────────────────
-    // Call these from your socket event handlers once you
-    // integrate WebSockets (e.g. socket.io):
-    //
-    //   socket.on('message', (msg) => dispatch(socketMessageReceived(msg)))
-    //   socket.on('connect',  ()  => dispatch(setSocketConnected(true)))
-    //   socket.on('disconnect',() => dispatch(setSocketConnected(false)))
-
-    setSocketConnected(state, action: PayloadAction<boolean>) {
-      state.socketConnected = action.payload;
-    },
-
-    socketMessageReceived(state, action: PayloadAction<Message>) {
-      const msg  = action.payload;
-      const conv = state.messages[msg.conversationId];
-      if (conv) {
-        conv.push(msg);
-      } else {
-        state.messages[msg.conversationId] = [msg];
-      }
     },
   },
   extraReducers: (builder) => {
-    // ── Fetch conversations ──────────────────────────────
     builder
-      .addCase(fetchConversations.pending, (state) => {
+      .addCase(sendChatbotMessage.pending, (state) => {
         state.loading = true;
         state.error   = null;
       })
-      .addCase(fetchConversations.fulfilled, (state, action) => {
-        state.loading       = false;
-        state.conversations = action.payload;
+      .addCase(sendChatbotMessage.fulfilled, (state, action) => {
+        state.loading = false;
+        state.messages.push({
+          id:        Date.now().toString(),
+          role:      'bot',
+          text:      action.payload,
+          timestamp: Date.now(),
+        });
       })
-      .addCase(fetchConversations.rejected, (state, action) => {
+      .addCase(sendChatbotMessage.rejected, (state, action) => {
         state.loading = false;
         state.error   = action.payload as string;
-      });
-
-    // ── Fetch messages ───────────────────────────────────
-    builder
-      .addCase(fetchMessages.pending, (state) => {
-        state.loading = true;
-        state.error   = null;
-      })
-      .addCase(fetchMessages.fulfilled, (state, action) => {
-        state.loading = false;
-        state.messages[action.payload.conversationId] = action.payload.messages;
-      })
-      .addCase(fetchMessages.rejected, (state, action) => {
-        state.loading = false;
-        state.error   = action.payload as string;
-      });
-
-    // ── Send message ─────────────────────────────────────
-    builder
-      .addCase(sendMessage.pending, (state) => {
-        state.sending = true;
-        state.error   = null;
-      })
-      .addCase(sendMessage.fulfilled, (state, action) => {
-        state.sending = false;
-        const { conversationId, message } = action.payload;
-        if (state.messages[conversationId]) {
-          state.messages[conversationId].push(message);
-        } else {
-          state.messages[conversationId] = [message];
-        }
-      })
-      .addCase(sendMessage.rejected, (state, action) => {
-        state.sending = false;
-        state.error   = action.payload as string;
-      });
-
-    // ── Mark read ────────────────────────────────────────
-    builder
-      .addCase(markConversationRead.fulfilled, (state, action) => {
-        const convId   = action.payload;
-        const messages = state.messages[convId];
-        if (messages) messages.forEach(m => { m.read = true; });
+        state.messages.push({
+          id:        Date.now().toString(),
+          role:      'bot',
+          text:      "Sorry, I couldn't connect. Please try again.",
+          timestamp: Date.now(),
+        });
       });
   },
 });
 
-export const {
-  setActiveConversation,
-  clearActiveConversation,
-  clearChatError,
-  setSocketConnected,
-  socketMessageReceived,
-} = chatSlice.actions;
+export const { addUserMessage, clearChat, clearChatbotError } = chatbotSlice.actions;
 
 // ── Selectors ──────────────────────────────────────────────────────────────
-export const selectConversations        = (state: RootState) => state.chat.conversations;
-export const selectActiveConversationId = (state: RootState) => state.chat.activeConversationId;
-export const selectMessages             = (conversationId: string) =>
-  (state: RootState) => state.chat.messages[conversationId] ?? [];
-export const selectChatLoading          = (state: RootState) => state.chat.loading;
-export const selectChatSending          = (state: RootState) => state.chat.sending;
-export const selectChatError            = (state: RootState) => state.chat.error;
-export const selectSocketConnected      = (state: RootState) => state.chat.socketConnected;
+export const selectChatMessages    = (state: RootState) => state.chat.messages;
+export const selectChatbotLoading  = (state: RootState) => state.chat.loading;
+export const selectChatbotError    = (state: RootState) => state.chat.error;
 
-export default chatSlice.reducer;
+export default chatbotSlice.reducer;

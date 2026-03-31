@@ -35,4 +35,9 @@ export const ENDPOINTS = {
     MARK_READ:     (conversationId: string) => `/chat/conversations/${conversationId}/read`,
   },
 
+  // ── Chatbot ───────────────────────────────────────────────
+  CHATBOT: {
+    CHAT: '/chatbot/chat',
+  },
+
 } as const;

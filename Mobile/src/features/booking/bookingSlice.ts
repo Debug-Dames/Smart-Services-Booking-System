@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { BookingState } from './bookingTypes';
-import { fetchMyBookings, fetchBookingById, createBooking, cancelBooking } from './BookingThunks';
+import { fetchMyBookings, fetchBookingById, createBooking, cancelBooking } from './bookingThunks';
 import { RootState } from '../../app/store';
 
 const initialState: BookingState = {
