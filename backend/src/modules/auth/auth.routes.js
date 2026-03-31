@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, getProfile } from "./auth.service.js";
+import { register, login, getProfile, logout } from "./auth.service.js";
 import { protect } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -170,5 +170,7 @@ router.post("/login", login);
 
 
 router.get("/me", protect, getProfile);
+
+router.post("/logout", protect, logout);
 
 export default router;

@@ -139,3 +139,17 @@ export async function getProfile(req, res) {
         res.status(500).json({ message: "Server error" });
     }
 }
+
+// 👤 LOGOUT
+export async function logout(req, res) {
+  try {
+    // With JWT there's nothing to invalidate server-side.
+    // The client deletes the token from SecureStore (already handled in authThunks).
+    // This endpoint exists so the client has a consistent API contract,
+    // and so you can add server-side token revocation here in the future.
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
