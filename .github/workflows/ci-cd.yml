@@ -35,8 +35,28 @@ jobs:
         run: npm run build
 
   backend-check:
-    name: Backend install and smoke test
+    name: Backend install , test and smoke test
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+      JWT_SECRET: testsecret
+      NODE_ENV: test
 
     steps:
       - name: Checkout repository
@@ -52,6 +72,18 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Apply database migrations
+        working-directory: backend
+        run: npx prisma migrate deploy
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
 
       - name: Start backend and check health endpoint
         working-directory: backend

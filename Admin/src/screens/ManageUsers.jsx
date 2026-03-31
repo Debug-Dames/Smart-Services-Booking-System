@@ -26,7 +26,9 @@ const bookingBelongsToUser = (booking, user) => {
   const userEmail = normalize(user.email)
   if (bookingEmail && userEmail && bookingEmail === userEmail) return true
 
-  const bookingName = normalize(booking.userName ?? booking.user)
+  const bookingName = normalize(
+    booking.userName ?? booking.customerName ?? (typeof booking.user === 'string' ? booking.user : booking.user?.name),
+  )
   const userName = normalize(user.name)
   return Boolean(bookingName && userName && bookingName === userName)
 }
@@ -51,18 +53,23 @@ function ManageUsers() {
   const loadUsers = async () => {
     setLoading(true)
     setError('')
-    try {
-      const [usersData, bookingsData] = await Promise.all([
-        adminApi.fetchUsers(),
-        bookingApi.fetchBookings(),
-      ])
-      setUsers(Array.isArray(usersData) ? usersData : [])
-      setBookings(Array.isArray(bookingsData) ? bookingsData : [])
-    } catch {
+
+    const [usersResult, bookingsResult] = await Promise.allSettled([
+      adminApi.fetchUsers(),
+      bookingApi.fetchBookings(),
+    ])
+
+    if (usersResult.status === 'fulfilled') {
+      setUsers(Array.isArray(usersResult.value) ? usersResult.value : [])
+    } else {
       setError('Failed to load users.')
-    } finally {
-      setLoading(false)
     }
+
+    if (bookingsResult.status === 'fulfilled') {
+      setBookings(Array.isArray(bookingsResult.value) ? bookingsResult.value : [])
+    }
+
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -149,15 +156,24 @@ function ManageUsers() {
     setSubmitting(true)
     setError('')
     try {
-      await adminApi.createUser({
+      const created = await adminApi.createUser({
         ...form,
         role: 'user',
         status: 'Active',
         name: form.name.trim(),
         email: form.email.trim(),
       })
+
+
+      if (created) {
+        setUsers((prev) => {
+          const filtered = prev.filter((item) => String(item.id ?? item._id) !== String(created.id ?? created._id))
+          return [created, ...filtered]
+        })
+      }
       setForm({ name: '', email: '', password: '', role: 'user' })
       await loadUsers()
+
     } catch {
       setError('Failed to create user.')
     } finally {
@@ -224,11 +240,11 @@ function ManageUsers() {
           <p className="admin-page-subtitle">Create, search by email, update, disable, and manage all user accounts in one place.</p>
         </div>
         <div className="admin-hero-metrics">
-          <article className="admin-metric-chip"><span>Total Users</span><strong>{metrics.totalUsers}</strong></article>
-          <article className="admin-metric-chip"><span>New Users Added</span><strong>{metrics.newUsersAdded}</strong></article>
-          <article className="admin-metric-chip"><span>Active Users</span><strong>{metrics.activeUsers}</strong></article>
-          <article className="admin-metric-chip"><span>Deleted Users</span><strong>{metrics.deletedUsers}</strong></article>
-          <article className="admin-metric-chip"><span>User Growth</span><strong>{metrics.growthText}</strong></article>
+          <article className="admin-metric-chip metric-users-total"><span>Total Users</span><strong>{metrics.totalUsers}</strong></article>
+          <article className="admin-metric-chip metric-users-new"><span>New Users Added</span><strong>{metrics.newUsersAdded}</strong></article>
+          <article className="admin-metric-chip metric-users-active"><span>Active Users</span><strong>{metrics.activeUsers}</strong></article>
+          <article className="admin-metric-chip metric-users-deleted"><span>Deleted Users</span><strong>{metrics.deletedUsers}</strong></article>
+          <article className="admin-metric-chip metric-users-growth"><span>User Growth</span><strong>{metrics.growthText}</strong></article>
         </div>
       </div>
 

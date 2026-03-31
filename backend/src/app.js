@@ -9,8 +9,6 @@ import contactRoutes from "./modules/contact/contact.routes.js";
 import adminRoutes from "./middlewares/admin.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
-
-
 const app = express();
 
 app.use(cors());
@@ -36,6 +34,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
+app.use(notFoundHandler);
 app.use(errorHandler);
 
 export default app;

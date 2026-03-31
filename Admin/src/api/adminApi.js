@@ -17,6 +17,104 @@ const withApiFallback = async (request, fallback) => {
     }
 }
 
+const adminApi = {
+  createUser: async (data) => {
+    const payload = normalizeUser(data)
+    try {
+      const res = await fetch(`${API}/admin/users`, {
+        method: 'POST',
+        headers: jsonHeaders,
+        body: JSON.stringify(payload),
+      })
+
+      if (res.ok) {
+        const created = (await safeJson(res)) || payload
+        return upsertLocalUser(created)
+      }
+    } catch {
+      // Fallback to local.
+    }
+
+    return upsertLocalUser(payload)
+  },
+
+  updateUser: async (id, data) => {
+    const local = getLocalUsers()
+    const current = local.find((user) => String(user.id) === String(id)) || {}
+    const payload = normalizeUser({ ...current, ...data, id })
+
+    try {
+      const res = await fetch(`${API}/admin/users/${id}`, {
+        method: 'PUT',
+        headers: jsonHeaders,
+        body: JSON.stringify(payload),
+      })
+      if (res.ok) {
+        const updated = (await safeJson(res)) || payload
+        return upsertLocalUser(updated)
+      }
+    } catch {
+      // Fallback to local.
+    }
+
+    return upsertLocalUser(payload)
+  },
+
+  deleteUser: async (id) => {
+    let deleted = false
+
+    try {
+      const res = await fetch(`${API}/admin/users/${id}`, {
+        method: 'DELETE',
+      })
+      deleted = res.ok
+    } catch {
+      deleted = false
+    }
+
+    const local = getLocalUsers()
+    const filtered = local.filter((user) => String(user.id) !== String(id))
+    setLocalUsers(filtered)
+
+    return deleted || filtered.length !== local.length
+  },
+
+  fetchStylists: async () => {
+    const users = await adminApi.fetchUsers()
+    return users.filter((user) => String(user.role || '').toLowerCase() === 'stylist')
+  },
+
+  createStylist: async (data) =>
+    adminApi.createUser({
+      ...data,
+      role: 'stylist',
+      availability: data.availability || 'Available',
+      status: data.status || 'Available',
+    }),
+
+  updateStylist: async (id, data) =>
+    adminApi.updateUser(id, {
+      ...data,
+      role: 'stylist',
+    }),
+
+  deleteStylist: async (id) => adminApi.deleteUser(id),
+
+  fetchServices: async () => {
+    const res = await fetch(`${API}/admin/services`)
+    return res.ok ? res.json() : []
+  },
+
+  createService: async (data) => {
+    const res = await fetch(`${API}/admin/services`, {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify(data),
+    })
+    return res.json()
+  },
+}
+
 export default {
     fetchUsers: async () => {
         return withApiFallback(

@@ -40,15 +40,19 @@ const toServiceArray = (value) => {
 const normalize = (value) => String(value || '').trim().toLowerCase()
 
 const bookingBelongsToStylist = (booking, stylist) => {
-  const bookingStylistId = booking.stylistId ?? booking.stylist?.id ?? booking.stylist?._id
+  const bookingStylistId = booking.stylistId ?? booking.assignedStylistId ?? booking.stylist?.id ?? booking.stylist?._id
   const stylistId = stylist.id ?? stylist._id
   if (bookingStylistId !== undefined && stylistId !== undefined && String(bookingStylistId) === String(stylistId)) return true
 
-  const bookingStylistEmail = normalize(booking.stylistEmail ?? booking.assignedStylistEmail ?? booking.stylist?.email)
+  const bookingStylistEmail = normalize(
+    booking.stylistEmail ?? booking.assignedStylistEmail ?? booking.stylist?.email,
+  )
   const stylistEmail = normalize(stylist.email)
   if (bookingStylistEmail && stylistEmail && bookingStylistEmail === stylistEmail) return true
 
-  const bookingStylistName = normalize(booking.stylistName ?? booking.assignedStylist)
+  const bookingStylistName = normalize(
+    booking.stylistName ?? booking.assignedStylist ?? (typeof booking.stylist === 'string' ? booking.stylist : booking.stylist?.name),
+  )
   const stylistName = normalize(stylist.name)
   return Boolean(bookingStylistName && stylistName && bookingStylistName === stylistName)
 }
@@ -80,18 +84,23 @@ function ManageStylists() {
   const loadStylists = async () => {
     setLoading(true)
     setError('')
-    try {
-      const [stylistsData, bookingsData] = await Promise.all([
-        adminApi.fetchStylists(),
-        bookingApi.fetchBookings(),
-      ])
-      setStylists(Array.isArray(stylistsData) ? stylistsData : [])
-      setBookings(Array.isArray(bookingsData) ? bookingsData : [])
-    } catch {
+
+    const [stylistsResult, bookingsResult] = await Promise.allSettled([
+      adminApi.fetchStylists(),
+      bookingApi.fetchBookings(),
+    ])
+
+    if (stylistsResult.status === 'fulfilled') {
+      setStylists(Array.isArray(stylistsResult.value) ? stylistsResult.value : [])
+    } else {
       setError('Failed to load stylists.')
-    } finally {
-      setLoading(false)
     }
+
+    if (bookingsResult.status === 'fulfilled') {
+      setBookings(Array.isArray(bookingsResult.value) ? bookingsResult.value : [])
+    }
+
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -154,7 +163,7 @@ function ManageStylists() {
     setSubmitting(true)
     setError('')
     try {
-      await adminApi.createStylist({
+      const created = await adminApi.createStylist({
         ...form,
         name: form.name.trim(),
         email: form.email.trim(),
@@ -164,6 +173,14 @@ function ManageStylists() {
         workingHours: form.workingHours,
         services: toServiceArray(form.services),
       })
+
+      if (created) {
+        setStylists((prev) => {
+          const filtered = prev.filter((item) => String(item.id ?? item._id) !== String(created.id ?? created._id))
+          return [created, ...filtered]
+        })
+      }
+
       setForm({
         name: '',
         email: '',
@@ -173,7 +190,8 @@ function ManageStylists() {
         workingHours: '09:00 - 17:00',
         services: 'Haircut',
       })
-      await loadStylists()
+
+      loadStylists()
     } catch {
       setError('Failed to create stylist.')
     } finally {
@@ -233,11 +251,11 @@ function ManageStylists() {
           <p className="admin-page-subtitle">Assign availability, working hours, and services with cleaner operational control.</p>
         </div>
         <div className="admin-hero-metrics">
-          <article className="admin-metric-chip"><span>Total Stylists</span><strong>{metrics.totalStylists}</strong></article>
-          <article className="admin-metric-chip"><span>Available Stylists</span><strong>{metrics.availableStylists}</strong></article>
-          <article className="admin-metric-chip"><span>Busy Stylists</span><strong>{metrics.busyStylists}</strong></article>
-          <article className="admin-metric-chip"><span>Total Services Offered</span><strong>{metrics.totalServicesOffered}</strong></article>
-          <article className="admin-metric-chip"><span>Bookings Per Stylist</span><strong>{metrics.bookingsPerStylist}</strong></article>
+          <article className="admin-metric-chip metric-stylists-total"><span>Total Stylists</span><strong>{metrics.totalStylists}</strong></article>
+          <article className="admin-metric-chip metric-stylists-available"><span>Available Stylists</span><strong>{metrics.availableStylists}</strong></article>
+          <article className="admin-metric-chip metric-stylists-busy"><span>Busy Stylists</span><strong>{metrics.busyStylists}</strong></article>
+          <article className="admin-metric-chip metric-stylists-services"><span>Total Services Offered</span><strong>{metrics.totalServicesOffered}</strong></article>
+          <article className="admin-metric-chip metric-stylists-bookings"><span>Bookings Per Stylist</span><strong>{metrics.bookingsPerStylist}</strong></article>
         </div>
       </div>
 

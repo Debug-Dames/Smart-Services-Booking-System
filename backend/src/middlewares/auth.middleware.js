@@ -13,10 +13,14 @@ export const protect = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(token, env.JWT_SECRET);
-    req.user = decoded;
+    const decodedUserId = Number(decoded?.userId ?? decoded?.id);
+
+    if (Number.isNaN(decodedUserId)) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
 
     const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
+      where: { id: decodedUserId },
     });
 
     if (!user) {
@@ -29,4 +33,4 @@ export const protect = async (req, res, next) => {
     console.error("Auth middleware error:", err);
     res.status(401).json({ message: "Not authorized" });
   }
-};0
+};
