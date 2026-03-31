@@ -26,7 +26,8 @@ let lastGeminiErrorLogAt = 0;
 const getSessionKey = (userKey) => {
   const base = userKey || "anonymous";
   if (isTestEnv()) {
-    return `${base}:test:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+    const workerId = process.env.JEST_WORKER_ID || "0";
+    return `${base}:test:${workerId}`;
   }
   return base;
 };

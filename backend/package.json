@@ -11,6 +11,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -24,6 +25,7 @@
     "openai": "^6.27.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",

@@ -11,7 +11,7 @@ const quickReplies = [
 
 const initialMessage = {
   sender: "bot",
-  text: "Hi,Welcome to DebugDames Salon,how can i help you today?.",
+  text: "Hi! Welcome to DebugDames Salon. How can I help you today?",
   timestamp: Date.now(),
 };
 
@@ -23,7 +23,7 @@ export default function Chatbot() {
   const messagesEndRef = useRef(null);
 
   const apiBase = useMemo(
-    () => import.meta.env.VITE_API_BASE_URL || "https://smart-services-booking-system-backend-uzip.onrender.com",
+    () => import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
     []
   );
 
@@ -54,16 +54,44 @@ export default function Chatbot() {
     setIsTyping(true);
 
     try {
-      const res = await axios.post(`${apiBase}/chat`, { message: text });
+      const res = await axios.post(`${apiBase}/chatbot`, { message: text });
+      const botText =
+        res?.data?.reply ||
+        res?.data?.response ||
+        "I can help with bookings, services, prices, and contact details.";
       setMessages((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: res?.data?.reply || "I can help with bookings, services, prices, and contact details.",
+          text: botText,
           timestamp: Date.now(),
         },
       ]);
-    } catch {
+    } catch (err) {
+      const status = err?.response?.status;
+      const apiFallbackBase = apiBase.endsWith("/api") ? apiBase.slice(0, -4) : apiBase;
+
+      if (status === 404 && apiFallbackBase !== apiBase) {
+        try {
+          const res = await axios.post(`${apiFallbackBase}/chatbot`, { message: text });
+          const botText =
+            res?.data?.reply ||
+            res?.data?.response ||
+            "I can help with bookings, services, prices, and contact details.";
+          setMessages((prev) => [
+            ...prev,
+            {
+              sender: "bot",
+              text: botText,
+              timestamp: Date.now(),
+            },
+          ]);
+          return;
+        } catch {
+          // fall through to error message below
+        }
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -104,9 +132,17 @@ export default function Chatbot() {
       {isOpen ? (
         <section className="chatbot-container" aria-label="Salon Assistant">
           <header className="chatbot-header">
-            <div>
-              <p className="chatbot-title">Salon Assistant</p>
-              <p className="chatbot-subtitle">Online now</p>
+            <div className="chatbot-header-profile">
+              <div className="chatbot-avatar" aria-hidden="true">
+                DD
+              </div>
+              <div>
+                <p className="chatbot-title">Salon Assistant</p>
+                <p className="chatbot-subtitle">
+                  <span className="chatbot-status-dot" aria-hidden="true" />
+                  Online now · Avg reply under 1 min
+                </p>
+              </div>
             </div>
             <div className="chatbot-header-actions">
               <button
@@ -130,7 +166,7 @@ export default function Chatbot() {
             </div>
           </header>
 
-          <div className="chatbot-messages">
+          <div className="chatbot-messages" role="log" aria-live="polite">
             {messages.map((message, idx) => (
               <article
                 key={`${message.timestamp}-${idx}`}
@@ -141,7 +177,13 @@ export default function Chatbot() {
               </article>
             ))}
 
-            {isTyping ? <div className="chatbot-typing">Assistant is typing...</div> : null}
+            {isTyping ? (
+              <div className="chatbot-typing" aria-label="Assistant is typing">
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+              </div>
+            ) : null}
             <div ref={messagesEndRef} />
           </div>
 
@@ -159,6 +201,7 @@ export default function Chatbot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about bookings, prices, or add-ons..."
+              aria-label="Type a message"
             />
             <button type="submit" disabled={isTyping}>
               {isTyping ? "..." : "Send"}

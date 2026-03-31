@@ -7,6 +7,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import chatbotRoutes from "../routes/chatbotRoutes.js";
 
+
 dotenv.config();
 
 const allowedOrigins = env.FRONTEND_ORIGIN
