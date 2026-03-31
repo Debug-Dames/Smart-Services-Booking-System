@@ -51,6 +51,41 @@ export const getBookingById = async (req, res) => {
   }
 }
 
+// export const createBookingController = async (req, res) => {
+//   try {
+//     const payload = {
+//       ...req.body,
+//       userId: req.user?.id ?? req.body?.userId,
+//     };
+
+//     const booking = await createBooking(payload);
+//     return res.status(201).json(booking);
+//   } catch (err) {
+//     if (err.message === "Time slot already booked") {
+//       return res.status(409).json({ message: err.message });
+//     }
+
+//     if (
+//       err.message === "Invalid userId" ||
+//       err.message === "Invalid userId or serviceId" ||
+//       err.message === "Date is required" ||
+//       err.message === "Invalid date" ||
+//       err.message === "Invalid start time" ||
+//       err.message === "Invalid time range" ||
+//       err.message === "Cannot book in the past" ||
+//       err.message === "User not found" ||
+//       err.message === "Service not found"
+//     ) {
+//       return res.status(400).json({ message: err.message });
+//     }
+
+//     return res.status(500).json({ message: "Error creating booking", error: err.message });
+//   }
+// };
+
+// Paste this updated createBookingController into your existing bookings.controller.js
+// Only this function changes — all others remain the same.
+
 export const createBookingController = async (req, res) => {
   try {
     const payload = {
@@ -58,28 +93,38 @@ export const createBookingController = async (req, res) => {
       userId: req.user?.id ?? req.body?.userId,
     };
 
-    const booking = await createBooking(payload);
-    return res.status(201).json(booking);
+    // createBooking now returns { booking, sessionUrl, payment }
+    const { booking, sessionUrl, payment } = await createBooking(payload);
+
+    return res.status(201).json({
+      booking,
+      payment,
+      sessionUrl,   // front-end should redirect user here to complete the deposit
+    });
   } catch (err) {
     if (err.message === "Time slot already booked") {
       return res.status(409).json({ message: err.message });
     }
 
-    if (
-      err.message === "Invalid userId" ||
-      err.message === "Invalid userId or serviceId" ||
-      err.message === "Date is required" ||
-      err.message === "Invalid date" ||
-      err.message === "Invalid start time" ||
-      err.message === "Invalid time range" ||
-      err.message === "Cannot book in the past" ||
-      err.message === "User not found" ||
-      err.message === "Service not found"
-    ) {
+    const clientErrors = [
+      "Invalid userId",
+      "Invalid userId or serviceId",
+      "Date is required",
+      "Invalid date",
+      "Invalid start time",
+      "Invalid time range",
+      "Cannot book in the past",
+      "User not found",
+      "Service not found",
+    ];
+
+    if (clientErrors.includes(err.message)) {
       return res.status(400).json({ message: err.message });
     }
 
-    return res.status(500).json({ message: "Error creating booking", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Error creating booking", error: err.message });
   }
 };
 
