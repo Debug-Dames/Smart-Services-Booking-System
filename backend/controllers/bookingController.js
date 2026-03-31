@@ -29,7 +29,7 @@ export const getBookingById = async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Error fetching booking", error: err.message });
   }
-};
+}; 
 
 // ==========================
 // CREATE BOOKING
