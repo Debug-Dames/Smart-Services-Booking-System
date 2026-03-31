@@ -106,3 +106,36 @@ export async function login(req, res) {
         res.status(500).json({ message: "Server error" });
     }
 }
+
+
+// 👤 GET PROFILE
+export async function getProfile(req, res) {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.id },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                gender: true,
+                role: true,
+                createdAt: true,
+            }
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.status(200).json({ user });
+
+    } catch (error) {
+        console.error("Get profile error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+}

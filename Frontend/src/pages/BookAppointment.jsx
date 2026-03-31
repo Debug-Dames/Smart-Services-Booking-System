@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { bookingService } from "../api/services";
+import { bookingService, getServices } from "../api/services";
 import { useAuth } from "../context/AuthContext";
 import "../Styles/bookAppointment.css";
 import "../Styles/calendar.css";
@@ -13,13 +13,7 @@ const TIME_SLOTS = [
 
 const MAX_BOOKINGS_PER_DAY = 4;
 
-const SERVICES = [
-  { value: "Haircut", label: "Haircut — R150", price: 150 },
-  { value: "Hair Styling", label: "Hair Styling — R200", price: 200 },
-  { value: "Hair Coloring", label: "Hair Coloring — R350", price: 350 },
-  { value: "Nails", label: "Nails — R220", price: 220 },
-  { value: "Braids", label: "Braids — R350", price: 350 },
-];
+const DEFAULT_DURATION_MINUTES = 60;
 
 function pad(n) { return String(n).padStart(2, "0"); }
 
@@ -34,16 +28,35 @@ function formatDisplayDate(dateStr) {
   return `${d} ${months[parseInt(m) - 1]} ${y}`;
 }
 
+function addMinutesToTime(timeStr, minutes) {
+  if (!timeStr) return "";
+  const [h, m] = timeStr.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return "";
+  const total = h * 60 + m + minutes;
+  const hh = Math.floor((total % 1440) / 60);
+  const mm = total % 60;
+  return `${pad(hh)}:${pad(mm)}`;
+}
+
+function toTimeSlot(value) {
+  if (!value) return "";
+  if (typeof value === "string" && /^\d{2}:\d{2}$/.test(value)) return value;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export default function BookAppointment() {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
+  const [services, setServices] = useState([]);
 
   // Step 1 form data
   const [details, setDetails] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
-    service: "",
+    serviceId: "",
   });
 
   // Step 2 calendar/slots
@@ -61,13 +74,27 @@ export default function BookAppointment() {
   const [bookingResult, setBookingResult] = useState(null);
   const [bookingError, setBookingError] = useState("");
 
+  // Fetch services once
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getServices();
+        if (mounted) setServices(Array.isArray(data) ? data : data?.data || []);
+      } catch {
+        if (mounted) setServices([]);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   // Fetch monthly booking counts when month changes
   const fetchMonthly = useCallback(async (date) => {
     try {
       const y = date.getFullYear();
       const m = date.getMonth() + 1;
       const res = await bookingService.getMonthlyBookings(y, m);
-      setMonthlyBookings(res.data || {});
+      setMonthlyBookings(res || {});
     } catch {
       // silent – calendar will just show no color info
     }
@@ -82,8 +109,8 @@ export default function BookAppointment() {
     setSlotsLoading(true);
     try {
       const res = await bookingService.getBookingsByDate(dateStr);
-      const bookings = res.data || [];
-      setBookedSlots(bookings.map(b => b.time));
+      const bookings = res || [];
+      setBookedSlots(bookings.map(b => toTimeSlot(b.startTime || b.time || b.date)));
       setDayBookingCount(bookings.length);
     } catch {
       setBookedSlots([]);
@@ -140,7 +167,7 @@ export default function BookAppointment() {
   };
 
   // Step 1 validation
-  const canProceedStep1 = details.name.trim() && details.email.trim() && details.service;
+  const canProceedStep1 = details.name.trim() && details.email.trim() && details.serviceId;
 
   // Step 2 validation
   const isFullyBooked = dayBookingCount >= MAX_BOOKINGS_PER_DAY;
@@ -148,25 +175,37 @@ export default function BookAppointment() {
   const isSlotDisabled = (slot) => isSlotBooked(slot) || isFullyBooked;
 
   const handleConfirmBooking = async () => {
-    setBookingError("");
-    setConfirming(true);
-    try {
-      const res = await bookingService.createBooking({
-        service: details.service,
-        date: selectedDate,
-        time: selectedTime,
-      });
-      setBookingResult(res.data);
-      setConfirmed(true);
-    } catch (err) {
-      const msg = err?.response?.data?.message || "Booking failed. Please try again.";
-      setBookingError(msg);
-    } finally {
-      setConfirming(false);
-    }
+  setBookingError("");
+  setConfirming(true);
+
+  try {
+    const serviceId = Number(details.serviceId);
+    const service = services.find((s) => Number(s.id) === serviceId);
+    const duration = service?.duration ?? DEFAULT_DURATION_MINUTES;
+    const endTime = addMinutesToTime(selectedTime, duration);
+    const res = await bookingService.createBooking({
+      serviceId,
+      serviceName: service?.name,
+      servicePrice: service?.price,
+      serviceDuration: service?.duration,
+      date: selectedDate,
+      startTime: selectedTime,
+      endTime,
+    });
+
+    setBookingResult(res);
+    setConfirmed(true);
+
+  } catch (err) {
+    console.log(err.response?.data); // helps debug errors
+    const msg = err?.response?.data?.message || "Booking failed. Please try again.";
+    setBookingError(msg);
+  } finally {
+    setConfirming(false);
+  }
   };
 
-  const selectedService = SERVICES.find(s => s.value === details.service);
+  const selectedService = services.find(s => Number(s.id) === Number(details.serviceId));
 
   return (
     <div className="book-page">
@@ -224,12 +263,12 @@ export default function BookAppointment() {
                 <div className="book-field">
                   <label>Service *</label>
                   <select
-                    value={details.service}
-                    onChange={e => setDetails(p => ({ ...p, service: e.target.value }))}
+                    value={details.serviceId}
+                    onChange={e => setDetails(p => ({ ...p, serviceId: e.target.value }))}
                   >
                     <option value="">— Select a service —</option>
-                    {SERVICES.map(s => (
-                      <option key={s.value} value={s.value}>{s.label}</option>
+                    {services.map(s => (
+                      <option key={s.id} value={s.id}>{s.name} - R{s.price}</option>
                     ))}
                   </select>
                 </div>
@@ -369,7 +408,7 @@ export default function BookAppointment() {
                   )}
                   <div className="book-summary-row">
                     <span>Service</span>
-                    <strong>{details.service}</strong>
+                    <strong>{selectedService?.name || "N/A"}</strong>
                   </div>
                   <div className="book-summary-row">
                     <span>Date</span>
@@ -415,7 +454,7 @@ export default function BookAppointment() {
                 <div className="book-success-details">
                   <div className="book-summary-row">
                     <span>Service</span>
-                    <strong>{details.service}</strong>
+                    <strong>{selectedService?.name || "N/A"}</strong>
                   </div>
                   <div className="book-summary-row">
                     <span>Date</span>
@@ -439,7 +478,7 @@ export default function BookAppointment() {
                     className="book-btn book-btn--primary"
                     onClick={() => {
                       setStep(1);
-                      setDetails({ name: user?.name || "", email: user?.email || "", phone: user?.phone || "", service: "" });
+                      setDetails({ name: user?.name || "", email: user?.email || "", phone: user?.phone || "", serviceId: "" });
                       setSelectedDate(null);
                       setSelectedTime(null);
                       setConfirmed(false);

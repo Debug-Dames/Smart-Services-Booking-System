@@ -20,6 +20,14 @@ export const authService = {
 
     return res.data;
   },
+  getMe: async () => {
+    const { data } = await api.get('/auth/me');
+    return data;
+  },
+  updateProfile: async (payload) => {
+    const { data } = await api.put('/auth/profile', payload);
+    return data;
+  },
 };
 
 // --- BOOKINGS ---
@@ -66,8 +74,38 @@ export const bookingService = {
 
 // --- SERVICES ---
 export const getServices = async () => {
-  const { data } = await api.get('/services');
-  return data;
+  return [
+    {
+      id: 2,
+      name: "Haircut",
+      price: 150,
+      duration: 60
+    },
+    {
+      id: 3,
+      name: "Hair Styling",
+      price: 200,
+      duration: 60
+    },
+    {
+      id: 4,
+      name: "Hair Coloring",
+      price: 350,
+      duration: 90
+    },
+    {
+      id: 5,
+      name: "Nails",
+      price: 220,
+      duration: 60
+    },
+    {
+      id: 6,
+      name: "Braids",
+      price: 350,
+      duration: 120
+    }
+  ];
 };
 
 export const getAvailableSlots = async (date, serviceId) => {
