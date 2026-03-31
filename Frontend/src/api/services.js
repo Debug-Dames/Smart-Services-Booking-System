@@ -24,7 +24,10 @@ export const authService = {
 
 // --- BOOKINGS ---
 export const bookingService = {
-    getBookingsByDate: (date) => api.get(`/bookings?date=${date}`),
+    getBookingsByDate: (date) =>
+  api.get(`/bookings/by-date`, {
+    params: { date },
+  }),
     getMonthlyBookings: (year, month) => api.get(`/bookings/monthly?year=${year}&month=${month}`),
     getMyBookings: () => api.get('/bookings/mine'), // ← /mine, not /bookings
     createBooking: (data) => api.post('/bookings', data),
