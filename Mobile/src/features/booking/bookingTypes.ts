@@ -6,16 +6,19 @@ export interface Booking {
   serviceName: string;
   userId: string;
   date: string;       // ISO string e.g. "2026-04-10"
-  time: string;       // e.g. "10:30"
+  startTime: string;  // e.g. "10:00"
+  endTime: string;    // e.g. "11:00"
   status: BookingStatus;
   notes?: string;
   price: number;
+  sessionUrl?: string; // Stripe checkout URL returned on create
 }
 
 export interface CreateBookingPayload {
   serviceId: string;
   date: string;
-  time: string;
+  startTime: string;  // "HH:MM" 24-hour — backend expects this
+  endTime: string;    // "HH:MM" 24-hour — derived from startTime + service duration
   notes?: string;
 }
 
@@ -25,4 +28,5 @@ export interface BookingState {
   loading:    boolean;
   error:      string | null;
   successMsg: string | null;
+  sessionUrl: string | null; // Stripe checkout URL after create
 }

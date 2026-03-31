@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { BookingState } from './bookingTypes';
-import { fetchMyBookings, fetchBookingById, createBooking, cancelBooking } from './bookingThunks';
+import { fetchMyBookings, fetchBookingById, createBooking, cancelBooking } from './BookingThunks';
 import { RootState } from '../../app/store';
 
 const initialState: BookingState = {
@@ -9,6 +9,7 @@ const initialState: BookingState = {
   loading:    false,
   error:      null,
   successMsg: null,
+  sessionUrl: null,
 };
 
 const bookingSlice = createSlice({
@@ -20,6 +21,7 @@ const bookingSlice = createSlice({
     },
     clearBookingSuccess(state) {
       state.successMsg = null;
+      state.sessionUrl = null;
     },
     clearSelectedBooking(state) {
       state.selected = null;
@@ -62,11 +64,15 @@ const bookingSlice = createSlice({
         state.loading    = true;
         state.error      = null;
         state.successMsg = null;
+        state.sessionUrl = null;
       })
       .addCase(createBooking.fulfilled, (state, action) => {
         state.loading    = false;
-        state.successMsg = 'Booking confirmed!';
-        state.items.push(action.payload);
+        state.successMsg = 'Booking created! Complete your deposit to confirm.';
+        state.sessionUrl = action.payload.sessionUrl ?? null;
+        // Add booking to list (without sessionUrl pollution)
+        const { sessionUrl, ...booking } = action.payload;
+        state.items.push(booking);
       })
       .addCase(createBooking.rejected, (state, action) => {
         state.loading = false;
@@ -80,7 +86,7 @@ const bookingSlice = createSlice({
         state.error   = null;
       })
       .addCase(cancelBooking.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loading    = false;
         state.successMsg = 'Booking cancelled.';
         const idx = state.items.findIndex(b => b.id === action.payload.id);
         if (idx !== -1) state.items[idx] = action.payload;
@@ -101,5 +107,6 @@ export const selectSelectedBooking = (state: RootState) => state.booking.selecte
 export const selectBookingLoading  = (state: RootState) => state.booking.loading;
 export const selectBookingError    = (state: RootState) => state.booking.error;
 export const selectBookingSuccess  = (state: RootState) => state.booking.successMsg;
+export const selectSessionUrl      = (state: RootState) => state.booking.sessionUrl;
 
 export default bookingSlice.reducer;
