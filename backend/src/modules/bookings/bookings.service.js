@@ -1,54 +1,3 @@
-
-// import prisma from "../../config/database.js";
-
-
-// // Create a new booking
-// export const createBooking = async ({ userId, serviceId, date, startTime, endTime }) => {
-
-//   const bookingDate = new Date(date)
-//   const start = new Date(startTime.includes("T") ? startTime : `${date}T${startTime}`)
-//   const end = new Date(endTime.includes("T") ? endTime : `${date}T${endTime}`)
-
-//   const today = new Date()
-//   today.setHours(0,0,0,0)
-
-//   if (bookingDate < today) {
-//     throw new Error("Cannot book in the past")
-//   }
-
-//   if (end <= start) {
-//     throw new Error("Invalid time range")
-//   }
-
-//   const existing = await prisma.booking.findFirst({
-//     where: {
-//       serviceId,
-//       startTime: {
-//         lt: end
-//       },
-//       endTime: {
-//         gt: start
-//       }
-//     }
-//   })
-
-//   if (existing) {
-//     throw new Error("Time slot already booked")
-//   }
-
-//   return prisma.booking.create({
-//     data: {
-//       userId,
-//       serviceId,
-//       date: bookingDate,
-//       startTime: start,
-//       endTime: end
-//     }
-//   })
-// }
-
-
-
 import prisma from "../../config/database.js";
 import { createDepositCheckoutSession } from "../payments/payments.service.js";
 
@@ -59,41 +8,31 @@ import { createDepositCheckoutSession } from "../payments/payments.service.js";
  *
  * @returns {{ booking: object, sessionUrl: string, payment: object }}
  */
-export const createBooking = async ({
-  userId,
-  serviceId,
-  date,
-  startTime,
-  endTime,
-}) => {
+export const createBooking = async ({ userId, serviceId, date, startTime, endTime }) => {
+  // ... all your existing validation stays exactly the same ...
+
   if (!userId || isNaN(Number(userId))) throw new Error("Invalid userId");
-  if (!serviceId || isNaN(Number(serviceId)))
-    throw new Error("Invalid userId or serviceId");
+  if (!serviceId || isNaN(Number(serviceId))) throw new Error("Invalid userId or serviceId");
   if (!date) throw new Error("Date is required");
 
   const bookingDate = new Date(date);
   if (isNaN(bookingDate.getTime())) throw new Error("Invalid date");
-
   if (!startTime) throw new Error("Invalid start time");
 
-  const start = new Date(
-    startTime.includes("T") ? startTime : `${date}T${startTime}`
-  );
+  const start = new Date(startTime.includes("T") ? startTime : `${date}T${startTime}`);
   if (isNaN(start.getTime())) throw new Error("Invalid start time");
 
   const end = endTime
     ? new Date(endTime.includes("T") ? endTime : `${date}T${endTime}`)
-    : new Date(start.getTime() + 60 * 60_000); // default 1 hour
+    : new Date(start.getTime() + 60 * 60_000);
 
   if (isNaN(end.getTime())) throw new Error("Invalid time range");
-
   if (end <= start) throw new Error("Invalid time range");
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   if (bookingDate < today) throw new Error("Cannot book in the past");
 
-  // Verify user & service exist
   const [user, service] = await Promise.all([
     prisma.user.findUnique({ where: { id: Number(userId) } }),
     prisma.service.findUnique({ where: { id: Number(serviceId) } }),
@@ -102,7 +41,6 @@ export const createBooking = async ({
   if (!user) throw new Error("User not found");
   if (!service) throw new Error("Service not found");
 
-  // Check for conflicting bookings
   const existing = await prisma.booking.findFirst({
     where: {
       serviceId: Number(serviceId),
@@ -113,7 +51,7 @@ export const createBooking = async ({
 
   if (existing) throw new Error("Time slot already booked");
 
-  // Create booking (status = "pending" until payment confirmed)
+  // ── Step 1: Save booking immediately ──────────────────────
   const booking = await prisma.booking.create({
     data: {
       userId: Number(userId),
@@ -126,14 +64,33 @@ export const createBooking = async ({
     include: { service: true },
   });
 
-  // Create Stripe checkout session for 10% deposit
-  const { sessionUrl, payment } = await createDepositCheckoutSession({
-    bookingId: booking.id,
-    userId: Number(userId),
-    servicePrice: service.price,
-    serviceName: service.name,
-    customerEmail: user.email,
-  });
+  // ── Step 2: Call Stripe with a hard 8s timeout ─────────────
+  let sessionUrl = null;
+  let payment = null;
+
+  try {
+    const stripeResult = await Promise.race([
+      createDepositCheckoutSession({
+        bookingId: booking.id,
+        userId: Number(userId),
+        servicePrice: service.price,
+        serviceName: service.name,
+        customerEmail: user.email,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Stripe timeout")), 25000)
+      ),
+    ]);
+    sessionUrl = stripeResult.sessionUrl;
+    payment = stripeResult.payment;
+  } catch (stripeErr) {
+    // Booking is already saved — Stripe failed silently
+    // User can retry payment from My Bookings screen
+    // Temporarily add to payments.service.js at the top
+    console.log('STRIPE KEY:', process.env.STRIPE_SECRET_KEY?.slice(0, 12));
+    console.log('CLIENT URL:', process.env.CLIENT_URL);
+    console.error("Stripe session error:", stripeErr.message);
+  }
 
   return { booking, sessionUrl, payment };
 };

@@ -28,6 +28,10 @@ async function startServer() {
             console.log(`🚀 Backend running on http://localhost:${PORT}`);
         });
 
+        app.listen(5000, '0.0.0.0', () => {
+            console.log("Backend running on http://0.0.0.0:5000");
+        });
+
     } catch (error) {
         console.error("❌ Database connection failed:", error);
     }

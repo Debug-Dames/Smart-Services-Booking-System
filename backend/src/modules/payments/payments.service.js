@@ -43,7 +43,7 @@ export async function createDepositCheckoutSession({
 
   if (depositCents < 50) {
     // Stripe minimum charge is $0.50
-    throw new Error("Deposit amount is below Stripe minimum charge of $0.50");
+    throw new Error("Deposit amount is below Stripe minimum charge of R0.50");
   }
 
   const session = await stripe.checkout.sessions.create({
@@ -77,7 +77,7 @@ export async function createDepositCheckoutSession({
       bookingId,
       userId,
       amount: depositCents / 100,
-      currency: "usd",
+      currency: "zar",
       status: "pending",
       stripeSessionId: session.id,
     },
