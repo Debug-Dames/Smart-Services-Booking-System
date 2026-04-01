@@ -50,10 +50,10 @@ interface BookingState {
 // ─── Data ─────────────────────────────────────────────────────────────────────
 const SERVICES: Service[] = [
   { id: '1',  name: 'Nails',              duration: '60 min',   durationMinutes: 60,  price: 'R200', emoji: '💅', description: 'Gel, tips' },
-  { id: '7',  name: 'Haircut & Style',    duration: '60 min',   durationMinutes: 60,  price: 'R65',  emoji: '✂️', description: 'Cut, blow-dry & style' },
-  { id: '2',  name: 'Balayage',           duration: '2h 30m',   durationMinutes: 150, price: 'R180', emoji: '🎨', description: 'Hand-painted highlights' },
+  { id: '2',  name: 'Haircut & Style',    duration: '60 min',   durationMinutes: 60,  price: 'R65',  emoji: '✂️', description: 'Cut, blow-dry & style' },
+  { id: '4',  name: 'Instalation',           duration: '2h 30m',   durationMinutes: 150, price: 'R300', emoji: '🎨', description: 'Hand-painted highlights' },
   { id: '3',  name: 'Blowout',            duration: '45 min',   durationMinutes: 45,  price: 'R45',  emoji: '💨', description: 'Wash, blow-dry & finish' },
-  { id: '4',  name: 'Deep Conditioning',  duration: '30 min',   durationMinutes: 30,  price: 'R35',  emoji: '🌿', description: 'Repair & strengthen' },
+  { id: '7',  name: 'Deep Conditioning',  duration: '30 min',   durationMinutes: 30,  price: 'R35',  emoji: '🌿', description: 'Repair & strengthen' },
   { id: '5',  name: 'Keratin Treatment',  duration: '3h',       durationMinutes: 180, price: 'R250', emoji: '✨', description: 'Smooth & frizz-free' },
   { id: '6',  name: 'Root Touch-Up',      duration: '1h 30m',   durationMinutes: 90,  price: 'R90',  emoji: '🖌️', description: 'Single process color' },
 ];
