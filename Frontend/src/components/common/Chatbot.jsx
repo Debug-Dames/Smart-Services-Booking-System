@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
+import { useEffect, useRef, useState } from "react";
+import api from "../../api/axios";
 import "./chatbot.css";
 
 const quickReplies = [
@@ -21,11 +21,10 @@ export default function Chatbot() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
-
-  const apiBase = useMemo(
-    () => import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
-    []
-  );
+  const chatbotPaths = (import.meta.env.VITE_CHATBOT_PATHS || "/chatbot")
+    .split(",")
+    .map((path) => path.trim())
+    .filter(Boolean);
 
   useEffect(() => {
     if (isOpen) {
@@ -54,10 +53,28 @@ export default function Chatbot() {
     setIsTyping(true);
 
     try {
-      const res = await axios.post(`${apiBase}/chatbot`, { message: text });
+      let response;
+      let lastError;
+
+      for (const path of chatbotPaths) {
+        try {
+          response = await api.post(path, { message: text });
+          break;
+        } catch (err) {
+          lastError = err;
+          if (err?.response?.status !== 404) {
+            throw err;
+          }
+        }
+      }
+
+      if (!response && lastError) {
+        throw lastError;
+      }
+
       const botText =
-        res?.data?.reply ||
-        res?.data?.response ||
+        response?.data?.reply ||
+        response?.data?.response ||
         "I can help with bookings, services, prices, and contact details.";
       setMessages((prev) => [
         ...prev,
@@ -69,34 +86,24 @@ export default function Chatbot() {
       ]);
     } catch (err) {
       const status = err?.response?.status;
-      const apiFallbackBase = apiBase.endsWith("/api") ? apiBase.slice(0, -4) : apiBase;
+      const statusText = err?.response?.statusText;
+      const errorMessage = err?.response?.data?.message;
 
-      if (status === 404 && apiFallbackBase !== apiBase) {
-        try {
-          const res = await axios.post(`${apiFallbackBase}/chatbot`, { message: text });
-          const botText =
-            res?.data?.reply ||
-            res?.data?.response ||
-            "I can help with bookings, services, prices, and contact details.";
-          setMessages((prev) => [
-            ...prev,
-            {
-              sender: "bot",
-              text: botText,
-              timestamp: Date.now(),
-            },
-          ]);
-          return;
-        } catch {
-          // fall through to error message below
-        }
+      const fallbackText = status
+        ? `I could not reach the chatbot service right now (${status}${statusText ? ` ${statusText}` : ""}). Please try again in a moment.`
+        : "I could not reach the chatbot service right now. Please try again in a moment.";
+
+      if (errorMessage) {
+        console.warn("Chatbot error:", errorMessage);
+      } else if (status) {
+        console.warn("Chatbot error:", status, statusText || "");
       }
 
       setMessages((prev) => [
         ...prev,
         {
           sender: "bot",
-          text: "I could not reach the chatbot service right now. Please try again in a moment.",
+          text: fallbackText,
           timestamp: Date.now(),
         },
       ]);
@@ -140,7 +147,7 @@ export default function Chatbot() {
                 <p className="chatbot-title">Salon Assistant</p>
                 <p className="chatbot-subtitle">
                   <span className="chatbot-status-dot" aria-hidden="true" />
-                  Online now Â· Avg reply under 1 min
+                  Online now · Avg reply under 1 min
                 </p>
               </div>
             </div>
@@ -221,3 +228,18 @@ export default function Chatbot() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

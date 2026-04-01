@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-
+import dotenv from "dotenv";
 import authRoutes from "./modules/auth/auth.routes.js";
 import paymentRoutes from "./modules/payments/payments.routes.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
@@ -10,6 +10,8 @@ import adminRoutes from "./modules/admin/admin.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import chatbotRoutes from "../routes/chatbotRoutes.js";
+
+dotenv.config();
 const app = express();
 
 app.use(cors());

@@ -5,7 +5,6 @@ import { ensureBookingTimeColumns } from "./config/database.js";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import chatbotRoutes from "../routes/chatbotRoutes.js";
 
 
 dotenv.config();
@@ -13,16 +12,19 @@ dotenv.config();
 const allowedOrigins = env.FRONTEND_ORIGIN
   ? env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean)
   : [];
-
 app.use(
   cors({
-    origin: allowedOrigins.length > 0 ? allowedOrigins : false,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.length === 0) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
 app.use(express.json());
 
-app.use("/api", chatbotRoutes);
 
 const prisma = new PrismaClient();
 const PORT = env.PORT || 5000;
@@ -44,3 +46,7 @@ async function startServer() {
 }
 
 startServer();
+
+
+
+

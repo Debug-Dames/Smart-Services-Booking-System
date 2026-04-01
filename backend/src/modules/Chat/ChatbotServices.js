@@ -397,7 +397,7 @@ const handleBookingFlow = async (message, { userId, userKey, sessionKey }) => {
 
   if (!userId) {
     bookingSessions.delete(sessionKey);
-    return `Great! I have your appointment details for ${serviceRecord.name} on ${session.date} at ${session.time}. Click here to proceed to book your appointment.`;
+    return `Great! I have your appointment for ${serviceRecord.name} on ${session.date} at ${session.time}. Thank you, bye.`;
   }
 
   try {
@@ -409,7 +409,7 @@ const handleBookingFlow = async (message, { userId, userKey, sessionKey }) => {
       endTime: end.toISOString(),
     });
     bookingSessions.delete(sessionKey);
-    return `Your appointment is booked for ${session.date} at ${session.time}. Click here to proceed to book your appointment.`;
+    return `Great! Your appointment is booked for ${session.date} at ${session.time}. Thank you, bye.`;
   } catch (err) {
     return err?.message || "I couldn't complete the booking. Please try again.";
   }
@@ -443,6 +443,34 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
   );
   const inferredService = extractServiceFallback(message);
 
+  const nonBookingIntent =
+    containsAny(["hello", "hi", "hey"], text) ||
+    containsAny(
+      [
+        "services",
+        "service",
+        "what services do you offer",
+        "what do you offer",
+        "available services",
+        "what can i book",
+      ],
+      text
+    ) ||
+    containsAny(["price", "prices", "cost", "pricing", "how much", "rate", "rates"], text) ||
+    containsAny(["add-on", "add on", "add ons", "addon", "addons", "extras", "extra services"], text) ||
+    containsAny(["contact", "phone", "email"], text) ||
+    containsAny(["cancellation", "cancelation", "cancel", "policy", "policies"], text) ||
+    containsAny([
+      "thank you",
+      "thanks",
+      "no more questions",
+      "that's all",
+      "thats all",
+      "no further questions",
+      "all good",
+    ], text);
+  const isBookingRequest = bookingIntent && !nonBookingIntent;
+
   if (activeSession?.active) {
     if (containsAny(["cancel", "stop", "never mind", "nevermind"], text)) {
       bookingSessions.delete(sessionKey);
@@ -453,7 +481,7 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
 
   // now use `text` in all checks
 
-  if (bookingIntent && inferredService) {
+  if (isBookingRequest && inferredService) {
     const session = {
       active: true,
       service: inferredService,
@@ -514,9 +542,7 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
   }
 
   // 3️⃣ Booking & Appointments
-  if (
-    bookingIntent
-  ) {
+  if (isBookingRequest) {
     return handleBookingFlow(message, { userId, userKey, sessionKey });
   }
 
@@ -568,3 +594,7 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
   // 9️⃣ Fallback
   return "Sorry, I didn't understand that. Please ask about salon services.";
 };
+
+
+
+
