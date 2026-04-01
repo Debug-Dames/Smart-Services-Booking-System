@@ -160,7 +160,7 @@ export const createBooking = async (data, user) => {
     data: {
       userId: bookingUserId,
       serviceId: Number(serviceId),
-      // stylistId: stylistId ? Number(stylistId) : null, // optional now
+      stylistId: stylistId ? Number(stylistId) : null,
       startTime: start,
       endTime: end,
       date: new Date(start.setHours(0, 0, 0, 0))

@@ -6,7 +6,7 @@ import paymentRoutes from "./modules/payments/payments.routes.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 import bookingRoutes from "./modules/bookings/bookings.routes.js";
 import contactRoutes from "./modules/contact/contact.routes.js";
-import adminRoutes from "./middlewares/admin.routes.js";
+import adminRoutes from "./modules/admin/admin.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 const app = express();

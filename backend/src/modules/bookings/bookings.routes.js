@@ -164,12 +164,12 @@ router.get("/:id", protect, bookingController.getBookingById);
  *       400:
  *         description: Invalid input or validation error
  *       401:
- *         description: Unauthorized â€“ JWT token missing or invalid
+ *         description: Unauthorized – JWT token missing or invalid
  *       409:
  *         description: Time slot already booked
  */
 
-router.post("/", protect, bookingController.createBookingController);
+router.post("/", protect, validateBooking, bookingController.createBookingController);
 
 /**
  * @swagger
@@ -232,20 +232,8 @@ router.put("/:id", protect, bookingController.updateBooking);
  *         description: Unauthorized
  */
 router.delete("/:id", protect, bookingController.deleteBooking);
-
-
-router.get("/", bookingController.getAllBookings);
-router.post("/lock", validateBooking, bookingController.lockSlot);
-router.delete("/lock/:token", bookingController.unlockSlot);
-
-// Create route is public for now (no token required)
-router.post("/", validateBooking, bookingController.createBooking);
-router.get("/:id", bookingController.getBookingById);
-router.put("/:id", bookingController.updateBooking);
-router.delete("/:id", bookingController.deleteBooking);
-
-router.post("/lock", validateBooking, bookingController.lockSlotController);
-router.delete("/lock/:token", bookingController.unlockSlotController);
+router.post("/lock", protect, validateBooking, bookingController.lockSlotController);
+router.delete("/lock/:token", protect, bookingController.unlockSlotController);
 
 
 export default router;
