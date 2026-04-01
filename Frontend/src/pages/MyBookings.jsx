@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { cancelBooking, getMyBookings, updateBooking } from "../api/services";
+import { cancelBooking, getMyBookings, updateBooking, getServices } from "../api/services";
 import "../Styles/myBookings.css";
 
 export default function MyBookings() {
@@ -10,6 +10,7 @@ export default function MyBookings() {
   const [dateDrafts, setDateDrafts] = useState({});
   const [timeDrafts, setTimeDrafts] = useState({});
   const [actionState, setActionState] = useState({});
+  const [serviceMap, setServiceMap] = useState({});
 
   const fetchBookings = () => {
     setLoading(true);
@@ -52,6 +53,25 @@ export default function MyBookings() {
 
   useEffect(() => {
     fetchBookings();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getServices();
+        const list = Array.isArray(data) ? data : data?.data || [];
+        if (!mounted) return;
+        const map = list.reduce((acc, svc) => {
+          if (svc?.id != null) acc[Number(svc.id)] = svc?.name;
+          return acc;
+        }, {});
+        setServiceMap(map);
+      } catch {
+        if (mounted) setServiceMap({});
+      }
+    })();
+    return () => { mounted = false; };
   }, []);
 
   function setActionFor(id, value) {
@@ -281,7 +301,13 @@ export default function MyBookings() {
 
         <div className="my-bookings-grid">
           {bookings.map((booking) => {
-            const serviceName = booking?.service?.name || booking?.service || "N/A";
+            const serviceName =
+              booking?.service?.name ||
+              booking?.service?.title ||
+              booking?.serviceName ||
+              serviceMap[Number(booking?.serviceId)] ||
+              booking?.service ||
+              "N/A";
             const status = normalizeStatus(booking?.status);
             const timeValue = booking?.startTime || booking?.time || booking?.appointment_time || booking?.date;
             const bookingId = booking?.id ?? booking?.bookingId;
