@@ -9,7 +9,9 @@ import ManageUsers from './screens/ManageUsers'
 import './styles/admin.css'
 
 const isAdminAuthenticated = () => {
-  return localStorage.getItem('adminAuth') === 'true'
+  const isAuthed = localStorage.getItem('adminAuth') === 'true'
+  const token = localStorage.getItem('adminToken')
+  return isAuthed && Boolean(token)
 }
 
 const RequireAdmin = ({ children }) => {

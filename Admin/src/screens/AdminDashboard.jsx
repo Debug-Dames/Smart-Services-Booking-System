@@ -24,9 +24,22 @@ const normalizeDate = (value) => {
 }
 
 const getBookingAmount = (booking) =>
-    toAmount(booking.amount ?? booking.total ?? booking.price ?? booking.servicePrice)
+    toAmount(
+        booking.amount ??
+        booking.total ??
+        booking.price ??
+        booking.servicePrice ??
+        booking.service?.price,
+    )
 
-const getServiceName = (booking) => booking.serviceName || booking.service || 'Unknown Service'
+const getServiceName = (booking) => {
+    if (typeof booking.serviceName === 'string' && booking.serviceName.trim()) return booking.serviceName.trim()
+    if (typeof booking.service === 'string' && booking.service.trim()) return booking.service.trim()
+    if (booking.service && typeof booking.service === 'object') {
+        if (typeof booking.service.name === 'string' && booking.service.name.trim()) return booking.service.name.trim()
+    }
+    return 'Unknown Service'
+}
 
 const isSameDay = (date, target) =>
     date.getFullYear() === target.getFullYear() &&
@@ -65,11 +78,12 @@ const StatCard = ({ title, value, subtitle }) => (
 
 const BarChart = ({ title, data }) => {
     const maxValue = Math.max(...data.map((item) => item.value), 1)
+    const isEmpty = data.every((item) => item.value === 0)
 
     return (
-        <article className="admin-card chart-card">
+        <article className={`admin-card chart-card ${isEmpty ? 'chart-card-compact' : ''}`}>
             <h3>{title}</h3>
-            <div className="bar-chart" role="img" aria-label={title}>
+            <div className={`bar-chart ${isEmpty ? 'is-empty' : ''}`} role="img" aria-label={title}>
                 {data.map((item) => (
                     <div key={item.label} className="bar-chart-item">
                         <div className="bar-track">
@@ -93,6 +107,7 @@ const LineChart = ({ title, data }) => {
     const height = 220
     const padding = 24
     const maxValue = Math.max(...data.map((item) => item.value), 1)
+    const isEmpty = data.every((item) => item.value === 0)
     const stepX = data.length > 1 ? (width - padding * 2) / (data.length - 1) : 0
 
     const points = data.map((item, index) => {
@@ -104,10 +119,10 @@ const LineChart = ({ title, data }) => {
     const polylinePoints = points.map((point) => `${point.x},${point.y}`).join(' ')
 
     return (
-        <article className="admin-card chart-card">
+        <article className={`admin-card chart-card ${isEmpty ? 'chart-card-compact' : ''}`}>
             <h3>{title}</h3>
-            <div className="line-chart-wrap">
-                <svg viewBox={`0 0 ${width} ${height}`} className="line-chart" role="img" aria-label={title}>
+            <div className={`line-chart-wrap ${isEmpty ? 'is-empty' : ''}`}>
+                <svg viewBox={`0 0 ${width} ${height}`} className={`line-chart ${isEmpty ? 'is-empty' : ''}`} role="img" aria-label={title}>
                     <polyline points={polylinePoints} className="line-path" />
                     {points.map((point) => (
                         <circle key={point.label} cx={point.x} cy={point.y} r="4" className="line-point">
@@ -132,6 +147,7 @@ const LineChart = ({ title, data }) => {
 
 const PieChart = ({ title, data }) => {
     const total = data.reduce((sum, item) => sum + item.value, 0)
+    const isCompact = data.length <= 1
     const size = 220
     const center = size / 2
     const radius = 90
@@ -152,9 +168,9 @@ const PieChart = ({ title, data }) => {
     ).items
 
     return (
-        <article className="admin-card chart-card">
+        <article className={`admin-card chart-card ${isCompact ? 'chart-card-compact' : 'chart-card-wide'}`}>
             <h3>{title}</h3>
-            <div className="pie-chart-wrap">
+            <div className={`pie-chart-wrap ${isCompact ? 'is-compact' : ''}`}>
                 <svg viewBox={`0 0 ${size} ${size}`} className="pie-chart" role="img" aria-label={title}>
                     {slices.map((slice) => (
                         <path key={slice.label} d={slice.path} fill={slice.color}>

@@ -19,6 +19,7 @@ const workingHoursOptions = [
   '09:00 - 17:00',
   '10:00 - 18:00',
   '11:00 - 19:00',
+  '15:00 - 20:00',
 ]
 
 const serviceOptions = [
@@ -168,6 +169,7 @@ function ManageStylists() {
         name: form.name.trim(),
         email: form.email.trim(),
         specialty: form.specialty.trim(),
+        category: form.specialty.trim(),
         availability: form.availability,
         status: form.availability,
         workingHours: form.workingHours,
@@ -212,7 +214,7 @@ function ManageStylists() {
   const startEdit = (stylist) => {
     setEditingId(stylist.id ?? stylist._id)
     setEditForm({
-      specialty: stylist.specialty || '',
+      specialty: stylist.specialty || stylist.category || '',
       availability: stylist.availability || stylist.status || 'Available',
       workingHours: stylist.workingHours || '09:00 - 17:00',
       status: stylist.status || stylist.availability || 'Available',
@@ -230,6 +232,7 @@ function ManageStylists() {
     try {
       await adminApi.updateStylist(id, {
         specialty: editForm.specialty,
+        category: editForm.specialty,
         availability: editForm.availability,
         workingHours: editForm.workingHours,
         status: editForm.status,

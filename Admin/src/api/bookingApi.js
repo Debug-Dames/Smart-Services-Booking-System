@@ -1,77 +1,71 @@
-const API = import.meta.env.VITE_API_URL || ''
-const jsonHeaders = { 'Content-Type': 'application/json' }
-import { getDemoCollection, isDemoModeEnabled, updateDemoItem } from '../utils/demoData'
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-const withApiFallback = async (request, fallback) => {
-    if (isDemoModeEnabled()) return fallback()
-    try {
-        return await request()
-    } catch {
-        return fallback()
+const clearAdminSession = () => {
+    localStorage.removeItem('adminAuth')
+    localStorage.removeItem('adminUser')
+    localStorage.removeItem('adminToken')
+}
+
+const handleUnauthorized = (res) => {
+    if (res.status !== 401) return
+    clearAdminSession()
+    if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.assign('/login')
     }
+}
+
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('adminToken')
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    }
+}
+
+const parseJson = async (res, fallbackMessage) => {
+    const data = await res.json().catch(() => null)
+    handleUnauthorized(res)
+    if (!res.ok) {
+        throw new Error(data?.message || fallbackMessage)
+    }
+    return data
 }
 
 export default {
     fetchAllBookings: async () => {
-        return withApiFallback(
-            async () => {
-                const res = await fetch(`${API}/bookings`)
-                if (!res.ok) throw new Error('bookings fetch failed')
-                return res.json()
-            },
-            () => getDemoCollection('bookings'),
-        )
+        const res = await fetch(`${API}/bookings`, {
+            headers: getAuthHeaders(),
+        })
+        return parseJson(res, 'Failed to fetch bookings')
     },
     fetchBookings: async () => {
-        return withApiFallback(
-            async () => {
-                const res = await fetch(`${API}/bookings`)
-                if (!res.ok) throw new Error('bookings fetch failed')
-                return res.json()
-            },
-            () => getDemoCollection('bookings'),
-        )
+        const res = await fetch(`${API}/bookings`, {
+            headers: getAuthHeaders(),
+        })
+        return parseJson(res, 'Failed to fetch bookings')
     },
     updateBooking: async (id, data) => {
-        return withApiFallback(
-            async () => {
-                const res = await fetch(`${API}/bookings/${id}`, {
-                    method: 'PUT',
-                    headers: jsonHeaders,
-                    body: JSON.stringify(data),
-                })
-                if (!res.ok) throw new Error('booking update failed')
-                return res.json()
-            },
-            () => updateDemoItem('bookings', id, data),
-        )
+        const res = await fetch(`${API}/bookings/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(data),
+        })
+        return parseJson(res, 'Failed to update booking')
     },
     updateBookingStatus: async (id, status) => {
-        return withApiFallback(
-            async () => {
-                const res = await fetch(`${API}/bookings/${id}`, {
-                    method: 'PUT',
-                    headers: jsonHeaders,
-                    body: JSON.stringify({ status }),
-                })
-                if (!res.ok) throw new Error('booking status update failed')
-                return res.json()
-            },
-            () => updateDemoItem('bookings', id, { status }),
-        )
+        const res = await fetch(`${API}/bookings/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ status }),
+        })
+        return parseJson(res, 'Failed to update booking status')
     },
     cancelBooking: async (id) => {
-        return withApiFallback(
-            async () => {
-                const res = await fetch(`${API}/bookings/${id}`, {
-                    method: 'PUT',
-                    headers: jsonHeaders,
-                    body: JSON.stringify({ status: 'Cancelled' }),
-                })
-                if (!res.ok) throw new Error('booking cancel failed')
-                return res.json()
-            },
-            () => updateDemoItem('bookings', id, { status: 'Cancelled' }),
-        )
+        const res = await fetch(`${API}/bookings/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ status: 'Cancelled' }),
+        })
+        return parseJson(res, 'Failed to cancel booking')
     },
 }

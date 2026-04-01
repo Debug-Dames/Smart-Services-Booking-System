@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import bookingApi from '../api/bookingApi'
+import adminApi from '../api/adminApi'
 
 const STATUS_OPTIONS = ['Pending', 'Confirmed', 'Cancelled', 'Completed', 'Rejected']
 
@@ -27,6 +28,8 @@ const normalizeBooking = (booking) => ({
   id: booking.id,
   customer: booking.userName || booking.user?.name || booking.user || booking.customer || booking.email || 'Unknown',
   service: booking.serviceName || booking.service?.name || booking.service || 'N/A',
+  stylistId: booking.stylistId ?? booking.stylist?.id ?? null,
+  stylistName: booking.stylistName || booking.stylist?.name || 'Unassigned',
   date: normalizeDateForInput(booking.date || booking.appointment_date || booking.bookingDate || booking.startTime || booking.createdAt),
   time: normalizeTimeForInput(booking.time || booking.appointment_time || booking.startTime),
   status: toTitle(booking.status),
@@ -52,28 +55,38 @@ const STATUS_CHIPS = [
 
 const ManageBookings = () => {
   const [bookings, setBookings] = useState([])
+  const [stylists, setStylists] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filters, setFilters] = useState({ date: '', service: '', status: '', search: '' })
   const [editingId, setEditingId] = useState(null)
   const [editStatus, setEditStatus] = useState('Pending')
+  const [editStylistId, setEditStylistId] = useState('')
   const [busyId, setBusyId] = useState(null)
 
   const loadBookings = async () => {
     setLoading(true)
     setError('')
-    try {
-      const data = await bookingApi.fetchAllBookings()
-      const safeData = Array.isArray(data) ? data : []
+    const [bookingsResult, stylistsResult] = await Promise.allSettled([
+      bookingApi.fetchAllBookings(),
+      adminApi.fetchStylists(),
+    ])
+
+    if (bookingsResult.status === 'fulfilled') {
+      const safeData = Array.isArray(bookingsResult.value) ? bookingsResult.value : []
       const normalized = safeData.map(normalizeBooking)
       normalized.sort((a, b) => `${b.date} ${b.time}`.localeCompare(`${a.date} ${a.time}`))
       setBookings(normalized)
-    } catch (err) {
-      setError(err.message || 'Failed to load bookings')
+    } else {
+      setError('Failed to load bookings')
       setBookings([])
-    } finally {
-      setLoading(false)
     }
+
+    if (stylistsResult.status === 'fulfilled') {
+      setStylists(Array.isArray(stylistsResult.value) ? stylistsResult.value : [])
+    }
+
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -137,11 +150,13 @@ const ManageBookings = () => {
   const startEdit = (booking) => {
     setEditingId(booking.id)
     setEditStatus(booking.status)
+    setEditStylistId(booking.stylistId ? String(booking.stylistId) : '')
   }
 
   const cancelEdit = () => {
     setEditingId(null)
     setEditStatus('Pending')
+    setEditStylistId('')
   }
 
   const applyStatus = async (bookingId, status) => {
@@ -153,6 +168,23 @@ const ManageBookings = () => {
       cancelEdit()
     } catch (err) {
       setError(err.message || 'Failed to update booking status')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  const saveBookingEdit = async (bookingId) => {
+    try {
+      setBusyId(bookingId)
+      setError('')
+      await bookingApi.updateBooking(bookingId, {
+        status: editStatus,
+        stylistId: editStylistId ? Number(editStylistId) : null,
+      })
+      await loadBookings()
+      cancelEdit()
+    } catch (err) {
+      setError(err.message || 'Failed to update booking')
     } finally {
       setBusyId(null)
     }
@@ -264,6 +296,7 @@ const ManageBookings = () => {
                 <tr>
                   <th>Customer</th>
                   <th>Service</th>
+                  <th>Stylist</th>
                   <th>Date</th>
                   <th>Time</th>
                   <th>Status</th>
@@ -278,6 +311,20 @@ const ManageBookings = () => {
                     <tr key={booking.id}>
                       <td>{booking.customer}</td>
                       <td>{booking.service}</td>
+                      <td>
+                        {isEditing ? (
+                          <select value={editStylistId} onChange={(e) => setEditStylistId(e.target.value)}>
+                            <option value="">Unassigned</option>
+                            {stylists.map((stylist) => (
+                              <option key={stylist.id} value={stylist.id}>
+                                {stylist.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          booking.stylistName || 'Unassigned'
+                        )}
+                      </td>
                       <td>{booking.date || '-'}</td>
                       <td>{booking.time || '-'}</td>
                       <td>
@@ -297,7 +344,7 @@ const ManageBookings = () => {
                         <div className="booking-actions">
                           {isEditing ? (
                             <>
-                              <button className="admin-btn" type="button" disabled={isBusy} onClick={() => applyStatus(booking.id, editStatus)}>
+                              <button className="admin-btn" type="button" disabled={isBusy} onClick={() => saveBookingEdit(booking.id)}>
                                 Save
                               </button>
                               <button className="admin-btn admin-btn-soft" type="button" disabled={isBusy} onClick={cancelEdit}>
@@ -330,7 +377,7 @@ const ManageBookings = () => {
                 })}
                 {!filteredBookings.length ? (
                   <tr>
-                    <td colSpan="6" className="booking-empty">
+                    <td colSpan="7" className="booking-empty">
                       No bookings found for the selected filters.
                     </td>
                   </tr>

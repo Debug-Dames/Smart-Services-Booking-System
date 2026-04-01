@@ -7,7 +7,7 @@ const AdminSidebar = () => {
     const handleLogout = () => {
         localStorage.removeItem('adminAuth')
         localStorage.removeItem('adminUser')
-        localStorage.removeItem('token')
+        localStorage.removeItem('adminToken')
         navigate('/login', { replace: true })
     }
 
@@ -21,11 +21,7 @@ const AdminSidebar = () => {
                             Dashboard
                         </NavLink>
                     </li>
-                    <li>
-                        <NavLink to="bookings" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
-                            Dashboard
-                        </NavLink>
-                    </li>
+                
                     <li>
                         <NavLink to="bookings" className={({ isActive }) => `admin-nav-link${isActive ? ' is-active' : ''}`}>
                             Bookings

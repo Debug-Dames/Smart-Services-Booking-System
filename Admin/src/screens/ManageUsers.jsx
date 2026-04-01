@@ -2,17 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import adminApi from '../api/adminApi'
 import bookingApi from '../api/bookingApi'
 
-const DELETED_USERS_KEY = 'admin_deleted_users_count'
 const USER_STATUSES = ['Active', 'Suspended', 'Blocked']
+const CUSTOMER_ROLES = new Set(['user', 'customer'])
 
 const toDate = (value) => {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date
-}
-
-const getDeletedCount = () => {
-  const raw = Number(localStorage.getItem(DELETED_USERS_KEY) || '0')
-  return Number.isFinite(raw) && raw >= 0 ? raw : 0
 }
 
 const normalize = (value) => String(value || '').trim().toLowerCase()
@@ -42,7 +37,6 @@ function ManageUsers() {
   const [search, setSearch] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState({ name: '', email: '', status: 'Active' })
-  const [deletedUsers, setDeletedUsers] = useState(getDeletedCount)
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -76,12 +70,8 @@ function ManageUsers() {
     loadUsers()
   }, [])
 
-  useEffect(() => {
-    localStorage.setItem(DELETED_USERS_KEY, String(deletedUsers))
-  }, [deletedUsers])
-
   const userAccounts = useMemo(
-    () => users.filter((user) => String(user.role || 'user').toLowerCase() === 'user'),
+    () => users.filter((user) => CUSTOMER_ROLES.has(String(user.role || 'CUSTOMER').toLowerCase())),
     [users],
   )
 
@@ -129,6 +119,10 @@ function ManageUsers() {
       return Number(bookingCountMap.get(String(id)) || 0) > 0
     }).length
 
+    const suspendedUsers = userAccounts.filter((user) =>
+      ['suspended', 'blocked'].includes(String(user.status || 'Active').toLowerCase()),
+    ).length
+
     const growthText = previousPeriodUsers === 0
       ? `${newUsersAdded > 0 ? '+' : ''}${newUsersAdded}`
       : `${(((newUsersAdded - previousPeriodUsers) / previousPeriodUsers) * 100).toFixed(1)}%`
@@ -137,10 +131,10 @@ function ManageUsers() {
       totalUsers: userAccounts.length,
       newUsersAdded,
       activeUsers,
-      deletedUsers,
+      suspendedUsers,
       growthText,
     }
-  }, [userAccounts, deletedUsers, bookingCountMap])
+  }, [userAccounts, bookingCountMap])
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -163,19 +157,11 @@ function ManageUsers() {
         name: form.name.trim(),
         email: form.email.trim(),
       })
-
-
-      if (created) {
-        setUsers((prev) => {
-          const filtered = prev.filter((item) => String(item.id ?? item._id) !== String(created.id ?? created._id))
-          return [created, ...filtered]
-        })
-      }
       setForm({ name: '', email: '', password: '', role: 'user' })
       await loadUsers()
 
-    } catch {
-      setError('Failed to create user.')
+    } catch (err) {
+      setError(err.message || 'Failed to create user.')
     } finally {
       setSubmitting(false)
     }
@@ -205,8 +191,8 @@ function ManageUsers() {
       })
       cancelEdit()
       await loadUsers()
-    } catch {
-      setError('Failed to update user.')
+    } catch (err) {
+      setError(err.message || 'Failed to update user.')
     }
   }
 
@@ -215,19 +201,18 @@ function ManageUsers() {
     try {
       await adminApi.updateUser(id, { status })
       await loadUsers()
-    } catch {
-      setError('Failed to update user status.')
+    } catch (err) {
+      setError(err.message || 'Failed to update user status.')
     }
   }
 
   const handleDelete = async (id) => {
     setError('')
     try {
-      const removed = await adminApi.deleteUser(id)
-      if (removed) setDeletedUsers((prev) => prev + 1)
+      await adminApi.deleteUser(id)
       await loadUsers()
-    } catch {
-      setError('Failed to delete user.')
+    } catch (err) {
+      setError(err.message || 'Failed to delete user.')
     }
   }
 
@@ -243,7 +228,7 @@ function ManageUsers() {
           <article className="admin-metric-chip metric-users-total"><span>Total Users</span><strong>{metrics.totalUsers}</strong></article>
           <article className="admin-metric-chip metric-users-new"><span>New Users Added</span><strong>{metrics.newUsersAdded}</strong></article>
           <article className="admin-metric-chip metric-users-active"><span>Active Users</span><strong>{metrics.activeUsers}</strong></article>
-          <article className="admin-metric-chip metric-users-deleted"><span>Deleted Users</span><strong>{metrics.deletedUsers}</strong></article>
+          <article className="admin-metric-chip metric-users-deleted"><span>Suspended Users</span><strong>{metrics.suspendedUsers}</strong></article>
           <article className="admin-metric-chip metric-users-growth"><span>User Growth</span><strong>{metrics.growthText}</strong></article>
         </div>
       </div>
@@ -330,7 +315,7 @@ function ManageUsers() {
                           user.email || 'N/A'
                         )}
                       </td>
-                      <td>user</td>
+                      <td>{CUSTOMER_ROLES.has(String(user.role || '').toLowerCase()) ? 'User' : (user.role || 'N/A')}</td>
                       <td>{created ? created.toLocaleDateString() : 'N/A'}</td>
                       <td>
                         {isEditing ? (
