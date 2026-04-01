@@ -19,7 +19,7 @@ const PORT = env.PORT || 5000;
 
 async function startServer() {
     try {
-        // await ensureBookingTimeColumns();
+        await ensureBookingTimeColumns();
         
         await prisma.$connect();
         console.log("✅ Database connected successfully");

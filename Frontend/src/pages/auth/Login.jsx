@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../api/services';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axios';
 import '../../Styles/auth.css';
 
 export default function Login() {
@@ -79,22 +80,16 @@ export default function Login() {
             required
           />
 
-          {error ? <p className="auth-error">{error}</p> : null}
+          {error && <p className="auth-error">{error}</p>}
 
           <button type="submit" className="auth-primary-btn" disabled={loading}>
-            {loading ? 'Logging in...' : 'Sign in'}
+            {loading ? 'Logging in…' : 'Sign in'}
           </button>
 
-          <div className="auth-separator">
-            <span>or</span>
-          </div>
+          <div className="auth-separator"><span>or</span></div>
 
-          <button type="button" className="auth-secondary-btn">
-            Continue with Google
-          </button>
-          <button type="button" className="auth-secondary-btn auth-secondary-btn--dark">
-            Continue with Apple
-          </button>
+          <button type="button" className="auth-secondary-btn">Continue with Google</button>
+          <button type="button" className="auth-secondary-btn auth-secondary-btn--dark">Continue with Apple</button>
 
           <p className="auth-helper-text">
             Don&apos;t have an account? <Link to="/register">Register</Link>
