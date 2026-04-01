@@ -91,22 +91,13 @@ const incrementGeminiUsage = (userKey) => {
   const current = dailyUsage.get(userKey);
   if (!current || current.date !== today) {
     dailyUsage.set(userKey, { date: today, count: 1 });
-  } else {
-    current.count += 1;
-    dailyUsage.set(userKey, current);
+    return;
   }
-
-  const globalRecord = getWindowRecord(globalShortTermUsage, "__global__", now);
-  globalRecord.count += 1;
-  globalShortTermUsage.set("__global__", globalRecord);
-
-  const windowRecord = getWindowRecord(shortTermUsage, userKey, now);
-  windowRecord.count += 1;
-  shortTermUsage.set(userKey, windowRecord);
+  current.count += 1;
+  dailyUsage.set(userKey, current);
 };
 
 const getGeminiModel = () => {
-  if (isTestEnv()) return null;
   if (!GEMINI_API_KEY) return null;
   const client = new GoogleGenerativeAI(GEMINI_API_KEY);
   return client.getGenerativeModel({ model: GEMINI_MODEL });
