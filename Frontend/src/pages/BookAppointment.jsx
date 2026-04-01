@@ -11,7 +11,7 @@ const TIME_SLOTS = [
   "12:00", "13:00", "14:00", "15:00", "16:00",
 ];
 
-const MAX_BOOKINGS_PER_DAY = 4;
+const MAX_BOOKINGS_PER_DAY = TIME_SLOTS.length;
 
 const DEFAULT_DURATION_MINUTES = 60;
 
@@ -89,11 +89,11 @@ export default function BookAppointment() {
   }, []);
 
   // Fetch monthly booking counts when month changes
-  const fetchMonthly = useCallback(async (date) => {
+  const fetchMonthly = useCallback(async (date, serviceId) => {
     try {
       const y = date.getFullYear();
       const m = date.getMonth() + 1;
-      const res = await bookingService.getMonthlyBookings(y, m);
+      const res = await bookingService.getMonthlyBookings(y, m, serviceId);
       setMonthlyBookings(res || {});
     } catch {
       // silent – calendar will just show no color info
@@ -101,17 +101,25 @@ export default function BookAppointment() {
   }, []);
 
   useEffect(() => {
-    fetchMonthly(calendarDate);
-  }, []);
+    if (!details.serviceId) {
+      setMonthlyBookings({});
+      return;
+    }
+    fetchMonthly(calendarDate, details.serviceId);
+  }, [calendarDate, details.serviceId, fetchMonthly]);
 
   // Fetch slots for a selected day
   const fetchSlots = async (dateStr) => {
     setSlotsLoading(true);
     try {
-      const res = await bookingService.getBookingsByDate(dateStr);
+      const res = await bookingService.getBookingsByDate(dateStr, details.serviceId);
       const bookings = res || [];
-      setBookedSlots(bookings.map(b => toTimeSlot(b.startTime || b.time || b.date)));
-      setDayBookingCount(bookings.length);
+      const slotSet = new Set(
+        bookings.map(b => toTimeSlot(b.startTime || b.time || b.date)).filter(Boolean)
+      );
+      const bookedList = TIME_SLOTS.filter(slot => slotSet.has(slot));
+      setBookedSlots(bookedList);
+      setDayBookingCount(bookedList.length);
     } catch {
       setBookedSlots([]);
       setDayBookingCount(0);
@@ -137,7 +145,9 @@ export default function BookAppointment() {
 
   const handleActiveStartDateChange = ({ activeStartDate }) => {
     setCalendarDate(activeStartDate);
-    fetchMonthly(activeStartDate);
+    if (details.serviceId) {
+      fetchMonthly(activeStartDate, details.serviceId);
+    }
   };
 
   // Calendar tile coloring
@@ -149,8 +159,10 @@ export default function BookAppointment() {
 
   if (date < today) return "cal-tile--past";
 
+  if (!details.serviceId) return "cal-tile--available";
+
   const ds = formatDate(date);
-  const count = monthlyBookings[ds] || 0;
+  const count = Math.min(monthlyBookings[ds] || 0, TIME_SLOTS.length);
 
   if (count >= MAX_BOOKINGS_PER_DAY) {
     return "cal-tile--full";

@@ -32,12 +32,14 @@ export const authService = {
 
 // --- BOOKINGS ---
 export const bookingService = {
-  getBookingsByDate: async (date) => {
-    const { data } = await api.get(`/bookings?date=${date}`);
+  getBookingsByDate: async (date, serviceId) => {
+    const serviceParam = serviceId ? `&serviceId=${serviceId}` : '';
+    const { data } = await api.get(`/bookings?date=${date}${serviceParam}`);
     return data;
   },
-  getMonthlyBookings: async (year, month) => {
-    const { data } = await api.get(`/bookings/monthly?year=${year}&month=${month}`);
+  getMonthlyBookings: async (year, month, serviceId) => {
+    const serviceParam = serviceId ? `&serviceId=${serviceId}` : '';
+    const { data } = await api.get(`/bookings/monthly?year=${year}&month=${month}${serviceParam}`);
     return data;
   },
   getMyBookings: async () => {
