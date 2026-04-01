@@ -66,7 +66,11 @@ export default function BookAppointment() {
     try {
       const y = date.getFullYear();
       const m = date.getMonth() + 1;
-      const res = await bookingService.getMonthlyBookings(y, m);
+      const res = await bookingService.getMonthlyBookings({
+  year: y,
+  month: m,
+});
+
       setMonthlyBookings(res.data || {});
     } catch {
       // silent – calendar will just show no color info
@@ -81,7 +85,10 @@ export default function BookAppointment() {
   const fetchSlots = async (dateStr) => {
     setSlotsLoading(true);
     try {
-      const res = await bookingService.getBookingsByDate(dateStr);
+     const res = await bookingService.getBookingsByDate({
+  date: dateStr,
+});
+
       const bookings = res.data || [];
       setBookedSlots(bookings.map(b => b.time));
       setDayBookingCount(bookings.length);
