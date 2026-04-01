@@ -37,7 +37,7 @@ const SERVICES = [
       'Neat, long-lasting braids with scalp-friendly sectioning and clean parting.',
   },
   {
-    id: 'manicure',
+    id: '1',
     category: 'Nails',
     name: 'Signature Manicure',
     price: 'R180',
