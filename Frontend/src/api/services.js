@@ -43,7 +43,7 @@ export const bookingService = {
     return data;
   },
   getMyBookings: async () => {
-    const { data } = await api.get('/bookings/mine');
+    const { data } = await api.get('/bookings');
     return data;
   },
   createBooking: async (payload) => {
