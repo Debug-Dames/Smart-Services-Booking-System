@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-
+import dotenv from "dotenv";
 import authRoutes from "./modules/auth/auth.routes.js";
 import paymentRoutes from "./modules/payments/payments.routes.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
@@ -23,7 +23,7 @@ app.get("/", (_, res) => {
     res.json({ message: "Smart Services API is running" });
 });
 
-
+ 
 
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
