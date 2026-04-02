@@ -143,14 +143,89 @@ const extractTime = (text) => {
 
 const safeString = (value) => (typeof value === "string" ? value.trim() : "");
 
-const SERVICE_CATALOG = new Map([
-  ["Precision Haircut & Styling", { price: 200, duration: 60 }],
-  ["Signature Manicure", { price: 180, duration: 45 }],
-  ["Spa Pedicure", { price: 240, duration: 60 }],
-  ["Event Makeup Session", { price: 500, duration: 75 }],
-  ["Protective Braids", { price: 450, duration: 120 }],
-  ["Color Refresh & Gloss", { price: 350, duration: 90 }],
+const SERVICE_DETAILS = new Map([
+  [
+    "Precision Haircut & Styling",
+    {
+      category: "Hair",
+      price: 200,
+      duration: 60,
+      description:
+        "Face-shape focused consultation, precision cut, and signature blow-dry finish for everyday elegance.",
+    },
+  ],
+  [
+    "Color Refresh & Gloss",
+    {
+      category: "Hair",
+      price: 350,
+      duration: 90,
+      description:
+        "Tone balancing and shine gloss to revive faded color while keeping hair healthy and vibrant.",
+    },
+  ],
+  [
+    "Protective Braids",
+    {
+      category: "Protective",
+      price: 450,
+      duration: 120,
+      description:
+        "Neat, long-lasting braids with scalp-friendly sectioning and clean parting.",
+    },
+  ],
+  [
+    "Signature Manicure",
+    {
+      category: "Nails",
+      price: 180,
+      duration: 45,
+      description:
+        "Cuticle care, shaping, nourishing treatment, and polish application for a clean premium finish.",
+    },
+  ],
+  [
+    "Spa Pedicure",
+    {
+      category: "Nails",
+      price: 240,
+      duration: 60,
+      description:
+        "Soak, exfoliation, callus smoothing, massage, and polish designed for comfort and durability.",
+    },
+  ],
+  [
+    "Event Makeup Session",
+    {
+      category: "Makeup",
+      price: 500,
+      duration: 75,
+      description:
+        "Camera-ready makeup with skin prep and look matching for weddings, graduations, and events.",
+    },
+  ],
 ]);
+
+const SERVICE_CATALOG = new Map(
+  Array.from(SERVICE_DETAILS.entries()).map(([name, details]) => [
+    name,
+    { price: details.price, duration: details.duration },
+  ])
+);
+
+const ADD_ONS = [
+  { name: "Deep Conditioning Treatment", price: 120 },
+  { name: "French Tip Upgrade", price: 60 },
+  { name: "Scalp Detox", price: 90 },
+  { name: "Brow Shape & Tint", price: 140 },
+];
+
+const BOOKING_NOTES = [
+  "Please arrive 10 minutes before your scheduled slot.",
+  "Late arrivals may reduce treatment time during peak periods.",
+  "Rescheduling is available up to 24 hours before your booking.",
+  "Walk-ins are welcome when slots are available.",
+];
 
 const resolveServiceName = (text) => {
   const normalized = text.toLowerCase();
@@ -458,7 +533,8 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
     ) ||
     containsAny(["price", "prices", "cost", "pricing", "how much", "rate", "rates"], text) ||
     containsAny(["add-on", "add on", "add ons", "addon", "addons", "extras", "extra services"], text) ||
-    containsAny(["contact", "phone", "email"], text) ||
+    containsAny(["contact", "phone", "email", "whatsapp", "address", "location", "hours", "business hours"], text) ||
+    containsAny(["booking notes", "notes", "arrival", "late", "reschedule", "walk-ins", "walk ins"], text) ||
     containsAny(["cancellation", "cancelation", "cancel", "policy", "policies"], text) ||
     containsAny([
       "thank you",
@@ -512,33 +588,39 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
     )
   ) {
     return (
-      "We offer the following services:\n" +
-      "- Precision Haircut & Styling: 60 minutes\n" +
-      "- Signature Manicure: 45 minutes\n" +
-      "- Event Makeup Session: 75 minutes\n" +
-      "- Protective Braids: 120 minutes\n" +
-      "- Color Refresh & Gloss: 90 minutes"
+      "Our service catalog:\n" +
+      Array.from(SERVICE_DETAILS.entries())
+        .map(
+          ([name, details]) =>
+            `- ${name} (${details.category}): ${details.duration} min, R${details.price}`
+        )
+        .join("\n")
     );
   }
 
   if (containsAny(["haircut", "precision haircut"], text)) {
-    return "Precision Haircut & Styling: 60 minutes.";
+    const details = SERVICE_DETAILS.get("Precision Haircut & Styling");
+    return `Precision Haircut & Styling: ${details.duration} minutes. R${details.price}. ${details.description}`;
   }
 
   if (containsAny(["manicure", "signature manicure"], text)) {
-    return "Signature Manicure: 45 minutes.";
+    const details = SERVICE_DETAILS.get("Signature Manicure");
+    return `Signature Manicure: ${details.duration} minutes. R${details.price}. ${details.description}`;
   }
 
   if (containsAny(["event makeup", "event makeup session"], text)) {
-    return "Event Makeup Session: 75 minutes.";
+    const details = SERVICE_DETAILS.get("Event Makeup Session");
+    return `Event Makeup Session: ${details.duration} minutes. R${details.price}. ${details.description}`;
   }
 
   if (containsAny(["protective braids", "braids"], text)) {
-    return "Protective Braids: 120 minutes.";
+    const details = SERVICE_DETAILS.get("Protective Braids");
+    return `Protective Braids: ${details.duration} minutes. R${details.price}. ${details.description}`;
   }
 
   if (containsAny(["color refresh", "gloss", "color refresh & gloss"], text)) {
-    return "Color Refresh & Gloss: 90 minutes.";
+    const details = SERVICE_DETAILS.get("Color Refresh & Gloss");
+    return `Color Refresh & Gloss: ${details.duration} minutes. R${details.price}. ${details.description}`;
   }
 
   // 3️⃣ Booking & Appointments
@@ -553,7 +635,9 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
       text
     )
   ) {
-    return "Precision Haircut & Styling R200, Color Refresh & Gloss R350, Protective Braids R450, Signature Manicure R180, Spa Pedicure R240, Event Makeup Session R500.";
+    return Array.from(SERVICE_DETAILS.entries())
+      .map(([name, details]) => `${name} R${details.price}`)
+      .join(", ");
   }
 
   // 5️⃣ Add-ons & Extras
@@ -563,15 +647,24 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
       text
     )
   ) {
-    return "Add-ons available: Deep Conditioning Treatment R120, French Tip Upgrade R60, Scalp Detox R90, Brow Shape & Tint R140.";
+    return (
+      "Add-ons available: " +
+      ADD_ONS.map((addon) => `${addon.name} R${addon.price}`).join(", ") +
+      "."
+    );
   }
 
   // 6️⃣ Contact & Location
-  if (containsAny(["contact", "phone", "email"], text)) {
-    return "You can find us at this address: 123 Beauty Avenue, Rosebank City. Contact us at +27 12 345 6789 or email us at hello@damessalon.com.";
+  if (containsAny(["contact", "phone", "email", "whatsapp", "address", "location", "hours", "business hours"], text)) {
+    return "Contact us at +27 00 000 0000, WhatsApp +27 82 345 7253, or email dameshair@example.com. Our office is in Johannesburg, South Africa. Business hours: Mon–Fri 9am–6pm | Sat–Sun 8am–8pm.";
   }
 
-  // 7️⃣ Cancellation & Policies
+  // 7️⃣ Booking Notes
+  if (containsAny(["booking notes", "notes", "arrival", "late", "reschedule", "walk-ins", "walk ins"], text)) {
+    return "Booking notes: " + BOOKING_NOTES.join(" ");
+  }
+
+  // 8️⃣ Cancellation & Policies
   if (
     containsAny(
       ["cancellation", "cancelation", "cancel", "policy", "policies"],
@@ -581,7 +674,7 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
     return "Our cancellation policy: please cancel at least 24 hours in advance to avoid a no-show fee.";
   }
 
-  // 8️⃣ Thank you / Goodbye
+  // 9️⃣ Thank you / Goodbye
   if (
     containsAny(
       ["thank you", "thanks", "no more questions", "that's all", "thats all", "no further questions", "all good"],
@@ -591,7 +684,7 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
     return "Thank you, bye.";
   }
 
-  // 9️⃣ Fallback
+  // 🔟 Fallback
   return "Sorry, I didn't understand that. Please ask about salon services.";
 };
 
