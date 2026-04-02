@@ -9,6 +9,7 @@ import contactRoutes from "./modules/contact/contact.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
+import chatbotRoutes from "../routes/chatbotRoutes.js";
 const app = express();
 
 app.use(cors());
@@ -30,6 +31,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api", chatbotRoutes);
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
