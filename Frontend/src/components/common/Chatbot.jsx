@@ -11,7 +11,7 @@ const quickReplies = [
 
 const initialMessage = {
   sender: "bot",
-  text: "Hi, I am your salon assistant. Ask me about bookings, prices, add-ons, or contact details.",
+  text: "Hi,Welcome to DebugDames Salon,how can i help you today?.",
   timestamp: Date.now(),
 };
 
@@ -23,7 +23,7 @@ export default function Chatbot() {
   const messagesEndRef = useRef(null);
 
   const apiBase = useMemo(
-    () => import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+    () => import.meta.env.VITE_API_BASE_URL || "https://smart-services-booking-system-backend-uzip.onrender.com/api",
     []
   );
 

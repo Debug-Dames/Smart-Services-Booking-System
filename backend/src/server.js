@@ -3,6 +3,10 @@ import { env } from "./config/env.js";
 import { PrismaClient } from "@prisma/client";
 import { ensureBookingTimeColumns, ensureStylistTable, ensureUserStatusColumn } from "./config/database.js";
 
+
+import dotenv from "dotenv";
+
+dotenv.config();
 const prisma = new PrismaClient();
 const PORT = env.PORT || 5000;
 
