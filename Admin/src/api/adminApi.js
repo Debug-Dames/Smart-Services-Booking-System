@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const API = import.meta.env.VITE_API_URL || 'https://smart-services-booking-system-backend-uzip.onrender.com/api'
 
 const clearAdminSession = () => {
     localStorage.removeItem('adminAuth')
