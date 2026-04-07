@@ -101,6 +101,13 @@ export const bookingService = {
   },
 };
 
+export const paymentsService = {
+  initPayfast: async (payload) => {
+    const { data } = await api.post("/payments/payfast/init", payload);
+    return data;
+  },
+};
+
 // --- SERVICES ---
 export const getServices = async () => {
   try {
