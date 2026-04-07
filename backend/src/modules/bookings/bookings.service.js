@@ -137,9 +137,8 @@ export const createBooking = async (data, user) => {
   });
   if (conflict) throw new Error("Time slot already booked");
 
-  // For real users, verify they locked the slot (stylist optional)
-  if (user) {
-    if (!lockToken) throw new Error("You must lock the slot before booking");
+  // If a lock token is provided, validate and consume it. Otherwise allow direct booking.
+  if (user && lockToken) {
     const lock = slotLocks.get(lockToken);
     if (!lock) throw new Error("You must lock the slot before booking");
     if (lock.userId !== user.id) throw new Error("You must lock the slot before booking");
@@ -160,7 +159,6 @@ export const createBooking = async (data, user) => {
     data: {
       userId: bookingUserId,
       serviceId: Number(serviceId),
-      stylistId: stylistId ? Number(stylistId) : null,
       startTime: start,
       endTime: end,
       date: new Date(start.setHours(0, 0, 0, 0))
