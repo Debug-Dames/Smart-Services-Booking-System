@@ -50,6 +50,14 @@ export const authService = {
 
 // --- BOOKINGS ---
 export const bookingService = {
+  lockSlot: async (payload) => {
+    const { data } = await api.post("/bookings/lock", payload);
+    return data;
+  },
+  unlockSlot: async (token) => {
+    const { data } = await api.delete(`/bookings/lock/${token}`);
+    return data;
+  },
   getBookingsByDate: async (date, serviceId) => {
     const serviceParam = serviceId ? `&serviceId=${serviceId}` : "";
     const { data } = await api.get(`/bookings?date=${date}${serviceParam}`);

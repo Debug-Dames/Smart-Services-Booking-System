@@ -5,7 +5,7 @@ import { createBooking, lockSlot, unlockSlot } from "../modules/bookings/booking
 /**
  * Get all bookings
  */
-export const getAllBookings = async (_req, res) => {
+export const getAllBookings = async (req, res) => {
   try {
     const bookings = await prisma.booking.findMany({
       orderBy: { createdAt: "desc" },
@@ -94,7 +94,7 @@ export const lockSlotController = async (req, res) => {
  */
 export const unlockSlotController = async (req, res) => {
   try {
-    const result = await unlockSlot(req.params.token, req.user);
+    const result = await unlockSlot(req.params.token);
     res.json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });
