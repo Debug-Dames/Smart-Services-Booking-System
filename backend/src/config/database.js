@@ -5,10 +5,15 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, "../../.env");
 
-// Ensure Prisma always gets DATABASE_URL from backend/.env.
-// Use override so Prisma does not connect to an unintended database from machine-level env vars.
-dotenv.config({ path: path.resolve(__dirname, "../../.env"), override: true });
+// In local development, load backend/.env.
+// In production, rely on hosting provider environment variables.
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config();
+}
 
 const prisma = new PrismaClient({
   datasources: {
