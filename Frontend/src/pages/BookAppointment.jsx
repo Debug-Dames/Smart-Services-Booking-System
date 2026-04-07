@@ -178,6 +178,7 @@ export default function BookAppointment() {
 
   const openPayment = () => {
     setBookingError("");
+    setConfirming(false);
     setShowPayment(true);
   };
 
@@ -626,8 +627,16 @@ export default function BookAppointment() {
       </div>
 
       {showPayment && (
-        <div className="pay-modal-backdrop" onClick={closePayment}>
-          <div className="pay-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="pay-modal-backdrop"
+          onClick={closePayment}
+          style={{ display: "flex", zIndex: 9999 }}
+        >
+          <div
+            className="pay-modal"
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: "block" }}
+          >
             <h3>Pay Deposit</h3>
             <p>
               A 50% deposit is required to secure your booking.
