@@ -1,15 +1,11 @@
 // backend/src/controllers/booking.controller.js
 import prisma from "../config/database.js";
-<<<<<<< HEAD
-import * as bookingService from "../modules/bookings/bookingService.js";
-=======
 import { createBooking, lockSlot, unlockSlot } from "../modules/bookings/bookings.service.js";
->>>>>>> ce812cbce06a0241ba33d22c99ecefe74bccddf7
 
 /**
  * Get all bookings
  */
-export const getAllBookings = async (req, res) => {
+export const getAllBookings = async (_req, res) => {
   try {
     const bookings = await prisma.booking.findMany({
       orderBy: { createdAt: "desc" },
@@ -77,50 +73,7 @@ export const getBookingById = async (req, res) => {
     if (!booking) return res.status(404).json({ message: "Booking not found" });
     res.json(booking);
   } catch (err) {
-<<<<<<< HEAD
-    res.status(500).json({ message: err.message })
-  }
-}
-
-export const createBookingController = async (req, res) => {
-  try {
-    const userId = req.user.id; // from protect middleware
-    const { serviceId, date, startTime, endTime } = req.body;
-
-    console.log("Incoming booking:", req.body); // 🔍 debug
-
-    const booking = await bookingService.createBooking({
-      userId,
-      serviceId,
-      date,
-      startTime,
-      endTime
-    });
-
-    return res.status(201).json(booking);
-
-  } catch (error) {
-    console.error("Booking error:", error.message);
-
-    if (error.message === "Time slot already booked") {
-      return res.status(409).json({ message: error.message });
-    }
-
-    if (error.message === "Cannot book in the past") {
-      return res.status(400).json({ message: error.message });
-    }
-
-    if (error.message === "End time must be after start time") {
-      return res.status(400).json({ message: error.message });
-    }
-
-    return res.status(500).json({
-      message: "Failed to create booking",
-      error: error.message
-    });
-=======
     res.status(500).json({ message: err.message });
->>>>>>> ce812cbce06a0241ba33d22c99ecefe74bccddf7
   }
 };
 
@@ -141,7 +94,7 @@ export const lockSlotController = async (req, res) => {
  */
 export const unlockSlotController = async (req, res) => {
   try {
-    const result = await unlockSlot(req.params.token);
+    const result = await unlockSlot(req.params.token, req.user);
     res.json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });

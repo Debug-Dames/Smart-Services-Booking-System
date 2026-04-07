@@ -27,7 +27,8 @@ export const ensureBookingTimeColumns = async () => {
   await prisma.$executeRawUnsafe(`
     ALTER TABLE "Booking"
     ADD COLUMN IF NOT EXISTS "startTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN IF NOT EXISTS "endTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS "endTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS "stylistId" INTEGER;
   `);
 };
 
