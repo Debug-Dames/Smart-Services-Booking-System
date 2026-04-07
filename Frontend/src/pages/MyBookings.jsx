@@ -152,23 +152,47 @@ export default function MyBookings() {
   function formatTime(value) {
     if (!value) return "N/A";
     if (typeof value === "string") {
-      const isoMatch = value.match(/T(\d{2}):(\d{2})/);
-      if (isoMatch) {
-        return `${isoMatch[1]}:${isoMatch[2]}`;
+      if (value.includes("T")) {
+        const dt = new Date(value);
+        if (!Number.isNaN(dt.getTime())) {
+          const hh = dt.getHours();
+          const mm = dt.getMinutes();
+          if (hh < 8 || hh > 20 || (hh === 20 && mm > 0)) return "N/A";
+          return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
       }
       const match = value.match(/^(\d{2}):(\d{2})/);
       if (match) {
+        const hh = Number(match[1]);
+        const mm = Number(match[2]);
+        if (hh < 8 || hh > 20 || (hh === 20 && mm > 0)) return "N/A";
         const today = new Date();
-        today.setHours(Number(match[1]), Number(match[2]), 0, 0);
+        today.setHours(hh, mm, 0, 0);
         return today.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
       }
     }
     const dt = new Date(value);
     if (!Number.isNaN(dt.getTime())) {
+      const hh = dt.getHours();
+      const mm = dt.getMinutes();
+      if (hh < 8 || hh > 20 || (hh === 20 && mm > 0)) return "N/A";
       return dt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     }
 
     return String(value);
+  }
+
+  function formatTimeRange(booking) {
+    const start = booking?.startTime || booking?.time || booking?.appointment_time;
+    const end = booking?.endTime;
+    const startLabel = formatTime(start);
+    if (end) {
+      const endLabel = formatTime(end);
+      if (endLabel && endLabel !== "N/A") {
+        return `${startLabel} - ${endLabel}`;
+      }
+    }
+    return startLabel;
   }
 
   function normalizeStatus(status) {
@@ -250,7 +274,7 @@ export default function MyBookings() {
                 <strong>
                   {(nextBooking.booking?.service?.name || nextBooking.booking?.service || "Service")} •{" "}
                   {formatDate(nextBooking.booking?.date || nextBooking.booking?.appointment_date)} at{" "}
-                  {formatTime(nextBooking.booking?.startTime || nextBooking.booking?.time || nextBooking.booking?.appointment_time || nextBooking.booking?.date)}
+                  {formatTime(nextBooking.booking?.startTime || nextBooking.booking?.time || nextBooking.booking?.appointment_time)}
                 </strong>
               </>
             ) : (
@@ -283,7 +307,7 @@ export default function MyBookings() {
           {bookings.map((booking) => {
             const serviceName = booking?.service?.name || booking?.service || "N/A";
             const status = normalizeStatus(booking?.status);
-            const timeValue = booking?.startTime || booking?.time || booking?.appointment_time || booking?.date;
+            const timeValue = booking?.startTime || booking?.time || booking?.appointment_time;
             const bookingId = booking?.id ?? booking?.bookingId;
             const numericId = Number(bookingId);
             const hasValidId = Number.isInteger(numericId);
@@ -314,7 +338,7 @@ export default function MyBookings() {
                   </div>
                   <div>
                     <p>Time</p>
-                    <strong>{formatTime(timeValue)}</strong>
+                    <strong>{formatTimeRange(booking)}</strong>
                   </div>
                 </div>
 
