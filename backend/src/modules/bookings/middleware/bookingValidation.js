@@ -14,52 +14,75 @@ export const validateBooking = async (req, res, next) => {
 
     const serviceIdNum = Number(serviceId);
     if (!Number.isNaN(serviceIdNum)) {
-      const serviceRecord = await prisma.service.findUnique({ where: { id: serviceIdNum } });
-      if (!serviceRecord) {
-        errors.push("Service not found");
+      try {
+        const serviceRecord = await prisma.service.findUnique({ where: { id: serviceIdNum } });
+        if (!serviceRecord) {
+          errors.push("Service not found");
+        }
+      } catch (err) {
+        console.warn("Service lookup failed during booking validation:", err?.message || err);
       }
     } else {
       errors.push("serviceId must be numeric");
     }
 
-    const startCandidate = startTime || (date && time ? `${date}T${time}:00` : null);
-    const startObj = new Date(startCandidate);
-    if (!startCandidate || Number.isNaN(startObj.getTime())) {
-      errors.push("Provide startTime (ISO-8601) or date + time");
+    function buildDateTime(input, dateStr) {
+      if (!input) return null;
+      if (typeof input === "string" && /^\d{2}:\d{2}$/.test(input)) {
+        if (!dateStr) return null;
+        return new Date(`${dateStr}T${input}:00`);
+      }
+      const dt = new Date(input);
+      return Number.isNaN(dt.getTime()) ? null : dt;
     }
 
-    const endObj = endTime ? new Date(endTime) : null;
-    if (endTime && Number.isNaN(endObj?.getTime())) {
-      errors.push("endTime must be a valid ISO-8601 datetime");
+    if (!date) {
+      errors.push("date is required");
     }
 
-    if (!Number.isNaN(startObj.getTime())) {
-      const hour = startObj.getUTCHours();
+    const startObj =
+      buildDateTime(startTime, date) ||
+      (date && time ? buildDateTime(`${date}T${time}:00`) : null);
+    if (!startObj) {
+      errors.push("Provide startTime (ISO-8601 or HH:mm) or date + time");
+    }
+
+    const endObj = buildDateTime(endTime, date);
+    if (endTime && !endObj) {
+      errors.push("endTime must be a valid ISO-8601 datetime or HH:mm");
+    }
+
+    if (startObj) {
+      const hour = startObj.getHours();
       if (hour < WORKING_HOURS_START || hour >= WORKING_HOURS_END) {
         errors.push(
-          `Booking time must be within working hours (${WORKING_HOURS_START}:00-${WORKING_HOURS_END}:00 UTC)`
+          `Booking time must be within working hours (${WORKING_HOURS_START}:00-${WORKING_HOURS_END}:00)`
         );
       }
     }
 
-    if (!Number.isNaN(startObj.getTime()) && endObj && endObj <= startObj) {
+    if (startObj && endObj && endObj <= startObj) {
       errors.push("endTime must be later than startTime");
     }
 
-    if (!Number.isNaN(startObj.getTime()) && !Number.isNaN(serviceIdNum)) {
-      const bookingDate = new Date(startObj);
-      bookingDate.setUTCHours(0, 0, 0, 0);
+    if (startObj && !Number.isNaN(serviceIdNum)) {
+      try {
+        const bookingDate = new Date(startObj);
+        bookingDate.setHours(0, 0, 0, 0);
 
-      const existingBooking = await prisma.booking.findFirst({
-        where: {
-          serviceId: serviceIdNum,
-          date: bookingDate,
-          startTime: startObj,
-        },
-      });
+        const existingBooking = await prisma.booking.findFirst({
+          where: {
+            serviceId: serviceIdNum,
+            date: bookingDate,
+            startTime: startObj,
+          },
+        });
 
-      if (existingBooking) {
-        errors.push("This time slot is already booked");
+        if (existingBooking) {
+          errors.push("This time slot is already booked");
+        }
+      } catch (err) {
+        console.warn("Booking overlap check failed during validation:", err?.message || err);
       }
     }
 

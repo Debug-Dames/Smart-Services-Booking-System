@@ -1,5 +1,5 @@
 import prisma from "../config/database.js";
-import { createBooking } from "../modules/bookings/bookings.service.js"
+import * as bookingService from "../modules/bookings/bookingService.js";
 
 export const getAllBookings = async (req, res) => {
   try {
@@ -53,33 +53,40 @@ export const getBookingById = async (req, res) => {
 
 export const createBookingController = async (req, res) => {
   try {
-    const payload = {
-      ...req.body,
-      userId: req.user?.id ?? req.body?.userId,
-    };
+    const userId = req.user.id; // from protect middleware
+    const { serviceId, date, startTime, endTime } = req.body;
 
-    const booking = await createBooking(payload);
+    console.log("Incoming booking:", req.body); // 🔍 debug
+
+    const booking = await bookingService.createBooking({
+      userId,
+      serviceId,
+      date,
+      startTime,
+      endTime
+    });
+
     return res.status(201).json(booking);
-  } catch (err) {
-    if (err.message === "Time slot already booked") {
-      return res.status(409).json({ message: err.message });
+
+  } catch (error) {
+    console.error("Booking error:", error.message);
+
+    if (error.message === "Time slot already booked") {
+      return res.status(409).json({ message: error.message });
     }
 
-    if (
-      err.message === "Invalid userId" ||
-      err.message === "Invalid userId or serviceId" ||
-      err.message === "Date is required" ||
-      err.message === "Invalid date" ||
-      err.message === "Invalid start time" ||
-      err.message === "Invalid time range" ||
-      err.message === "Cannot book in the past" ||
-      err.message === "User not found" ||
-      err.message === "Service not found"
-    ) {
-      return res.status(400).json({ message: err.message });
+    if (error.message === "Cannot book in the past") {
+      return res.status(400).json({ message: error.message });
     }
 
-    return res.status(500).json({ message: "Error creating booking", error: err.message });
+    if (error.message === "End time must be after start time") {
+      return res.status(400).json({ message: error.message });
+    }
+
+    return res.status(500).json({
+      message: "Failed to create booking",
+      error: error.message
+    });
   }
 };
 
