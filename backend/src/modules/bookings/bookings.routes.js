@@ -3,8 +3,8 @@ import express from "express";
 
 import { protect } from "../../middlewares/auth.middleware.js";
 
+import { validateBooking } from "../../middlewares/bookingValidation.js"; // fix this!!!
 import * as bookingController from "../../controllers/bookingController.js";
-import { validateBooking } from "./middleware/bookingValidation.js";
 
 const router = express.Router();
 
@@ -164,12 +164,12 @@ router.get("/:id", protect, bookingController.getBookingById);
  *       400:
  *         description: Invalid input or validation error
  *       401:
- *         description: Unauthorized â€“ JWT token missing or invalid
+ *         description: Unauthorized – JWT token missing or invalid
  *       409:
  *         description: Time slot already booked
  */
 
-router.post("/", protect, bookingController.createBookingController);
+router.post("/", protect, validateBooking, bookingController.createBookingController);
 
 /**
  * @swagger
@@ -231,9 +231,9 @@ router.put("/:id", protect, bookingController.updateBooking);
  *       401:
  *         description: Unauthorized
  */
-
 router.delete("/:id", protect, bookingController.deleteBooking);
-
+router.post("/lock", protect, validateBooking, bookingController.lockSlotController);
+router.delete("/lock/:token", protect, bookingController.unlockSlotController);
 
 
 export default router;

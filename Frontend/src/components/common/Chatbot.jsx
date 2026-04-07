@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+ï»¿import { useEffect, useRef, useState } from "react";
 import api from "../../api/axios";
 import "./chatbot.css";
 
@@ -21,10 +21,11 @@ export default function Chatbot() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
-  const chatbotPaths = (import.meta.env.VITE_CHATBOT_PATHS || "/chatbot")
-    .split(",")
-    .map((path) => path.trim())
-    .filter(Boolean);
+
+  const apiBase = useMemo(
+    () => import.meta.env.VITE_API_BASE_URL || "https://smart-services-booking-system-backend-uzip.onrender.com/api",
+    []
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -147,7 +148,7 @@ export default function Chatbot() {
                 <p className="chatbot-title">Salon Assistant</p>
                 <p className="chatbot-subtitle">
                   <span className="chatbot-status-dot" aria-hidden="true" />
-                  Online now · Avg reply under 1 min
+                  Online now ï¿½ Avg reply under 1 min
                 </p>
               </div>
             </div>

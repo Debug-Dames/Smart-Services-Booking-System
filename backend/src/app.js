@@ -10,8 +10,6 @@ import adminRoutes from "./modules/admin/admin.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import chatbotRoutes from "../routes/chatbotRoutes.js";
-
-dotenv.config();
 const app = express();
 
 app.use(cors());
@@ -25,18 +23,7 @@ app.get("/", (_, res) => {
     res.json({ message: "Smart Services API is running" });
 });
 
-app.get("/api/services", async (_req, res) => {
-  try {
-    const services = await prisma.service.findMany({
-      select: { id: true, name: true, price: true },
-      orderBy: { id: "asc" },
-    });
-    res.json(services);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to load services" });
-  }
-});
-
+ 
 
 app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
@@ -44,7 +31,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/bookings", bookingRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/chatbot", chatbotRoutes);
+app.use("/api", chatbotRoutes);
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
