@@ -23,8 +23,8 @@ const slotLocks = new Map();
 export const lockSlot = async (data, user) => {
   const { serviceId, stylistId, startTime, endTime, lockMinutes } = data;
 
-  if (!serviceId || !stylistId || !startTime || !endTime) {
-    throw new Error("serviceId, stylistId, startTime, and endTime are required");
+  if (!serviceId || !startTime || !endTime) {
+    throw new Error("serviceId, startTime, and endTime are required");
   }
 
   const start = new Date(startTime);
@@ -37,7 +37,8 @@ export const lockSlot = async (data, user) => {
       AND: [
         { startTime: { lt: end } },
         { endTime: { gt: start } },
-        { stylistId: Number(stylistId) }
+        { serviceId: Number(serviceId) },
+        ...(stylistId ? [{ stylistId: Number(stylistId) }] : [])
       ]
     }
   });
@@ -46,7 +47,8 @@ export const lockSlot = async (data, user) => {
   // Check in-memory locks
   const now = Date.now();
   for (const lock of slotLocks.values()) {
-    if (lock.stylistId !== Number(stylistId)) continue;
+    if (stylistId && lock.stylistId !== Number(stylistId)) continue;
+    if (lock.serviceId !== Number(serviceId)) continue;
     if (lock.expiresAt < now) {
       slotLocks.delete(lock.token);
       continue;
@@ -62,7 +64,7 @@ export const lockSlot = async (data, user) => {
     token,
     userId: user?.id,
     serviceId: Number(serviceId),
-    stylistId: Number(stylistId),
+    stylistId: stylistId ? Number(stylistId) : null,
     startTimeMs: start.getTime(),
     endTimeMs: end.getTime(),
     expiresAt: now + minutes * 60 * 1000
@@ -93,7 +95,7 @@ export const unlockSlot = async (token) => {
  * Accepts either locked slots (preferred) or direct booking (for tests)
  */
 export const createBooking = async (data, user) => {
-  const { userId, serviceId, stylistId, date, startTime, endTime } = data;
+  const { userId, serviceId, stylistId, date, startTime, endTime, lockToken } = data;
 
   // Support test-friendly direct booking without user object
   const bookingUserId = user?.id || userId;
@@ -135,24 +137,21 @@ export const createBooking = async (data, user) => {
   });
   if (conflict) throw new Error("Time slot already booked");
 
-  // For real users, verify they locked the slot (stylist optional)
-  if (user) {
-    let hasValidLock = true;
-    const now = Date.now();
-    for (const [token, lock] of slotLocks.entries()) {
-      if (lock.userId !== user.id) continue;
-      if (stylistId && lock.stylistId !== Number(stylistId)) continue;
-      if (lock.expiresAt < now) {
-        slotLocks.delete(token);
-        continue;
-      }
-      if (overlaps(start.getTime(), end.getTime(), lock.startTimeMs, lock.endTimeMs)) {
-        hasValidLock = true;
-        slotLocks.delete(token); // consume the lock
-        break;
-      }
+  // If a lock token is provided, validate and consume it. Otherwise allow direct booking.
+  if (user && lockToken) {
+    const lock = slotLocks.get(lockToken);
+    if (!lock) throw new Error("You must lock the slot before booking");
+    if (lock.userId !== user.id) throw new Error("You must lock the slot before booking");
+    if (lock.serviceId !== Number(serviceId)) throw new Error("You must lock the slot before booking");
+    if (stylistId && lock.stylistId !== Number(stylistId)) {
+      throw new Error("You must lock the slot before booking");
     }
-    if (!hasValidLock) throw new Error("You must lock the slot before booking");
+    if (lock.expiresAt < Date.now()) {
+      slotLocks.delete(lockToken);
+      throw new Error("You must lock the slot before booking");
+    }
+    // consume the lock
+    slotLocks.delete(lockToken);
   }
 
   // Create booking
@@ -160,7 +159,6 @@ export const createBooking = async (data, user) => {
     data: {
       userId: bookingUserId,
       serviceId: Number(serviceId),
-      stylistId: stylistId ? Number(stylistId) : null,
       startTime: start,
       endTime: end,
       date: new Date(start.setHours(0, 0, 0, 0))

@@ -4,10 +4,15 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, "../../.env");
 
-// Always load backend/.env regardless of where the node process was started.
-// Use override so global/system env vars do not silently point the app to a different database.
-dotenv.config({ path: path.resolve(__dirname, "../../.env"), override: true });
+// In local development, load backend/.env.
+// In production, rely on hosting provider environment variables.
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config();
+}
 
 export const env = {
   PORT: process.env.PORT || 5000,

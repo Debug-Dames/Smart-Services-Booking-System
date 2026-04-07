@@ -7,6 +7,7 @@ import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js
 import bookingRoutes from "./modules/bookings/bookings.routes.js";
 import contactRoutes from "./modules/contact/contact.routes.js";
 import adminRoutes from "./modules/admin/admin.routes.js";
+import servicesRoutes from "./modules/services/services.routes.js";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./config/swagger.js";
 import chatbotRoutes from "../routes/chatbotRoutes.js";
@@ -29,6 +30,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/bookings", bookingRoutes);
+app.use("/api/services", servicesRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", chatbotRoutes);
