@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { bookingService, getServices, paymentsService } from "../api/services";
+import { bookingService, getServices } from "../api/services";
 import { useAuth } from "../context/AuthContext";
 import "../Styles/bookAppointment.css";
 import "../Styles/calendar.css";
@@ -75,14 +75,6 @@ export default function BookAppointment() {
   const [confirmed, setConfirmed] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
   const [bookingError, setBookingError] = useState("");
-  const [showPayment, setShowPayment] = useState(false);
-  const [card, setCard] = useState({
-    name: "",
-    number: "",
-    expiry: "",
-    cvc: "",
-  });
-  const [cardErrors, setCardErrors] = useState({});
 
   // Fetch services once
   useEffect(() => {
@@ -130,13 +122,6 @@ export default function BookAppointment() {
     }
   }
 
-  async function handleConfirmPayment() {
-    await submitBooking({ payLater: false });
-  }
-
-  async function handleBookNowPayLater() {
-    await submitBooking({ payLater: true });
-  }
 
   const handleDateClick = (date) => {
     const dateStr = formatDate(date);
@@ -176,81 +161,6 @@ export default function BookAppointment() {
   const isSlotBooked = (slot) => bookedSlots.includes(slot);
   const isSlotDisabled = (slot) => isSlotBooked(slot) || isFullyBooked;
 
-  const openPayment = () => {
-    setBookingError("");
-    setConfirming(false);
-    setShowPayment(true);
-  };
-
-  const closePayment = () => setShowPayment(false);
-
-  function luhnCheck(num) {
-    const digits = String(num).replace(/\D/g, "");
-    let sum = 0;
-    let shouldDouble = false;
-    for (let i = digits.length - 1; i >= 0; i -= 1) {
-      let d = Number(digits[i]);
-      if (shouldDouble) {
-        d *= 2;
-        if (d > 9) d -= 9;
-      }
-      sum += d;
-      shouldDouble = !shouldDouble;
-    }
-    return sum % 10 === 0;
-  }
-
-  function isValidCardNumber(num) {
-    const digits = String(num).replace(/\D/g, "");
-    return digits.length === 16 && luhnCheck(digits);
-  }
-
-  function validateCard() {
-    const errors = {};
-    const number = card.number;
-    if (number.length !== 16) {
-      errors.number = "Card number must be 16 digits.";
-    } else if (!luhnCheck(number)) {
-      errors.number = "Card number is invalid.";
-    }
-    if (!card.name.trim()) {
-      errors.name = "Cardholder name is required.";
-    }
-    const expMatch = card.expiry.match(/^(\d{2})\/(\d{2})$/);
-    if (!expMatch) {
-      errors.expiry = "Expiry must be MM/YY.";
-    } else {
-      const mm = Number(expMatch[1]);
-      const yy = Number(expMatch[2]);
-      if (mm < 1 || mm > 12) {
-        errors.expiry = "Invalid expiry month.";
-      } else {
-        const now = new Date();
-        const expDate = new Date(2000 + yy, mm, 0, 23, 59, 59);
-        if (expDate < now) {
-          errors.expiry = "Card has expired.";
-        }
-      }
-    }
-    if (!/^\d{3}$/.test(card.cvc)) {
-      errors.cvc = "CVC must be 3 digits.";
-    }
-    setCardErrors(errors);
-    return Object.keys(errors).length === 0;
-  }
-
-  const canPay =
-    !confirming &&
-    card.name.trim() &&
-    isValidCardNumber(card.number) &&
-    card.expiry &&
-    card.cvc;
-
-  function formatCardNumber(value) {
-    const digits = value.replace(/\D/g, "").slice(0, 16);
-    return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
-  }
-
   const handleConfirmBooking = async () => {
   setBookingError("");
   setConfirming(true);
@@ -280,49 +190,29 @@ export default function BookAppointment() {
       setConfirming(false);
       return;
     }
-    if (!validateCard()) {
-      setConfirming(false);
-      return;
-    }
 
     const startTimeISO = `${selectedDate}T${selectedTime}:00`;
     const endTimeISO = `${selectedDate}T${endTime}:00`;
-    const deposit = selectedService?.price ? Math.round(selectedService.price * 0.5) : 50;
-
-    const init = await paymentsService.initPayfast({
-      amount: deposit,
-      item_name: `${selectedService?.name || "Service"} deposit`,
-      item_description: `Deposit for ${selectedService?.name || "service"} booking`,
-      name_first: details.name?.split(" ")[0] || "",
-      name_last: details.name?.split(" ").slice(1).join(" ") || "",
-      email: details.email,
-      booking: {
-        serviceId,
-        date: selectedDate,
-        startTime: startTimeISO,
-        endTime: endTimeISO,
-      },
+    const lock = await bookingService.lockSlot({
+      serviceId,
+      date: selectedDate,
+      startTime: startTimeISO,
+      endTime: endTimeISO,
+    });
+    const lockToken = lock?.lockToken;
+    const res = await bookingService.createBooking({
+      serviceId,
+      serviceName: service?.name,
+      servicePrice: service?.price,
+      serviceDuration: service?.duration,
+      date: selectedDate,
+      startTime: startTimeISO,
+      endTime: endTimeISO,
+      lockToken,
     });
 
-    setBookingResult(init?.booking);
+    setBookingResult(res);
     setConfirmed(true);
-    setShowPayment(false);
-
-    if (init?.processUrl && init?.fields) {
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = init.processUrl;
-      Object.entries(init.fields).forEach(([k, v]) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = k;
-        input.value = String(v);
-        form.appendChild(input);
-      });
-      document.body.appendChild(form);
-      form.submit();
-      form.remove();
-    }
 
   } catch (err) {
     console.log(err.response?.data); // helps debug errors
@@ -568,7 +458,7 @@ export default function BookAppointment() {
                   </button>
                   <button
                     className="book-btn book-btn--primary"
-                    onClick={openPayment}
+                    onClick={handleConfirmBooking}
                     disabled={confirming}
                   >
                     {confirming ? "Processing..." : "Confirm Booking ✓"}
@@ -626,86 +516,6 @@ export default function BookAppointment() {
         )}
       </div>
 
-      {showPayment && (
-        <div
-          className="pay-modal-backdrop"
-          onClick={closePayment}
-          style={{ display: "flex", zIndex: 9999 }}
-        >
-          <div
-            className="pay-modal"
-            onClick={(e) => e.stopPropagation()}
-            style={{ display: "block" }}
-          >
-            <h3>Pay Deposit</h3>
-            <p>
-              A 50% deposit is required to secure your booking.
-            </p>
-            <div className="pay-modal-amount">
-              Deposit: <strong>R{selectedService?.price ? Math.round(selectedService.price * 0.5) : 50}</strong>
-            </div>
-            <div className="pay-modal-form">
-              <label className="pay-field">
-                <span>Cardholder Name</span>
-                <input
-                  type="text"
-                  value={card.name}
-                  onChange={(e) => setCard((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="Full name on card"
-                />
-                {cardErrors.name && <small className="pay-error">{cardErrors.name}</small>}
-              </label>
-              <label className="pay-field">
-                <span>Card Number</span>
-                <input
-                  type="text"
-                  value={formatCardNumber(card.number)}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "").slice(0, 16);
-                    setCard((prev) => ({ ...prev, number: digits }));
-                  }}
-                  placeholder="1234 5678 9012 3456"
-                  inputMode="numeric"
-                  maxLength={19}
-                />
-                {cardErrors.number && <small className="pay-error">{cardErrors.number}</small>}
-              </label>
-              <div className="pay-field-row">
-                <label className="pay-field">
-                  <span>Expiry</span>
-                  <input
-                    type="text"
-                    value={card.expiry}
-                    onChange={(e) => setCard((prev) => ({ ...prev, expiry: e.target.value }))}
-                    placeholder="MM/YY"
-                    inputMode="numeric"
-                  />
-                  {cardErrors.expiry && <small className="pay-error">{cardErrors.expiry}</small>}
-                </label>
-                <label className="pay-field">
-                  <span>CVC</span>
-                  <input
-                    type="text"
-                    value={card.cvc}
-                    onChange={(e) => setCard((prev) => ({ ...prev, cvc: e.target.value }))}
-                    placeholder="123"
-                    inputMode="numeric"
-                  />
-                  {cardErrors.cvc && <small className="pay-error">{cardErrors.cvc}</small>}
-                </label>
-              </div>
-            </div>
-            <div className="pay-modal-actions">
-              <button className="book-btn book-btn--ghost" onClick={closePayment} disabled={confirming}>
-                Cancel
-              </button>
-              <button className="book-btn book-btn--primary" onClick={handleConfirmBooking} disabled={!canPay}>
-                {confirming ? "Processing..." : "Pay & Confirm"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
