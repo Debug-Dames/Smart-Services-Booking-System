@@ -7,7 +7,12 @@ import { createBooking, lockSlot, unlockSlot } from "../modules/bookings/booking
  */
 export const getAllBookings = async (req, res) => {
   try {
+    const userId = Number(req.user?.id);
+    if (!Number.isInteger(userId)) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
     const bookings = await prisma.booking.findMany({
+      where: { userId },
       orderBy: { createdAt: "desc" },
       include: {
         user: {
@@ -24,13 +29,7 @@ export const getAllBookings = async (req, res) => {
             price: true,
           },
         },
-        stylist: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        // stylist relation omitted to avoid Prisma client mismatch
       },
     });
     res.json(bookings);
@@ -61,13 +60,7 @@ export const getBookingById = async (req, res) => {
             price: true,
           },
         },
-        stylist: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        // stylist relation omitted to avoid Prisma client mismatch
       },
     });
     if (!booking) return res.status(404).json({ message: "Booking not found" });
@@ -175,13 +168,7 @@ export const updateBooking = async (req, res) => {
             price: true,
           },
         },
-        stylist: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        // stylist relation omitted to avoid Prisma client mismatch
       },
     });
 

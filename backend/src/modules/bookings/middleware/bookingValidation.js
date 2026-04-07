@@ -1,7 +1,7 @@
 import prisma from "../../../config/database.js";
 
 const WORKING_HOURS_START = 8;
-const WORKING_HOURS_END = 20;
+const WORKING_HOURS_END = 19; // last bookable start time ends by 19:00
 
 export const validateBooking = async (req, res, next) => {
   try {
@@ -63,6 +63,16 @@ export const validateBooking = async (req, res, next) => {
 
     if (startObj && endObj && endObj <= startObj) {
       errors.push("endTime must be later than startTime");
+    }
+
+    if (endObj) {
+      const endHour = endObj.getHours();
+      const endMinute = endObj.getMinutes();
+      const endAfterClose =
+        endHour > WORKING_HOURS_END || (endHour === WORKING_HOURS_END && endMinute > 0);
+      if (endAfterClose) {
+        errors.push(`Booking must end by ${WORKING_HOURS_END}:00`);
+      }
     }
 
     if (startObj && !Number.isNaN(serviceIdNum)) {
