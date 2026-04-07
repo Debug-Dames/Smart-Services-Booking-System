@@ -73,6 +73,7 @@ export default function BookAppointment() {
   const [confirmed, setConfirmed] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
   const [bookingError, setBookingError] = useState("");
+  const [showPayment, setShowPayment] = useState(false);
 
   // Fetch services once
   useEffect(() => {
@@ -182,9 +183,9 @@ export default function BookAppointment() {
   const canProceedStep1 = details.name.trim() && details.email.trim() && details.serviceId;
 
   // Step 2 validation
-  const isFullyBooked = dayBookingCount >= MAX_BOOKINGS_PER_DAY;
-  const isSlotBooked = (slot) => bookedSlots.includes(slot);
-  const isSlotDisabled = (slot) => isSlotBooked(slot) || isFullyBooked;
+  const isFullyBooked = false;
+  const isSlotBooked = (_slot) => false;
+  const isSlotDisabled = (_slot) => false;
 
   const handleConfirmBooking = async () => {
   setBookingError("");
@@ -207,6 +208,7 @@ export default function BookAppointment() {
 
     setBookingResult(res);
     setConfirmed(true);
+    setShowPayment(false);
 
   } catch (err) {
     console.log(err.response?.data); // helps debug errors
@@ -216,6 +218,13 @@ export default function BookAppointment() {
     setConfirming(false);
   }
   };
+
+  const openPayment = () => {
+    setBookingError("");
+    setShowPayment(true);
+  };
+
+  const closePayment = () => setShowPayment(false);
 
   const selectedService = services.find(s => Number(s.id) === Number(details.serviceId));
 
@@ -448,7 +457,7 @@ export default function BookAppointment() {
                   </button>
                   <button
                     className="book-btn book-btn--primary"
-                    onClick={handleConfirmBooking}
+                    onClick={openPayment}
                     disabled={confirming}
                   >
                     {confirming ? "Processing..." : "Confirm Booking ✓"}
@@ -505,6 +514,48 @@ export default function BookAppointment() {
           </div>
         )}
       </div>
+
+      {showPayment && (
+        <div className="pay-modal-backdrop" onClick={closePayment}>
+          <div className="pay-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Pay Deposit</h3>
+            <p>
+              A small deposit is required to secure your booking.
+            </p>
+            <div className="pay-modal-amount">
+              Deposit: <strong>R{selectedService?.price ? Math.round(selectedService.price * 0.5) : 50}</strong>
+            </div>
+            <div className="pay-modal-form">
+              <label className="pay-field">
+                <span>Cardholder Name</span>
+                <input type="text" placeholder="Full name on card" />
+              </label>
+              <label className="pay-field">
+                <span>Card Number</span>
+                <input type="text" placeholder="1234 5678 9012 3456" inputMode="numeric" />
+              </label>
+              <div className="pay-field-row">
+                <label className="pay-field">
+                  <span>Expiry</span>
+                  <input type="text" placeholder="MM/YY" inputMode="numeric" />
+                </label>
+                <label className="pay-field">
+                  <span>CVC</span>
+                  <input type="text" placeholder="123" inputMode="numeric" />
+                </label>
+              </div>
+            </div>
+            <div className="pay-modal-actions">
+              <button className="book-btn book-btn--ghost" onClick={closePayment} disabled={confirming}>
+                Cancel
+              </button>
+              <button className="book-btn book-btn--primary" onClick={handleConfirmBooking} disabled={confirming}>
+                {confirming ? "Processing..." : "Pay & Confirm"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

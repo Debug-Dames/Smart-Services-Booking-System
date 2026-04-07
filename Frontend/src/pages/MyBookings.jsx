@@ -10,7 +10,13 @@ export default function MyBookings() {
   const [dateDrafts, setDateDrafts] = useState({});
   const [timeDrafts, setTimeDrafts] = useState({});
   const [actionState, setActionState] = useState({});
-  const [serviceMap, setServiceMap] = useState({});
+  const [serviceMap, setServiceMap] = useState({
+    2: "Haircut",
+    3: "Hair Styling",
+    4: "Hair Coloring",
+    5: "Nails",
+    6: "Braids",
+  });
 
   const fetchBookings = () => {
     setLoading(true);
@@ -57,6 +63,13 @@ export default function MyBookings() {
 
   useEffect(() => {
     let mounted = true;
+    const fallback = {
+      2: "Haircut",
+      3: "Hair Styling",
+      4: "Hair Coloring",
+      5: "Nails",
+      6: "Braids",
+    };
     (async () => {
       try {
         const data = await getServices();
@@ -66,9 +79,9 @@ export default function MyBookings() {
           if (svc?.id != null) acc[Number(svc.id)] = svc?.name;
           return acc;
         }, {});
-        setServiceMap(map);
+        setServiceMap({ ...fallback, ...map });
       } catch {
-        if (mounted) setServiceMap({});
+        if (mounted) setServiceMap(fallback);
       }
     })();
     return () => { mounted = false; };
@@ -301,15 +314,20 @@ export default function MyBookings() {
 
         <div className="my-bookings-grid">
           {bookings.map((booking) => {
+            const rawServiceId =
+              booking?.serviceId ||
+              booking?.service_id ||
+              booking?.serviceID ||
+              booking?.service?.id;
             const serviceName =
               booking?.service?.name ||
               booking?.service?.title ||
               booking?.serviceName ||
-              serviceMap[Number(booking?.serviceId)] ||
+              serviceMap[Number(rawServiceId)] ||
               booking?.service ||
-              "N/A";
+              (rawServiceId ? `Service ${rawServiceId}` : "N/A");
             const status = normalizeStatus(booking?.status);
-            const timeValue = booking?.startTime || booking?.time || booking?.appointment_time || booking?.date;
+            const timeValue = booking?.startTime || booking?.time || booking?.appointment_time;
             const bookingId = booking?.id ?? booking?.bookingId;
             const numericId = Number(bookingId);
             const hasValidId = Number.isInteger(numericId);
