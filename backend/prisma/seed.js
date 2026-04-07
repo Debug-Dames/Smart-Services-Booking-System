@@ -3,7 +3,27 @@ import bcrypt from "bcryptjs";
 
 async function main() {
   const hashedPassword = await bcrypt.hash("123456", 10);
+  const adminHashedPassword = await bcrypt.hash("Admin@1234", 10);
   const now = new Date();
+
+  await prisma.user.upsert({
+    where: { email: "admin@smartservices.com" },
+    update: {
+      name: "System Admin",
+      password: adminHashedPassword,
+      phone: "+10000000001",
+      updatedAt: now,
+      role: "ADMIN",
+    },
+    create: {
+      name: "System Admin",
+      email: "admin@smartservices.com",
+      password: adminHashedPassword,
+      phone: "+10000000001",
+      updatedAt: now,
+      role: "ADMIN",
+    },
+  });
 
   await prisma.user.upsert({
     where: { email: "test@example.com" },
@@ -24,7 +44,6 @@ async function main() {
     },
   });
 
-
   const haircut = await prisma.service.findFirst({
     where: {
       name: {
@@ -33,16 +52,6 @@ async function main() {
       },
     },
   });
-  await prisma.service.upsert({
-  where: { name: "Haircut" },
-  update: {},
-  create: {
-    name: "Haircut",
-    description: "Standard haircut service",
-    price: 100,
-    duration: 60,
-  },
- } );
 
   if (haircut) {
     await prisma.service.update({

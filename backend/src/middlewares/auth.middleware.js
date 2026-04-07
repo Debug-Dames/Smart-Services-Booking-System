@@ -13,14 +13,10 @@ export const protect = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
 
     const decoded = jwt.verify(token, env.JWT_SECRET);
-    const decodedUserId = Number(decoded?.userId ?? decoded?.id);
-
-    if (Number.isNaN(decodedUserId)) {
-      return res.status(401).json({ message: "Not authorized" });
-    }
+    req.user = decoded;
 
     const user = await prisma.user.findUnique({
-      where: { id: decodedUserId },
+      where: { id: req.user.id },
     });
 
     if (!user) {

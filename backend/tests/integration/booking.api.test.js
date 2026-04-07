@@ -49,8 +49,26 @@ beforeEach(async () => {
   await prisma.booking.deleteMany();
 });
 
-describe("Booking API Integration Tests", () => {
+describe("Booking API Integration Tests (no stylist)", () => {
+  const lockSlot = async (start, end) => {
+    const res = await request(app)
+      .post("/bookings/lock")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        serviceId: service.id,
+        startTime: start,
+        endTime: end,
+      });
+    expect(res.statusCode).toBe(201);
+    return res.body.lockToken;
+  };
+
   it("should create a booking successfully", async () => {
+    const start = "2026-03-10T10:00:00";
+    const end = "2026-03-10T11:00:00";
+
+    await lockSlot(start, end);
+
     const res = await request(app)
       .post("/bookings")
       .set("Authorization", `Bearer ${token}`)
@@ -58,8 +76,8 @@ describe("Booking API Integration Tests", () => {
         userId: user.id,
         serviceId: service.id,
         date: "2026-03-10",
-        startTime: "2026-03-10T10:00:00",
-        endTime: "2026-03-10T11:00:00",
+        startTime: start,
+        endTime: end,
       });
 
     expect(res.statusCode).toBe(201);

@@ -3,6 +3,7 @@ import express from "express";
 import * as bookingController from "./bookings.services.js";
 import { protect } from "../../middlewares/auth.middleware.js";
 
+
 const router = express.Router();
 
 // Public routes
@@ -13,7 +14,5 @@ router.get("/:id", bookingController.getBookingById);
 router.post("/", bookingController.createBooking); // can add protect later
 router.put("/:id", bookingController.updateBooking);
 router.delete("/:id", bookingController.deleteBooking);
-
-router.get("/bookings", getBookingsByDate);
 
 export default router;

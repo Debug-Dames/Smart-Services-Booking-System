@@ -1,51 +1,34 @@
-
-name: CI/CD
+name: CI Pipeline
 
 on:
   push:
-    branches:
-      - main
-      - develop
-      - 'feature/*'
+    branches: [develop, main]
   pull_request:
-    branches:
-      - main
-      - develop
+    branches: [develop, main]
 
 jobs:
-  build-test:
+  build-frontend-admin:
+    name: Build ${{ matrix.app }}
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: smart_salon
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres" 
-          --health-interval 10s 
-          --health-timeout 5s 
-          --health-retries 5
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [Frontend, Admin]
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2️⃣ Set up Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+          cache-dependency-path: ${{ matrix.app }}/package-lock.json
 
-      # 3️⃣ Install Backend dependencies
-      - name: Install Backend dependencies
-        working-directory: ./Backend
-        run: npm install
+      - name: Install dependencies
+        working-directory: ${{ matrix.app }}
+        run: npm ci
 
       - name: Build app
         working-directory: ${{ matrix.app }}
@@ -88,13 +71,13 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: backend
-        run: npm test || echo "Backend tests failed"
+        run: npm ci
 
       - name: Generate Prisma client
         working-directory: backend
         run: npx prisma generate
 
-      - name: Run database migrations
+      - name: Apply database migrations
         working-directory: backend
         run: npx prisma migrate deploy
 
@@ -146,7 +129,3 @@ jobs:
       - name: Build admin image
         run: docker build -t smart-services/admin:ci ./Admin
 
-      # 6️⃣ Optional: Deploy to production
-      - name: Deploy (optional)
-        if: github.ref == 'refs/heads/main'
-        run: echo "Deploy to production server here"

@@ -118,9 +118,26 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.auth-form-panel select {
+  height: 42px;
+  border: 1px solid #d8dce8;
+  border-radius: 7px;
+  padding: 0 12px;
+  font-size: 0.94rem;
+  color: #101828;
+  background: #ffffff;
+  margin-bottom: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
 .auth-form-panel--register input {
   height: 40px;
   margin-bottom: 10px;
+}
+
+.auth-form-panel--register select {
+  height: 40px;
+  margin-bottom: 18px;
 }
 
 .auth-form-panel input:focus {

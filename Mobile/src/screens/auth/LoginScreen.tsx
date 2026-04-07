@@ -14,6 +14,10 @@ import {
   Dimensions,
 } from 'react-native';
 import Colors from '../../contants/colors';
+import { useAppDispatch, useAppSelector } from '../../app/store';
+import { loginUser } from '../../features/auth/authThunks';
+import { selectAuthLoading, selectAuthError, clearAuthError } from '../../features/auth/authSlice';
+
 
 const { height } = Dimensions.get('window');
 const theme = Colors.light;
@@ -132,8 +136,33 @@ const FadeIn: React.FC<{ children: React.ReactNode; delay?: number }> = ({ child
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 const LoginScreen = ({ navigation }: any) => {
+  const dispatch  = useAppDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const loading   = useAppSelector(selectAuthLoading);
+  const apiError  = useAppSelector(selectAuthError);
+
+  // Clear any previous auth errors when screen mounts
+    useEffect(() => {
+      dispatch(clearAuthError());
+    }, [dispatch]);
+  
+    // Inline validation
+    const emailValid   = email.length === 0            ? null : /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const passwordValid= password.length === 0         ? null : password.length >= 8;  
+    const canSubmit = emailValid && passwordValid && !loading;
+  
+
+  const handleLogin = async () => {
+      if (!canSubmit) return;
+      dispatch(loginUser({
+        email:    email.trim(),
+        password,
+      }));
+      // No navigation.navigate() needed — AppNavigator watches isLoggedIn from Redux.
+      // When registerUser succeeds, isLoggedIn becomes true and the navigator
+      // automatically switches to MainNavigator (which shows the Tabs).
+    };
 
   return (
     <KeyboardAvoidingView
@@ -185,10 +214,20 @@ const LoginScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </FadeIn>
 
+
+        {/* API error from Redux */}
+          {apiError ? (
+            <FadeIn delay={0}>
+              <Text style={ls.apiError}>{apiError}</Text>
+            </FadeIn>
+          ) : null}
+
+
+
         <FadeIn delay={380}>
           <TouchableOpacity
             style={ls.loginBtn}
-            onPress={() => navigation.navigate('Home')}
+            onPress={handleLogin}
             activeOpacity={0.85}
           >
             <Text style={ls.loginBtnText}>Sign In</Text>
@@ -290,7 +329,12 @@ const ls = StyleSheet.create({
 
   forgotBtn: { alignSelf: 'flex-end', marginBottom: 20, marginTop: 4 },
   forgotText: { fontSize: 13, color: theme.primary, fontWeight: '600' },
-
+  apiError: {
+    fontSize: 13, color: '#C03030', fontWeight: '600',
+    backgroundColor: '#FEF2F2', borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 10,
+    marginBottom: 16, overflow: 'hidden',
+  },
   loginBtn: {
     backgroundColor: theme.primary,
     borderRadius: 16,

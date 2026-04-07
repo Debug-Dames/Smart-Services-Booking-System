@@ -2,17 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import adminApi from '../api/adminApi'
 import bookingApi from '../api/bookingApi'
 
-const DELETED_USERS_KEY = 'admin_deleted_users_count'
 const USER_STATUSES = ['Active', 'Suspended', 'Blocked']
+const CUSTOMER_ROLES = new Set(['user', 'customer'])
 
 const toDate = (value) => {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? null : date
-}
-
-const getDeletedCount = () => {
-  const raw = Number(localStorage.getItem(DELETED_USERS_KEY) || '0')
-  return Number.isFinite(raw) && raw >= 0 ? raw : 0
 }
 
 const normalize = (value) => String(value || '').trim().toLowerCase()
@@ -26,12 +21,14 @@ const bookingBelongsToUser = (booking, user) => {
   const userEmail = normalize(user.email)
   if (bookingEmail && userEmail && bookingEmail === userEmail) return true
 
-  const bookingName = normalize(booking.userName ?? booking.user)
+  const bookingName = normalize(
+    booking.userName ?? booking.customerName ?? (typeof booking.user === 'string' ? booking.user : booking.user?.name),
+  )
   const userName = normalize(user.name)
   return Boolean(bookingName && userName && bookingName === userName)
 }
 
-export default function ManageUsers() {
+function ManageUsers() {
   const [users, setUsers] = useState([])
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -40,7 +37,6 @@ export default function ManageUsers() {
   const [search, setSearch] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editForm, setEditForm] = useState({ name: '', email: '', status: 'Active' })
-  const [deletedUsers, setDeletedUsers] = useState(getDeletedCount)
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -51,30 +47,31 @@ export default function ManageUsers() {
   const loadUsers = async () => {
     setLoading(true)
     setError('')
-    try {
-      const [usersData, bookingsData] = await Promise.all([
-        adminApi.fetchUsers(),
-        bookingApi.fetchBookings(),
-      ])
-      setUsers(Array.isArray(usersData) ? usersData : [])
-      setBookings(Array.isArray(bookingsData) ? bookingsData : [])
-    } catch {
+
+    const [usersResult, bookingsResult] = await Promise.allSettled([
+      adminApi.fetchUsers(),
+      bookingApi.fetchBookings(),
+    ])
+
+    if (usersResult.status === 'fulfilled') {
+      setUsers(Array.isArray(usersResult.value) ? usersResult.value : [])
+    } else {
       setError('Failed to load users.')
-    } finally {
-      setLoading(false)
     }
+
+    if (bookingsResult.status === 'fulfilled') {
+      setBookings(Array.isArray(bookingsResult.value) ? bookingsResult.value : [])
+    }
+
+    setLoading(false)
   }
 
   useEffect(() => {
     loadUsers()
   }, [])
 
-  useEffect(() => {
-    localStorage.setItem(DELETED_USERS_KEY, String(deletedUsers))
-  }, [deletedUsers])
-
   const userAccounts = useMemo(
-    () => users.filter((user) => String(user.role || 'user').toLowerCase() === 'user'),
+    () => users.filter((user) => CUSTOMER_ROLES.has(String(user.role || 'CUSTOMER').toLowerCase())),
     [users],
   )
 
@@ -122,6 +119,10 @@ export default function ManageUsers() {
       return Number(bookingCountMap.get(String(id)) || 0) > 0
     }).length
 
+    const suspendedUsers = userAccounts.filter((user) =>
+      ['suspended', 'blocked'].includes(String(user.status || 'Active').toLowerCase()),
+    ).length
+
     const growthText = previousPeriodUsers === 0
       ? `${newUsersAdded > 0 ? '+' : ''}${newUsersAdded}`
       : `${(((newUsersAdded - previousPeriodUsers) / previousPeriodUsers) * 100).toFixed(1)}%`
@@ -130,10 +131,10 @@ export default function ManageUsers() {
       totalUsers: userAccounts.length,
       newUsersAdded,
       activeUsers,
-      deletedUsers,
+      suspendedUsers,
       growthText,
     }
-  }, [userAccounts, deletedUsers, bookingCountMap])
+  }, [userAccounts, bookingCountMap])
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -149,7 +150,7 @@ export default function ManageUsers() {
     setSubmitting(true)
     setError('')
     try {
-      await adminApi.createUser({
+      const created = await adminApi.createUser({
         ...form,
         role: 'user',
         status: 'Active',
@@ -158,8 +159,9 @@ export default function ManageUsers() {
       })
       setForm({ name: '', email: '', password: '', role: 'user' })
       await loadUsers()
-    } catch {
-      setError('Failed to create user.')
+
+    } catch (err) {
+      setError(err.message || 'Failed to create user.')
     } finally {
       setSubmitting(false)
     }
@@ -189,8 +191,8 @@ export default function ManageUsers() {
       })
       cancelEdit()
       await loadUsers()
-    } catch {
-      setError('Failed to update user.')
+    } catch (err) {
+      setError(err.message || 'Failed to update user.')
     }
   }
 
@@ -199,19 +201,18 @@ export default function ManageUsers() {
     try {
       await adminApi.updateUser(id, { status })
       await loadUsers()
-    } catch {
-      setError('Failed to update user status.')
+    } catch (err) {
+      setError(err.message || 'Failed to update user status.')
     }
   }
 
   const handleDelete = async (id) => {
     setError('')
     try {
-      const removed = await adminApi.deleteUser(id)
-      if (removed) setDeletedUsers((prev) => prev + 1)
+      await adminApi.deleteUser(id)
       await loadUsers()
-    } catch {
-      setError('Failed to delete user.')
+    } catch (err) {
+      setError(err.message || 'Failed to delete user.')
     }
   }
 
@@ -224,11 +225,11 @@ export default function ManageUsers() {
           <p className="admin-page-subtitle">Create, search by email, update, disable, and manage all user accounts in one place.</p>
         </div>
         <div className="admin-hero-metrics">
-          <article className="admin-metric-chip"><span>Total Users</span><strong>{metrics.totalUsers}</strong></article>
-          <article className="admin-metric-chip"><span>New Users Added</span><strong>{metrics.newUsersAdded}</strong></article>
-          <article className="admin-metric-chip"><span>Active Users</span><strong>{metrics.activeUsers}</strong></article>
-          <article className="admin-metric-chip"><span>Deleted Users</span><strong>{metrics.deletedUsers}</strong></article>
-          <article className="admin-metric-chip"><span>User Growth</span><strong>{metrics.growthText}</strong></article>
+          <article className="admin-metric-chip metric-users-total"><span>Total Users</span><strong>{metrics.totalUsers}</strong></article>
+          <article className="admin-metric-chip metric-users-new"><span>New Users Added</span><strong>{metrics.newUsersAdded}</strong></article>
+          <article className="admin-metric-chip metric-users-active"><span>Active Users</span><strong>{metrics.activeUsers}</strong></article>
+          <article className="admin-metric-chip metric-users-deleted"><span>Suspended Users</span><strong>{metrics.suspendedUsers}</strong></article>
+          <article className="admin-metric-chip metric-users-growth"><span>User Growth</span><strong>{metrics.growthText}</strong></article>
         </div>
       </div>
 
@@ -314,7 +315,7 @@ export default function ManageUsers() {
                           user.email || 'N/A'
                         )}
                       </td>
-                      <td>user</td>
+                      <td>{CUSTOMER_ROLES.has(String(user.role || '').toLowerCase()) ? 'User' : (user.role || 'N/A')}</td>
                       <td>{created ? created.toLocaleDateString() : 'N/A'}</td>
                       <td>
                         {isEditing ? (
@@ -357,3 +358,5 @@ export default function ManageUsers() {
     </section>
   )
 }
+
+export default ManageUsers
