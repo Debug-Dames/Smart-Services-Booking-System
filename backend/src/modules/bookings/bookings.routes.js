@@ -3,13 +3,8 @@ import express from "express";
 
 import { protect } from "../../middlewares/auth.middleware.js";
 
-<<<<<<< HEAD
-import * as bookingController from "../../controllers/bookingController.js";
-import { validateBooking } from "./middleware/bookingValidation.js";
-=======
 import { validateBooking } from "../../middlewares/bookingValidation.js"; // fix this!!!
 import * as bookingController from "../../controllers/bookingController.js";
->>>>>>> e62622b5828e5f667d9cf7ff705437ad65f58a2b
 
 const router = express.Router();
 
@@ -108,7 +103,6 @@ const router = express.Router();
  *       401:
  *         description: Unauthorized
  */
-<<<<<<< HEAD
 
 
 router.get("/", protect, bookingController.getAllBookings);
@@ -170,146 +164,7 @@ router.get("/:id", protect, bookingController.getBookingById);
  *       400:
  *         description: Invalid input or validation error
  *       401:
- *         description: Unauthorized â€“ JWT token missing or invalid
- *       409:
- *         description: Time slot already booked
- */
-
-router.post("/", protect, bookingController.createBookingController);
-
-/**
- * @swagger
- * /bookings/{id}:
- *   put:
- *     summary: Update booking status
- *     description: Allows admin or user to update booking status.
- *     tags: [Bookings]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Booking ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           example:
- *             status: CONFIRMED
- *     responses:
- *       200:
- *         description: Booking updated successfully
- *       400:
- *         description: Invalid status value
- *       404:
- *         description: Booking not found
- *       401:
- *         description: Unauthorized
- */
-
-router.put("/:id", protect, bookingController.updateBooking);
-
-
-/**
- * @swagger
- * /bookings/{id}:
- *   delete:
- *     summary: Cancel a booking
- *     description: Deletes or cancels an existing booking.
- *     tags: [Bookings]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Booking ID
- *     responses:
- *       200:
- *         description: Booking cancelled successfully
- *       404:
- *         description: Booking not found
- *       401:
- *         description: Unauthorized
- */
-
-router.delete("/:id", protect, bookingController.deleteBooking);
-
-router.get("/", bookingController.getBookingsByDateController);
-
-// calendar monthly heatmap
-router.get("/monthly", bookingController.getMonthlyBookingsController);
-
-
-=======
->>>>>>> e62622b5828e5f667d9cf7ff705437ad65f58a2b
-
-
-router.get("/", protect, bookingController.getAllBookings);
-
-
-/**
- * @swagger
- * /bookings/{id}:
- *   get:
- *     summary: Get a booking by ID
- *     tags: [Bookings]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: Booking ID
- *     responses:
- *       200:
- *         description: Booking details
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Booking'
- *       404:
- *         description: Booking not found
- *       401:
- *         description: Unauthorized
- */
-
-router.get("/:id", protect, bookingController.getBookingById);
-
-
-/**
- * @swagger
- * /bookings:
- *   post:
- *     summary: Create a new booking
- *     description: Allows an authenticated user to create a booking for a specific service and time slot.
- *     tags: [Bookings]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreateBookingInput'
- *     responses:
- *       201:
- *         description: Booking created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Booking'
- *       400:
- *         description: Invalid input or validation error
- *       401:
- *         description: Unauthorized – JWT token missing or invalid
+ *         description: Unauthorized ï¿½ JWT token missing or invalid
  *       409:
  *         description: Time slot already booked
  */
