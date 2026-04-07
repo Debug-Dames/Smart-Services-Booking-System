@@ -5,10 +5,15 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const envPath = path.resolve(__dirname, "../../.env");
 
-// Ensure Prisma always gets DATABASE_URL from backend/.env.
-// Use override so Prisma does not connect to an unintended database from machine-level env vars.
-dotenv.config({ path: path.resolve(__dirname, "../../.env"), override: true });
+// In local development, load backend/.env.
+// In production, rely on hosting provider environment variables.
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config();
+}
 
 const prisma = new PrismaClient({
   datasources: {
@@ -23,6 +28,36 @@ export const ensureBookingTimeColumns = async () => {
     ALTER TABLE "Booking"
     ADD COLUMN IF NOT EXISTS "startTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ADD COLUMN IF NOT EXISTS "endTime" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+  `);
+};
+
+export const ensureUserStatusColumn = async () => {
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "User"
+    ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'Active';
+  `);
+};
+
+export const ensureStylistTable = async () => {
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "Stylist" (
+      "id" SERIAL NOT NULL,
+      "name" TEXT NOT NULL,
+      "email" TEXT NOT NULL,
+      "password" TEXT NOT NULL,
+      "specialty" TEXT,
+      "availability" TEXT NOT NULL DEFAULT 'Available',
+      "workingHours" TEXT NOT NULL DEFAULT '09:00 - 17:00',
+      "status" TEXT NOT NULL DEFAULT 'Available',
+      "services" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Stylist_pkey" PRIMARY KEY ("id")
+    );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "Stylist_email_key" ON "Stylist" ("email");
   `);
 };
 

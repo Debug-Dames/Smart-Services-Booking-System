@@ -1,5 +1,4 @@
-
-   {
+{
   "name": "smart-salon-backend",
   "version": "1.0.0",
   "type": "module",
@@ -33,4 +32,4 @@
     "prisma": "^6.0.0",
     "supertest": "^7.2.2"
   }
-   }
+}

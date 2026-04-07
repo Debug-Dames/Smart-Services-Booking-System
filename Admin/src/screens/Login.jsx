@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const ADMIN_EMAIL = (import.meta.env.VITE_ADMIN_EMAIL || "admin@smartservices.com")
-  .trim()
-  .toLowerCase();
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "Admin@123";
+const API = import.meta.env.VITE_API_URL || "https://smart-services-booking-system-backend-uzip.onrender.com/api";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -14,7 +11,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -30,18 +27,44 @@ export default function AdminLogin() {
 
     setLoading(true);
 
-    if (trimmedEmail !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+    try {
+      const response = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: trimmedEmail,
+          password,
+        }),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Login failed.");
+      }
+
+      const userRole = String(data?.user?.role || "").toUpperCase();
+      if (userRole !== "ADMIN") {
+        localStorage.removeItem("adminAuth");
+        localStorage.removeItem("adminUser");
+        localStorage.removeItem("adminToken");
+        throw new Error("This account does not have admin access.");
+      }
+
+      localStorage.setItem("adminAuth", "true");
+      localStorage.setItem("adminToken", data.token || "");
+      localStorage.setItem("adminUser", JSON.stringify(data.user || { email: trimmedEmail, role: userRole }));
+      navigate("/admin", { replace: true });
+    } catch (err) {
       localStorage.removeItem("adminAuth");
       localStorage.removeItem("adminUser");
-      setError("Invalid admin credentials.");
+      localStorage.removeItem("adminToken");
+      setError(err.message || "Invalid admin credentials.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    localStorage.setItem("adminAuth", "true");
-    localStorage.setItem("adminUser", JSON.stringify({ email: trimmedEmail, role: "admin" }));
-    setLoading(false);
-    navigate("/admin", { replace: true });
   };
 
   return (

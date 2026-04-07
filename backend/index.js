@@ -1,5 +1,7 @@
 const express = require("express");
 const app = express();
+import express from "express";
+import cors from "cors";
 const bookingRoutes = require("./routes/bookingRoutes");
 const { errorHandler } = require("./middlewares/errorHandler");
 
