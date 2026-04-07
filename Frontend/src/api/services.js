@@ -1,4 +1,22 @@
-import api from './axios';
+import axios from "axios";
+
+const API_URL = "http://localhost:5000/api";
+
+// ✅ Create axios instance
+const api = axios.create({
+  baseURL: API_URL,
+});
+
+// ✅ Attach token automatically to every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
 
 // --- AUTHENTICATION ---
 export const authService = {
@@ -32,16 +50,18 @@ export const authService = {
 
 // --- BOOKINGS ---
 export const bookingService = {
-  getBookingsByDate: async (date) => {
-    const { data } = await api.get(`/bookings?date=${date}`);
+  getBookingsByDate: async (date, serviceId) => {
+    const serviceParam = serviceId ? `&serviceId=${serviceId}` : "";
+    const { data } = await api.get(`/bookings?date=${date}${serviceParam}`);
     return data;
   },
-  getMonthlyBookings: async (year, month) => {
-    const { data } = await api.get(`/bookings/monthly?year=${year}&month=${month}`);
+  getMonthlyBookings: async (year, month, serviceId) => {
+    const serviceParam = serviceId ? `&serviceId=${serviceId}` : "";
+    const { data } = await api.get(`/bookings/monthly?year=${year}&month=${month}${serviceParam}`);
     return data;
   },
   getMyBookings: async () => {
-    const { data } = await api.get('/bookings/mine');
+    const { data } = await api.get('/bookings');
     return data;
   },
   createBooking: async (payload) => {
@@ -74,38 +94,8 @@ export const bookingService = {
 
 // --- SERVICES ---
 export const getServices = async () => {
-  return [
-    {
-      id: 2,
-      name: "Haircut",
-      price: 150,
-      duration: 60
-    },
-    {
-      id: 3,
-      name: "Hair Styling",
-      price: 200,
-      duration: 60
-    },
-    {
-      id: 4,
-      name: "Hair Coloring",
-      price: 350,
-      duration: 90
-    },
-    {
-      id: 5,
-      name: "Nails",
-      price: 220,
-      duration: 60
-    },
-    {
-      id: 6,
-      name: "Braids",
-      price: 350,
-      duration: 120
-    }
-  ];
+  const res = await api.get("/services");
+  return res.data;
 };
 
 export const getAvailableSlots = async (date, serviceId) => {

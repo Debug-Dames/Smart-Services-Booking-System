@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { bookingService, getServices } from "../api/services";
@@ -11,7 +12,7 @@ const TIME_SLOTS = [
   "12:00", "13:00", "14:00", "15:00", "16:00",
 ];
 
-const MAX_BOOKINGS_PER_DAY = 4;
+const MAX_BOOKINGS_PER_DAY = TIME_SLOTS.length;
 
 const DEFAULT_DURATION_MINUTES = 60;
 
@@ -48,6 +49,7 @@ function toTimeSlot(value) {
 
 export default function BookAppointment() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [services, setServices] = useState([]);
 
@@ -89,30 +91,30 @@ export default function BookAppointment() {
   }, []);
 
   // Fetch monthly booking counts when month changes
-  const fetchMonthly = useCallback(async (date) => {
+  const fetchMonthly = useCallback(async (date, serviceId) => {
     try {
       const y = date.getFullYear();
       const m = date.getMonth() + 1;
-      const res = await bookingService.getMonthlyBookings(y, m);
+      if (!serviceId) {
+        setMonthlyBookings({});
+        return;
+      }
+      const res = await bookingService.getMonthlyBookings(y, m, serviceId);
       setMonthlyBookings(res || {});
     } catch {
-      // silent – calendar will just show no color info
+      setMonthlyBookings({});
     }
   }, []);
 
   useEffect(() => {
-    fetchMonthly(calendarDate);
-  }, []);
+    fetchMonthly(calendarDate, details.serviceId);
+  }, [calendarDate, details.serviceId, fetchMonthly]);
 
   // Fetch slots for a selected day
-  const fetchSlots = async (dateStr) => {
+  const fetchSlots = async (_dateStr) => {
+    // Temporarily keep all slots available (backend data has been unreliable).
     setSlotsLoading(true);
     try {
-      const res = await bookingService.getBookingsByDate(dateStr);
-      const bookings = res || [];
-      setBookedSlots(bookings.map(b => toTimeSlot(b.startTime || b.time || b.date)));
-      setDayBookingCount(bookings.length);
-    } catch {
       setBookedSlots([]);
       setDayBookingCount(0);
     } finally {
@@ -137,7 +139,7 @@ export default function BookAppointment() {
 
   const handleActiveStartDateChange = ({ activeStartDate }) => {
     setCalendarDate(activeStartDate);
-    fetchMonthly(activeStartDate);
+    fetchMonthly(activeStartDate, details.serviceId);
   };
 
   // Calendar tile coloring
@@ -148,14 +150,6 @@ export default function BookAppointment() {
   today.setHours(0, 0, 0, 0);
 
   if (date < today) return "cal-tile--past";
-
-  const ds = formatDate(date);
-  const count = monthlyBookings[ds] || 0;
-
-  if (count >= MAX_BOOKINGS_PER_DAY) {
-    return "cal-tile--full";
-  }
-
   return "cal-tile--available";
 };
 
@@ -179,10 +173,30 @@ export default function BookAppointment() {
   setConfirming(true);
 
   try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setBookingError("Please log in to book an appointment.");
+      setConfirming(false);
+      navigate("/login");
+      return;
+    }
     const serviceId = Number(details.serviceId);
     const service = services.find((s) => Number(s.id) === serviceId);
-    const duration = service?.duration ?? DEFAULT_DURATION_MINUTES;
+    const rawDuration = Number(service?.duration);
+    const duration = Number.isFinite(rawDuration) && rawDuration > 0
+      ? rawDuration
+      : DEFAULT_DURATION_MINUTES;
+    if (!selectedTime) {
+      setBookingError("Please select a valid time.");
+      setConfirming(false);
+      return;
+    }
     const endTime = addMinutesToTime(selectedTime, duration);
+    if (!endTime) {
+      setBookingError("Please select a valid time.");
+      setConfirming(false);
+      return;
+    }
     const res = await bookingService.createBooking({
       serviceId,
       serviceName: service?.name,
@@ -198,7 +212,11 @@ export default function BookAppointment() {
 
   } catch (err) {
     console.log(err.response?.data); // helps debug errors
-    const msg = err?.response?.data?.message || "Booking failed. Please try again.";
+    const status = err?.response?.status;
+    const msg =
+      status === 401
+        ? "Your session has expired. Please log in again."
+        : err?.response?.data?.message || "Booking failed. Please try again.";
     setBookingError(msg);
   } finally {
     setConfirming(false);
@@ -496,3 +514,5 @@ export default function BookAppointment() {
     </div>
   );
 }
+
+
