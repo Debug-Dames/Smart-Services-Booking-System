@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 
 // ✅ Create axios instance
 const api = axios.create({
@@ -102,8 +103,19 @@ export const bookingService = {
 
 // --- SERVICES ---
 export const getServices = async () => {
-  const res = await api.get("/services");
-  return res.data;
+  try {
+    const res = await api.get("/services");
+    return res.data;
+  } catch (err) {
+    // Fallback for local dev when API isn't reachable
+    return [
+      { id: 2, name: "Haircut", price: 150, duration: 60 },
+      { id: 3, name: "Hair Styling", price: 200, duration: 60 },
+      { id: 4, name: "Hair Coloring", price: 350, duration: 90 },
+      { id: 5, name: "Nails", price: 220, duration: 60 },
+      { id: 6, name: "Braids", price: 350, duration: 120 }
+    ];
+  }
 };
 
 export const getAvailableSlots = async (date, serviceId) => {

@@ -197,14 +197,24 @@ export default function BookAppointment() {
       setConfirming(false);
       return;
     }
+    const startTimeISO = `${selectedDate}T${selectedTime}:00`;
+    const endTimeISO = `${selectedDate}T${endTime}:00`;
+    const lock = await bookingService.lockSlot({
+      serviceId,
+      date: selectedDate,
+      startTime: startTimeISO,
+      endTime: endTimeISO,
+    });
+    const lockToken = lock?.lockToken;
     const res = await bookingService.createBooking({
       serviceId,
       serviceName: service?.name,
       servicePrice: service?.price,
       serviceDuration: service?.duration,
       date: selectedDate,
-      startTime: selectedTime,
-      endTime,
+      startTime: startTimeISO,
+      endTime: endTimeISO,
+      lockToken,
     });
 
     setBookingResult(res);
