@@ -251,8 +251,6 @@ const buildServiceCatalogResponse = () => {
     )
     .join("\n\n");
 
-  const addOns = ADD_ONS.map((addon) => `- ${addon.name} · R${addon.price}`).join("\n");
-
   return [
     "Our Service Catalog",
     "Transparent prices, practical durations, and specialist care from our team.",
@@ -260,15 +258,6 @@ const buildServiceCatalogResponse = () => {
     "Services",
     "",
     services,
-    "",
-    "Add-On Treatments",
-    addOns,
-    "",
-    "Booking Notes",
-    ...BOOKING_NOTES,
-    "",
-    "Contact",
-    ...CONTACT_DETAILS,
   ].join("\n");
 };
 

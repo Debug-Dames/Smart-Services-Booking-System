@@ -3,7 +3,7 @@ import api from "../../api/axios";
 import "./chatbot.css";
 
 const quickReplies = [
-  "What are your prices?",
+  "What services do you offer?",
   "What add-ons do you offer?",
   "How do I book?",
   "Contact details",
@@ -22,14 +22,22 @@ export default function Chatbot() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const chatbotPaths = useMemo(
-    () =>
-      (import.meta.env.VITE_CHATBOT_PATHS || "/")
-        .split(",")
-        .map((path) => path.trim())
-        .filter(Boolean),
-    []
-  );
+  const chatbotPaths = useMemo(() => {
+    const raw = import.meta.env.VITE_CHATBOT_PATHS ?? "";
+    const parts = raw
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+
+    if (parts.length === 0) {
+      return [""];
+    }
+
+    return parts.map((part) => {
+      if (part === "/") return "";
+      return part.replace(/^\/+/, "");
+    });
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
