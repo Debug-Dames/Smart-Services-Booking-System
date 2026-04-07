@@ -16,7 +16,7 @@ export const getAllBookings = async (req, res) => {
             name: true,
             email: true,
           },
-        },
+        }, 
         service: {
           select: {
             id: true,

@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from "react";
+﻿import React, { useState, useEffect, useMemo, useRef } from "react";
 import api from "../../api/axios";
 import "./chatbot.css";
 
@@ -22,8 +22,12 @@ export default function Chatbot() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const apiBase = useMemo(
-    () => import.meta.env.VITE_API_BASE_URL || "https://smart-services-booking-system-backend-uzip.onrender.com/api",
+  const chatbotPaths = useMemo(
+    () =>
+      (import.meta.env.VITE_CHATBOT_PATHS || "/")
+        .split(",")
+        .map((path) => path.trim())
+        .filter(Boolean),
     []
   );
 

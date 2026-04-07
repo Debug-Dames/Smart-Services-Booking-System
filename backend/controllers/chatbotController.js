@@ -14,22 +14,26 @@ export const chatbotHealth = (_req, res) => {
 export const chatbotHandler = async (req, res) => {
   try {
     const { message } = req.body;
+    const userKey = req.user?.id || req.ip;
 
     if (!message) {
       return res.status(400).json({ response: "Message is required" });
     }
 
     if (isTestEnv()) {
-      const reply = await processMessage(message, { userId: req.user?.id });
+      const reply = await processMessage(message, { userId: req.user?.id, userKey });
       return res.json({ response: reply });
     }
 
-    if (!process.env.GROQ_API_KEY) {
-      const reply = await processMessage(message, { userId: req.user?.id });
+    const useGroq = process.env.CHATBOT_PROVIDER === "groq";
+
+    if (!process.env.GROQ_API_KEY || !useGroq) {
+      const reply = await processMessage(message, { userId: req.user?.id, userKey });
       return res.json({ response: reply });
     }
 
     const model = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+    const canonicalReply = await processMessage(message, { userId: req.user?.id, userKey });
 
     const aiResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -40,8 +44,16 @@ export const chatbotHandler = async (req, res) => {
       body: JSON.stringify({
         model,
         messages: [
-          { role: "system", content: "You are a helpful salon assistant." },
-          { role: "user", content: message },
+          {
+            role: "system",
+            content:
+              "You are a salon assistant. You must answer using ONLY the canonical response provided. " +
+              "Do not add, remove, or alter any facts. If unsure, return the canonical response exactly.",
+          },
+          {
+            role: "user",
+            content: `Canonical response:\n${canonicalReply}\n\nUser message:\n${message}\n\nReturn the canonical response only.`,
+          },
         ],
       }),
     });
@@ -59,15 +71,19 @@ export const chatbotHandler = async (req, res) => {
     const reply = data?.choices?.[0]?.message?.content;
 
     if (!reply) {
-      const fallbackReply = await processMessage(message, { userId: req.user?.id });
+      const fallbackReply = await processMessage(message, { userId: req.user?.id, userKey });
       return res.json({ response: fallbackReply || "Chatbot returned no reply" });
     }
 
-    return res.json({ response: reply });
+    if (!reply.includes(canonicalReply)) {
+      return res.json({ response: canonicalReply });
+    }
+
+    return res.json({ response: canonicalReply });
   } catch (error) {
     console.error(error);
     try {
-      const reply = await processMessage(req.body?.message || "", { userId: req.user?.id });
+      const reply = await processMessage(req.body?.message || "", { userId: req.user?.id, userKey });
       if (reply) {
         return res.json({ response: reply });
       }

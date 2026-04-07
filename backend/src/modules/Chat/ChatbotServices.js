@@ -1,4 +1,4 @@
-// backend/src/modules/Chat/ChatbotServices.js
+﻿// backend/src/modules/Chat/ChatbotServices.js
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createBooking } from "../bookings/bookings.service.js";
 import prisma from "../../config/database.js";
@@ -18,6 +18,7 @@ const globalShortTermUsage = new Map();
 const geminiCooldowns = new Map();
 const geminiCache = new Map();
 const bookingSessions = new Map();
+const conversationSessions = new Map();
 const isTestEnv = () =>
   process.env.NODE_ENV === "test" ||
   typeof process.env.JEST_WORKER_ID !== "undefined";
@@ -30,6 +31,14 @@ const getSessionKey = (userKey) => {
     return `${base}:test:${workerId}`;
   }
   return base;
+};
+
+const getConversation = (sessionKey) =>
+  conversationSessions.get(sessionKey) || { lastTopic: "", lastService: "" };
+
+const updateConversation = (sessionKey, updates) => {
+  const current = getConversation(sessionKey);
+  conversationSessions.set(sessionKey, { ...current, ...updates });
 };
 
 const getTodayKey = () => new Date().toISOString().slice(0, 10);
@@ -226,6 +235,42 @@ const BOOKING_NOTES = [
   "Rescheduling is available up to 24 hours before your booking.",
   "Walk-ins are welcome when slots are available.",
 ];
+const CONTACT_DETAILS = [
+  "123 Beauty Avenue, Rosebank City",
+  "+27 12 345 6789",
+  "hello@damessalon.com",
+];
+
+const BOOKING_CTA = "Click here to proceed to book your appointment.";
+
+const buildServiceCatalogResponse = () => {
+  const services = Array.from(SERVICE_DETAILS.entries())
+    .map(
+      ([name, details]) =>
+        `- ${name} (${details.category})\n  ${details.description}\n  ${details.duration} min · R${details.price}`
+    )
+    .join("\n\n");
+
+  const addOns = ADD_ONS.map((addon) => `- ${addon.name} · R${addon.price}`).join("\n");
+
+  return [
+    "Our Service Catalog",
+    "Transparent prices, practical durations, and specialist care from our team.",
+    "",
+    "Services",
+    "",
+    services,
+    "",
+    "Add-On Treatments",
+    addOns,
+    "",
+    "Booking Notes",
+    ...BOOKING_NOTES,
+    "",
+    "Contact",
+    ...CONTACT_DETAILS,
+  ].join("\n");
+};
 
 const resolveServiceName = (text) => {
   const normalized = text.toLowerCase();
@@ -426,18 +471,19 @@ const buildOrUpdateSession = async (message, session, userKey) => {
 const handleBookingFlow = async (message, { userId, userKey, sessionKey }) => {
   const session = bookingSessions.get(sessionKey) || { active: true, service: "", date: "", time: "" };
   session.active = true;
+  updateConversation(sessionKey, { lastTopic: "booking" });
 
   await buildOrUpdateSession(message, session, userKey);
   bookingSessions.set(sessionKey, session);
 
   if (!session.service) {
-    return "Which service would you like to book?";
+    return "Which service would you like to book? You can say a name like \"Signature Manicure\" or \"Protective Braids\".";
   }
   if (!session.date) {
-    return "What date would you like? (YYYY-MM-DD)";
+    return "What date would you like? Please use YYYY-MM-DD (for example, 2026-04-10).";
   }
   if (!session.time) {
-    return "What time should I book? (HH:mm)";
+    return "What time should I book? Please use HH:mm (for example, 14:30).";
   }
 
   const serviceRecord = await findOrCreateServiceRecord(session.service);
@@ -449,7 +495,7 @@ const handleBookingFlow = async (message, { userId, userKey, sessionKey }) => {
   if (!start) {
     session.time = "";
     bookingSessions.set(sessionKey, session);
-    return "That time doesn't look right. Please provide time in HH:mm format.";
+    return "That time doesn't look right. Please provide time in HH:mm format (for example, 14:30).";
   }
 
   const durationMinutes = Number(serviceRecord.duration) || 60;
@@ -465,14 +511,15 @@ const handleBookingFlow = async (message, { userId, userKey, sessionKey }) => {
     session.time = "";
     bookingSessions.set(sessionKey, session);
     if (suggestions.length > 0) {
-      return `That time is not available. Available times include ${suggestions.join(", ")}. What time works for you?`;
+      return `That time is not available. Available times include ${suggestions.join(", ")}. Which time works for you?`;
     }
     return "That time is not available. Please choose a different time.";
   }
 
   if (!userId) {
     bookingSessions.delete(sessionKey);
-    return `Great! I have your appointment for ${serviceRecord.name} on ${session.date} at ${session.time}. Thank you, bye.`;
+    updateConversation(sessionKey, { lastTopic: "booking_complete", lastService: serviceRecord.name });
+    return `All set! I have your appointment for ${serviceRecord.name} on ${session.date} at ${session.time}. ${BOOKING_CTA}`;
   }
 
   try {
@@ -484,7 +531,8 @@ const handleBookingFlow = async (message, { userId, userKey, sessionKey }) => {
       endTime: end.toISOString(),
     });
     bookingSessions.delete(sessionKey);
-    return `Great! Your appointment is booked for ${session.date} at ${session.time}. Thank you, bye.`;
+    updateConversation(sessionKey, { lastTopic: "booking_complete", lastService: serviceRecord.name });
+    return `All set! Your appointment is booked for ${session.date} at ${session.time}. ${BOOKING_CTA}`;
   } catch (err) {
     return err?.message || "I couldn't complete the booking. Please try again.";
   }
@@ -503,6 +551,7 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
   // normalize: lowercase and trim spaces
   const text = message.toLowerCase().trim();
   const sessionKey = getSessionKey(userKey);
+  const conversation = getConversation(sessionKey);
   const activeSession = bookingSessions.get(sessionKey);
   const bookingIntent = containsAny(
     [
@@ -517,6 +566,11 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
     text
   );
   const inferredService = extractServiceFallback(message);
+  const isAffirmative = containsAny(
+    ["yes", "yeah", "yep", "sure", "please", "okay", "ok", "sounds good", "that works"],
+    text
+  );
+  const isNegative = containsAny(["no", "nope", "not now", "maybe later", "nah"], text);
 
   const nonBookingIntent =
     containsAny(["hello", "hi", "hey"], text) ||
@@ -550,9 +604,29 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
   if (activeSession?.active) {
     if (containsAny(["cancel", "stop", "never mind", "nevermind"], text)) {
       bookingSessions.delete(sessionKey);
+      updateConversation(sessionKey, { lastTopic: "booking_canceled" });
       return "Booking canceled. Let me know if you need anything else.";
     }
     return handleBookingFlow(message, { userId, userKey, sessionKey });
+  }
+
+  if (isNegative && conversation.lastTopic) {
+    updateConversation(sessionKey, { lastTopic: "", lastService: "" });
+    return "No problem. Is there anything else I can help with?";
+  }
+
+  if (isAffirmative) {
+    if (conversation.lastTopic === "service_detail" && conversation.lastService) {
+      const session = { active: true, service: conversation.lastService, date: "", time: "" };
+      bookingSessions.set(sessionKey, session);
+      return `Great! What date and time work for you? You can say: \"Book a ${conversation.lastService} on 2026-04-10 at 14:30.\"`;
+    }
+    if (conversation.lastTopic === "catalog") {
+      return "Great! Which service would you like to book?";
+    }
+    if (conversation.lastTopic === "add_ons") {
+      return "Which add-on would you like to include?";
+    }
   }
 
   // now use `text` in all checks
@@ -565,15 +639,17 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
       time: "",
     };
     bookingSessions.set(sessionKey, session);
-    return `Sure! I can help you book a ${inferredService}. What date would you like? (YYYY-MM-DD)`;
+    updateConversation(sessionKey, { lastTopic: "booking", lastService: inferredService });
+    return `Great choice! I can help you book a ${inferredService}. What date and time work for you? You can say: \"Book a ${inferredService} on 2026-04-10 at 14:30.\"`;
   }
 
-  // 1️⃣ Greetings
+  // 1ï¸âƒ£ Greetings
   if (containsAny(["hello", "hi", "hey"], text)) {
-    return "Hello! Welcome to Smart Salon! How can I help you?";
+    updateConversation(sessionKey, { lastTopic: "greeting", lastService: "" });
+    return "Hi! Welcome to DebugDames Salon. How can I help you today? I can share services, prices, add-ons, or book an appointment.";
   }
 
-  // 2️⃣ Services & Durations
+  // 2ï¸âƒ£ Services & Durations
   if (
     containsAny(
       [
@@ -587,106 +663,121 @@ export const processMessage = async (message, { userId, userKey } = {}) => {
       text
     )
   ) {
-    return (
-      "Our service catalog:\n" +
-      Array.from(SERVICE_DETAILS.entries())
-        .map(
-          ([name, details]) =>
-            `- ${name} (${details.category}): ${details.duration} min, R${details.price}`
-        )
-        .join("\n")
-    );
+    updateConversation(sessionKey, { lastTopic: "catalog", lastService: "" });
+    return buildServiceCatalogResponse() + "\n\nWould you like help booking any of these?";
   }
 
   if (containsAny(["haircut", "precision haircut"], text)) {
     const details = SERVICE_DETAILS.get("Precision Haircut & Styling");
-    return `Precision Haircut & Styling: ${details.duration} minutes. R${details.price}. ${details.description}`;
+    updateConversation(sessionKey, { lastTopic: "service_detail", lastService: "Precision Haircut & Styling" });
+    return `Precision Haircut & Styling\n${details.description}\n${details.duration} min · R${details.price}\nWould you like to book this service?`;
   }
 
   if (containsAny(["manicure", "signature manicure"], text)) {
     const details = SERVICE_DETAILS.get("Signature Manicure");
-    return `Signature Manicure: ${details.duration} minutes. R${details.price}. ${details.description}`;
+    updateConversation(sessionKey, { lastTopic: "service_detail", lastService: "Signature Manicure" });
+    return `Signature Manicure\n${details.description}\n${details.duration} min · R${details.price}\nWould you like to book this service?`;
   }
 
   if (containsAny(["event makeup", "event makeup session"], text)) {
     const details = SERVICE_DETAILS.get("Event Makeup Session");
-    return `Event Makeup Session: ${details.duration} minutes. R${details.price}. ${details.description}`;
+    updateConversation(sessionKey, { lastTopic: "service_detail", lastService: "Event Makeup Session" });
+    return `Event Makeup Session\n${details.description}\n${details.duration} min · R${details.price}\nWould you like to book this service?`;
   }
 
   if (containsAny(["protective braids", "braids"], text)) {
     const details = SERVICE_DETAILS.get("Protective Braids");
-    return `Protective Braids: ${details.duration} minutes. R${details.price}. ${details.description}`;
+    updateConversation(sessionKey, { lastTopic: "service_detail", lastService: "Protective Braids" });
+    return `Protective Braids\n${details.description}\n${details.duration} min · R${details.price}\nWould you like to book this service?`;
   }
 
   if (containsAny(["color refresh", "gloss", "color refresh & gloss"], text)) {
     const details = SERVICE_DETAILS.get("Color Refresh & Gloss");
-    return `Color Refresh & Gloss: ${details.duration} minutes. R${details.price}. ${details.description}`;
+    updateConversation(sessionKey, { lastTopic: "service_detail", lastService: "Color Refresh & Gloss" });
+    return `Color Refresh & Gloss\n${details.description}\n${details.duration} min · R${details.price}\nWould you like to book this service?`;
   }
 
-  // 3️⃣ Booking & Appointments
+  // 3ï¸âƒ£ Booking & Appointments
+  if (containsAny(["how do i book", "how can i book", "book an appointment", "book appointment"], text)) {
+    return "I can book it for you right here. Please share the service, date (YYYY-MM-DD), and time (HH:mm). For example: \"Book a manicure on 2026-04-10 at 14:30.\"";
+  }
+
   if (isBookingRequest) {
-    return handleBookingFlow(message, { userId, userKey, sessionKey });
+    const session = {
+      active: true,
+      service: "",
+      date: "",
+      time: "",
+    };
+    bookingSessions.set(sessionKey, session);
+    updateConversation(sessionKey, { lastTopic: "booking", lastService: "" });
+    return "Great! What service would you like, and what date/time works for you? You can say: \"Book a manicure on 2026-04-10 at 14:30.\"";
   }
 
-  // 4️⃣ Pricing & Rates
+  // 4ï¸âƒ£ Pricing & Rates
   if (
     containsAny(
       ["price", "prices", "cost", "pricing", "how much", "rate", "rates"],
       text
     )
   ) {
-    return Array.from(SERVICE_DETAILS.entries())
-      .map(([name, details]) => `${name} R${details.price}`)
-      .join(", ");
+    updateConversation(sessionKey, { lastTopic: "catalog", lastService: "" });
+    return buildServiceCatalogResponse() + "\n\nWant me to help you book one?";
   }
 
-  // 5️⃣ Add-ons & Extras
+  // 5ï¸âƒ£ Add-ons & Extras
   if (
     containsAny(
       ["add-on", "add on", "add ons", "addon", "addons", "extras", "extra services"],
       text
     )
   ) {
+    updateConversation(sessionKey, { lastTopic: "add_ons", lastService: "" });
     return (
-      "Add-ons available: " +
-      ADD_ONS.map((addon) => `${addon.name} R${addon.price}`).join(", ") +
-      "."
+      "Add-On Treatments\n" +
+      ADD_ONS.map((addon) => `- ${addon.name} · R${addon.price}`).join("\n") +
+      "\n\nWould you like to add any of these to your booking?"
     );
   }
 
-  // 6️⃣ Contact & Location
+  // 6ï¸âƒ£ Contact & Location
   if (containsAny(["contact", "phone", "email", "whatsapp", "address", "location", "hours", "business hours"], text)) {
-    return "Contact us at +27 00 000 0000, WhatsApp +27 82 345 7253, or email dameshair@example.com. Our office is in Johannesburg, South Africa. Business hours: Mon–Fri 9am–6pm | Sat–Sun 8am–8pm.";
+    updateConversation(sessionKey, { lastTopic: "contact", lastService: "" });
+    return ["Contact", ...CONTACT_DETAILS].join("\n");
   }
 
-  // 7️⃣ Booking Notes
+  // 7ï¸âƒ£ Booking Notes
   if (containsAny(["booking notes", "notes", "arrival", "late", "reschedule", "walk-ins", "walk ins"], text)) {
-    return "Booking notes: " + BOOKING_NOTES.join(" ");
+    updateConversation(sessionKey, { lastTopic: "booking_notes", lastService: "" });
+    return ["Booking Notes", ...BOOKING_NOTES].join("\n");
   }
 
-  // 8️⃣ Cancellation & Policies
+  // 8ï¸âƒ£ Cancellation & Policies
   if (
     containsAny(
       ["cancellation", "cancelation", "cancel", "policy", "policies"],
       text
     )
   ) {
-    return "Our cancellation policy: please cancel at least 24 hours in advance to avoid a no-show fee.";
+    return "Our cancellation policy: please cancel at least 24 hours in advance to avoid a no-show fee. Would you like help booking instead?";
   }
 
-  // 9️⃣ Thank you / Goodbye
+  // 9ï¸âƒ£ Thank you / Goodbye
   if (
     containsAny(
       ["thank you", "thanks", "no more questions", "that's all", "thats all", "no further questions", "all good"],
       text
     )
   ) {
-    return "Thank you, bye.";
+    return "You're welcome! If you'd like to book or ask anything else, I'm here.";
   }
 
-  // 🔟 Fallback
-  return "Sorry, I didn't understand that. Please ask about salon services.";
+  // ðŸ"Ÿ Fallback
+  return "Sorry, I didn't quite catch that. You can ask about services, prices, add-ons, booking notes, or say \"book an appointment.\"";
 };
+
+
+
 
 
 
