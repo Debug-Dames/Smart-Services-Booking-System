@@ -26,13 +26,14 @@ export default function Profile() {
     (async () => {
       try {
         const me = await authService.getMe();
+        const profile = me?.user || me || user;
         if (!mounted) return;
         setForm((prev) => ({
           ...prev,
-          name: me?.name || '',
-          email: me?.email || '',
-          phone: me?.phone || '',
-          gender: me?.gender || '',
+          name: profile?.name || '',
+          email: profile?.email || '',
+          phone: profile?.phone || '',
+          gender: profile?.gender || '',
         }));
         setError('');
       } catch (err) {

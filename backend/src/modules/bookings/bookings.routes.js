@@ -5,7 +5,7 @@ import * as bookingController from "../../controllers/bookingController.js";
 
 const router = express.Router();
 
-// GET ALL BOOKINGS
+// GET MY BOOKINGS
 router.get("/", protect, bookingController.getAllBookings);
 
 // GET BOOKING BY ID

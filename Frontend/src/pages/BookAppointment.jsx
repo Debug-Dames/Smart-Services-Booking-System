@@ -9,7 +9,7 @@ import "../Styles/calendar.css";
 
 const TIME_SLOTS = [
   "08:00", "09:00", "10:00", "11:00",
-  "12:00", "13:00", "14:00", "15:00", "16:00",
+  "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00",
 ];
 
 const MAX_BOOKINGS_PER_DAY = TIME_SLOTS.length;
@@ -122,13 +122,6 @@ export default function BookAppointment() {
     }
   }
 
-  async function handleConfirmPayment() {
-    await submitBooking({ payLater: false });
-  }
-
-  async function handleBookNowPayLater() {
-    await submitBooking({ payLater: true });
-  }
 
   const handleDateClick = (date) => {
     const dateStr = formatDate(date);
@@ -197,6 +190,7 @@ export default function BookAppointment() {
       setConfirming(false);
       return;
     }
+
     const startTimeISO = `${selectedDate}T${selectedTime}:00`;
     const endTimeISO = `${selectedDate}T${endTime}:00`;
     const lock = await bookingService.lockSlot({
@@ -521,6 +515,7 @@ export default function BookAppointment() {
           </div>
         )}
       </div>
+
     </div>
   );
 }

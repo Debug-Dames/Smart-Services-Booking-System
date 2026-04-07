@@ -125,6 +125,13 @@ export const createBooking = async (data, user) => {
   // Validate time range
   if (end <= start) throw new Error("Invalid time range");
 
+  // Enforce salon closing time (19:00)
+  const endHour = end.getHours();
+  const endMinute = end.getMinutes();
+  if (endHour > 19 || (endHour === 19 && endMinute > 0)) {
+    throw new Error("Booking must end by 19:00");
+  }
+
   // Check DB conflicts (stylist optional)
   const conflict = await prisma.booking.findFirst({
     where: {
