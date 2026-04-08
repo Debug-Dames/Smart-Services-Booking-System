@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { cancelBooking, getMyBookings, updateBooking } from "../api/services";
+import { bookingService} from "../api/services";
 import "../Styles/myBookings.css";
 
 export default function MyBookings() {
@@ -13,7 +13,7 @@ export default function MyBookings() {
 
   const fetchBookings = () => {
     setLoading(true);
-    getMyBookings()
+    bookingService.getMyBookings()
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
         setBookings(list);
@@ -76,7 +76,7 @@ export default function MyBookings() {
       setError("");
       setActionNote("");
       setActionFor(numericId, "cancelling");
-      await cancelBooking(numericId);
+      await bookingService.cancelBooking(numericId);
       setBookings((prev) => prev.filter((b) => b.id !== numericId));
       setActionNote("Booking cancelled.");
     } catch (err) {

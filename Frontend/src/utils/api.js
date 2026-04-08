@@ -1,4 +1,4 @@
-export const API_URL = "http://localhost:5000";
+export const API_URL = "https://smart-services-booking-system-frontend.onrender.com/api/";
 
 export function authHeaders() {
   const token = localStorage.getItem("token");
