@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || ''
+import API from './apiBaseUrl'
 const jsonHeaders = { 'Content-Type': 'application/json' }
 
 export default {

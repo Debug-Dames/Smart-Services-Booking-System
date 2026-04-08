@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API = import.meta.env.VITE_API_URL || "https://smart-services-booking-system-backend-uzip.onrender.com/api";
+import API from "../api/apiBaseUrl";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
