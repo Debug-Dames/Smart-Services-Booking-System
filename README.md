@@ -284,6 +284,28 @@ checks - Continuous integration workflows
     GET /api/services
     POST /api/services
 
+    📖 FEATURES
+
+User:
+
+Register/login
+Book appointments
+View/cancel bookings
+
+Mobile:
+
+Book via phone
+Chatbot access
+
+Admin:
+
+Manage bookings/services
+
+⚠️ Troubleshooting
+500 error → check backend logs
+Chatbot → check API key
+Mobile not working → check API URL
+
 ------------------------------------------------------------------------
 
 
