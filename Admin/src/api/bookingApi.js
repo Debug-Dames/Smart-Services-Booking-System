@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+import API from './apiBaseUrl'
 
 const clearAdminSession = () => {
     localStorage.removeItem('adminAuth')
@@ -33,12 +33,24 @@ const parseJson = async (res, fallbackMessage) => {
 
 export default {
     fetchAllBookings: async () => {
+        const adminRes = await fetch(`${API}/admin/bookings`, {
+            headers: getAuthHeaders(),
+        })
+        if (adminRes.ok) return parseJson(adminRes, 'Failed to fetch bookings')
+        if (adminRes.status !== 404) return parseJson(adminRes, 'Failed to fetch bookings')
+
         const res = await fetch(`${API}/bookings`, {
             headers: getAuthHeaders(),
         })
         return parseJson(res, 'Failed to fetch bookings')
     },
     fetchBookings: async () => {
+        const adminRes = await fetch(`${API}/admin/bookings`, {
+            headers: getAuthHeaders(),
+        })
+        if (adminRes.ok) return parseJson(adminRes, 'Failed to fetch bookings')
+        if (adminRes.status !== 404) return parseJson(adminRes, 'Failed to fetch bookings')
+
         const res = await fetch(`${API}/bookings`, {
             headers: getAuthHeaders(),
         })

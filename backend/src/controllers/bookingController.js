@@ -11,8 +11,9 @@ export const getAllBookings = async (req, res) => {
     if (!Number.isInteger(userId)) {
       return res.status(401).json({ message: "Not authorized" });
     }
+    const isAdmin = String(req.user?.role || "").toUpperCase() === "ADMIN";
     const bookings = await prisma.booking.findMany({
-      where: { userId },
+      ...(isAdmin ? {} : { where: { userId } }),
       orderBy: { createdAt: "desc" },
       include: {
         user: {

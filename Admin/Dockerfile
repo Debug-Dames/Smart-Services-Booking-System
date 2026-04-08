@@ -7,7 +7,7 @@ RUN npm install
 
 COPY . .
 
-ARG VITE_API_URL
+ARG VITE_API_URL=https://smart-services-booking-system-backend-uzip.onrender.com/api
 ENV VITE_API_URL=$VITE_API_URL
 
 RUN npm run build

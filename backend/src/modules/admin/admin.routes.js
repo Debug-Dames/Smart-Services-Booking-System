@@ -18,6 +18,7 @@ const router = express.Router();
 const requireAdmin = [protect, roleMiddleware("ADMIN")];
 
 router.get("/users", ...requireAdmin, adminController.getUsers);
+router.get("/bookings", ...requireAdmin, adminController.getBookings);
 router.post("/users", ...requireAdmin, validateCreateUser, adminController.createUser);
 router.put("/users/:id", ...requireAdmin, validateUserId, validateUpdateUser, adminController.updateUser);
 router.delete("/users/:id", ...requireAdmin, validateUserId, adminController.deleteUser);
