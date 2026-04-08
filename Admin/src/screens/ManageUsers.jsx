@@ -3,7 +3,6 @@ import adminApi from '../api/adminApi'
 import bookingApi from '../api/bookingApi'
 
 const USER_STATUSES = ['Active', 'Suspended', 'Blocked']
-const CUSTOMER_ROLES = new Set(['user', 'customer'])
 
 const toDate = (value) => {
   const date = new Date(value)
@@ -70,10 +69,9 @@ function ManageUsers() {
     loadUsers()
   }, [])
 
-  const userAccounts = useMemo(
-    () => users.filter((user) => CUSTOMER_ROLES.has(String(user.role || 'CUSTOMER').toLowerCase())),
-    [users],
-  )
+  const userAccounts = useMemo(() => {
+    return users.filter((user) => String(user.role || '').trim().toLowerCase() !== 'admin')
+  }, [users])
 
   const bookingCountMap = useMemo(() => {
     const map = new Map()
@@ -315,7 +313,7 @@ function ManageUsers() {
                           user.email || 'N/A'
                         )}
                       </td>
-                      <td>{CUSTOMER_ROLES.has(String(user.role || '').toLowerCase()) ? 'User' : (user.role || 'N/A')}</td>
+                      <td>{String(user.role || '').trim().toLowerCase() === 'admin' ? 'Admin' : 'User'}</td>
                       <td>{created ? created.toLocaleDateString() : 'N/A'}</td>
                       <td>
                         {isEditing ? (
