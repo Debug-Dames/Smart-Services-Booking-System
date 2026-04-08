@@ -3,15 +3,49 @@ import prisma from "../../config/database.js";
 
 export async function getUsers(_req, res) {
   try {
-    const users = await prisma.$queryRaw`
-      SELECT "id", "name", "email", "role", "status", "createdAt"
-      FROM "User"
-      ORDER BY "id" DESC
-    `;
-
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        status: true,
+        createdAt: true,
+      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    });
+    res.set("Cache-Control", "no-store");
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch users" });
+  }
+}
+
+export async function getBookings(_req, res) {
+  try {
+    const bookings = await prisma.booking.findMany({
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        service: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+          },
+        },
+      },
+    });
+    res.set("Cache-Control", "no-store");
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch bookings" });
   }
 }
 
