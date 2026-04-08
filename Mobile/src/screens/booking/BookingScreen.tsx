@@ -535,27 +535,22 @@ const BookingScreen: React.FC<{ navigation?: any }> = ({ navigation }) => {
   const endTime   = addMinutes(startTime, booking.service.durationMinutes);
 
   const result = await dispatch(createBooking({
-    serviceId: booking.service.id,
+    serviceId: Number(booking.service.id), // ← was: booking.service.id (string)
     date:      booking.date,
     startTime,
     endTime,
   }));
 
-  // Check if the thunk succeeded
   if (createBooking.fulfilled.match(result)) {
     const sessionUrl = result.payload?.sessionUrl;
-
     if (sessionUrl) {
       Linking.openURL(sessionUrl).catch(() => {
         Alert.alert('Could not open payment page', 'You can pay from My Bookings.');
       });
     }
-
     navigation?.navigate('My Bookings');
   }
-  // error case is already handled by the error useEffect
 };
-
   return (
     <View style={ms.container}>
       <StatusBar barStyle="dark-content" />

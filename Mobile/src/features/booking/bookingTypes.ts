@@ -25,7 +25,7 @@ export interface Booking {
 }
 
 export interface CreateBookingPayload {
-  serviceId: string;
+  serviceId: number;
   date: string;       // "YYYY-MM-DD"
   startTime: string;  // "HH:MM" 24-hour
   endTime: string;    // "HH:MM" 24-hour
