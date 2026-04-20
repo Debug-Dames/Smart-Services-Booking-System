@@ -6,8 +6,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
-
 model User {
   id               Int       @id @default(autoincrement())
   name             String
@@ -21,6 +19,7 @@ model User {
   resetTokenExpiry DateTime?
   updatedAt        DateTime  @default(now())
   bookings         Booking[]
+  payments  Payment[]
 }
 
 model Service {
@@ -43,8 +42,24 @@ model Booking {
   endTime   DateTime @default(now())
   service   Service  @relation(fields: [serviceId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
-
+  payment   Payment?
   @@unique([userId, serviceId, date, startTime])
+}
+
+model Payment {
+  id                   Int      @id @default(autoincrement())
+  bookingId            Int      @unique
+  userId               Int
+  amount               Float                          // deposit amount (10% of service price)
+  currency             String   @default("usd")
+  status               String   @default("pending")  // pending | paid | failed | refunded
+  stripePaymentIntentId String? @unique
+  stripeSessionId      String?  @unique
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
 }
 
 enum Role {

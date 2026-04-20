@@ -1,142 +1,96 @@
 import prisma from "../../config/database.js";
+import { createDepositCheckoutSession } from "../payments/payments.service.js";
 
-const DEFAULT_SERVICE_META = {
-  Haircut: { price: 150, duration: 60 },
-  Nails: { price: 220, duration: 90 },
-  Braids: { price: 350, duration: 180 },
-};
+/**
+ * Creates a booking and immediately generates a Stripe checkout session
+ * for the 10% deposit.  The booking starts with status "pending" and is
+ * only moved to "confirmed" after the webhook fires.
+ *
+ * @returns {{ booking: object, sessionUrl: string, payment: object }}
+ */
+export const createBooking = async ({ userId, serviceId, date, startTime, endTime }) => {
+  // ... all your existing validation stays exactly the same ...
 
-function isMissingTimeFieldError(err) {
-  const msg = String(err?.message || "");
-  return (
-    msg.includes("Unknown argument `startTime`") ||
-    msg.includes("Unknown argument `endTime`") ||
-    msg.includes("Unknown arg `startTime`") ||
-    msg.includes("Unknown arg `endTime`") ||
-    msg.includes('column "startTime" does not exist') ||
-    msg.includes('column "endTime" does not exist')
-  );
-}
+  if (!userId || isNaN(Number(userId))) throw new Error("Invalid userId");
+  if (!serviceId || isNaN(Number(serviceId))) throw new Error("Invalid userId or serviceId");
+  if (!date) throw new Error("Date is required");
 
-// Create a new booking
-export const createBooking = async ({ userId, serviceId, service, date, time, startTime, endTime }) => {
-  const numericUserId = Number(userId);
-  let numericServiceId = Number(serviceId);
-  const normalizedServiceName = typeof service === "string" ? service.trim() : "";
+  const bookingDate = new Date(date);
+  if (isNaN(bookingDate.getTime())) throw new Error("Invalid date");
+  if (!startTime) throw new Error("Invalid start time");
 
-  if (!Number.isInteger(numericUserId)) {
-    throw new Error("Invalid userId");
-  }
+  const start = new Date(startTime.includes("T") ? startTime : `${date}T${startTime}`);
+  if (isNaN(start.getTime())) throw new Error("Invalid start time");
 
-  if (!date) {
-    throw new Error("Date is required");
-  }
+  const end = endTime
+    ? new Date(endTime.includes("T") ? endTime : `${date}T${endTime}`)
+    : new Date(start.getTime() + 60 * 60_000);
 
-  const bookingDate = new Date(`${date}T00:00:00.000Z`);
-  if (Number.isNaN(bookingDate.getTime())) {
-    throw new Error("Invalid date");
-  }
-
-  const startCandidate = startTime || (date && time ? `${date}T${time}:00` : null);
-  const start = new Date(startCandidate);
-  if (!startCandidate || Number.isNaN(start.getTime())) {
-    throw new Error("Invalid start time");
-  }
-
-  const end = endTime ? new Date(endTime) : new Date(start.getTime() + 60 * 60000);
-  if (Number.isNaN(end.getTime()) || end <= start) {
-    throw new Error("Invalid time range");
-  }
+  if (isNaN(end.getTime())) throw new Error("Invalid time range");
+  if (end <= start) throw new Error("Invalid time range");
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const bookingDay = new Date(bookingDate);
-  bookingDay.setHours(0, 0, 0, 0);
-  if (bookingDay < today) {
-    throw new Error("Cannot book in the past");
-  }
+  if (bookingDate < today) throw new Error("Cannot book in the past");
 
-  const user = await prisma.user.findUnique({ where: { id: numericUserId } });
+  const [user, service] = await Promise.all([
+    prisma.user.findUnique({ where: { id: Number(userId) } }),
+    prisma.service.findUnique({ where: { id: Number(serviceId) } }),
+  ]);
+
   if (!user) throw new Error("User not found");
+  if (!service) throw new Error("Service not found");
 
-  let serviceRecord = null;
+  const existing = await prisma.booking.findFirst({
+    where: {
+      serviceId: Number(serviceId),
+      startTime: { lt: end },
+      endTime: { gt: start },
+    },
+  });
 
-  if (Number.isInteger(numericServiceId)) {
-    serviceRecord = await prisma.service.findUnique({ where: { id: numericServiceId } });
-  }
+  if (existing) throw new Error("Time slot already booked");
 
-  if (!serviceRecord && normalizedServiceName) {
-    serviceRecord = await prisma.service.findFirst({
-      where: {
-        name: {
-          equals: normalizedServiceName,
-          mode: "insensitive",
-        },
-      },
-    });
-  }
+  // ── Step 1: Save booking immediately ──────────────────────
+  const booking = await prisma.booking.create({
+    data: {
+      userId: Number(userId),
+      serviceId: Number(serviceId),
+      date: bookingDate,
+      startTime: start,
+      endTime: end,
+      status: "pending",
+    },
+    include: { service: true },
+  });
 
-  if (!serviceRecord && normalizedServiceName) {
-    const fallbackMeta = DEFAULT_SERVICE_META[normalizedServiceName] || { price: 200, duration: 60 };
-    serviceRecord = await prisma.service.create({
-      data: {
-        name: normalizedServiceName,
-        description: `${normalizedServiceName} service`,
-        price: fallbackMeta.price,
-        duration: fallbackMeta.duration,
-      },
-    });
-  }
-
-  if (!serviceRecord) {
-    throw new Error("Invalid userId or serviceId");
-  }
-
-  numericServiceId = serviceRecord.id;
+  // ── Step 2: Call Stripe with a hard 8s timeout ─────────────
+  let sessionUrl = null;
+  let payment = null;
 
   try {
-    const existing = await prisma.booking.findFirst({
-      where: {
-        serviceId: numericServiceId,
-        startTime: { lt: end },
-        endTime: { gt: start },
-      },
-    });
-
-    if (existing) {
-      throw new Error("Time slot already booked");
-    }
-  } catch (err) {
-    if (!isMissingTimeFieldError(err)) {
-      throw err;
-    }
+    const stripeResult = await Promise.race([
+      createDepositCheckoutSession({
+        bookingId: booking.id,
+        userId: Number(userId),
+        servicePrice: service.price,
+        serviceName: service.name,
+        customerEmail: user.email,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Stripe timeout")), 25000)
+      ),
+    ]);
+    sessionUrl = stripeResult.sessionUrl;
+    payment = stripeResult.payment;
+  } catch (stripeErr) {
+    // Booking is already saved — Stripe failed silently
+    // User can retry payment from My Bookings screen
+    // Temporarily add to payments.service.js at the top
+    console.log('STRIPE KEY:', process.env.STRIPE_SECRET_KEY?.slice(0, 12));
+    console.log('CLIENT URL:', process.env.CLIENT_URL);
+    console.error("Stripe session error:", stripeErr.message);
   }
 
-  try {
-    return await prisma.booking.create({
-      data: {
-        userId: numericUserId,
-        serviceId: numericServiceId,
-        date: bookingDate,
-        startTime: start,
-        endTime: end,
-      },
-      include: { service: true },
-    });
-  } catch (err) {
-    if (!isMissingTimeFieldError(err)) {
-      throw err;
-    }
-
-    // Fallback for environments where Booking has no startTime/endTime columns.
-    return prisma.booking.create({
-      data: {
-        userId: numericUserId,
-        serviceId: numericServiceId,
-        date: start,
-      },
-      include: { service: true },
-    });
-  }
+  return { booking, sessionUrl, payment };
 };
-

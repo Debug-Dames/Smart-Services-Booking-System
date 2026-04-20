@@ -7,8 +7,8 @@ export default function Register() {
   const [formData, setFormData] = useState({
     name: '',
     gender: '',
-    phone: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
 
@@ -105,9 +105,10 @@ export default function Register() {
             onChange={handleChange}
             required
           >
-            <option value="" disabled>Select gender</option>
-            <option value="male">Male</option>
+            <option value="">Gender</option>
             <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="non-binary">Non-binary</option>
             <option value="other">Other</option>
           </select>
 
@@ -165,7 +166,7 @@ export default function Register() {
           {success ? <p className="auth-success">{success}</p> : null}
 
           <button type="submit" className="auth-primary-btn" disabled={loading}>
-            {loading ? 'Creating account...' : 'Join us'}
+            {loading ? 'Creating account…' : 'Join us'}
           </button>
 
           <p className="auth-helper-text">

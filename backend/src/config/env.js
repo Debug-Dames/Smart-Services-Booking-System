@@ -11,6 +11,6 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env"), override: true });
 
 export const env = {
   PORT: process.env.PORT || 5000,
-  JWT_SECRET: process.env.JWT_SECRET || "super_secret_key",
+  JWT_SECRET: process.env.JWT_SECRET || process.env.jwtSecret || "super_secret_key",
   DATABASE_URL: process.env.DATABASE_URL,
 };

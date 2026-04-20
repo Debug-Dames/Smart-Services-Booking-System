@@ -10,7 +10,13 @@ const __dirname = path.dirname(__filename);
 // Use override so Prisma does not connect to an unintended database from machine-level env vars.
 dotenv.config({ path: path.resolve(__dirname, "../../.env"), override: true });
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+});
 
 export const ensureBookingTimeColumns = async () => {
   await prisma.$executeRawUnsafe(`

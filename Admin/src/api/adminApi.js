@@ -82,7 +82,6 @@ const adminApi = {
 
   createUser: async (data) => {
     const payload = normalizeUser(data)
-
     try {
       const res = await fetch(`${API}/admin/users`, {
         method: 'POST',

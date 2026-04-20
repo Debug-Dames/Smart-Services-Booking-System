@@ -1,18 +1,18 @@
 import express from "express";
-import { register, login } from "./auth.service.js";
+import { register, login, getProfile, logout } from "./auth.service.js";
+import { protect } from "../../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 /**
  * @swagger
- * tags:
- *   name: Auth
- *   description: Authentication and authorization endpoints
- */
-
-/**
- * @swagger
  * components:
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ *
  *   schemas:
  *     RegisterInput:
  *       type: object
@@ -48,29 +48,43 @@ const router = express.Router();
  *         - email
  *         - password
  *
+ *     UserProfile:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         name:
+ *           type: string
+ *           example: John Doe
+ *         email:
+ *           type: string
+ *           example: john@example.com
+ *         phone:
+ *           type: string
+ *           example: +27 123 456 7890
+ *         gender:
+ *           type: string
+ *           example: Male
+ *         role:
+ *           type: string
+ *           enum: [USER, ADMIN]
+ *           example: USER
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           example: 2024-01-15T10:30:00.000Z
+ *
  *     AuthResponse:
  *       type: object
  *       properties:
  *         user:
- *           type: object
- *           properties:
- *             id:
- *               type: integer
- *               example: 1
- *             name:
- *               type: string
- *               example: John Doe
- *             email:
- *               type: string
- *               example: john@example.com
- *             role:
- *               type: string
- *               enum: [USER, ADMIN]
- *               example: USER
+ *           $ref: '#/components/schemas/UserProfile'
  *         token:
  *           type: string
  *           example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  */
+
 
 /**
  * @swagger
@@ -94,7 +108,10 @@ const router = express.Router();
  *               $ref: '#/components/schemas/AuthResponse'
  *       400:
  *         description: Validation error or email already exists
- */
+*/
+
+
+router.post("/register", register);
 
 /**
  * @swagger
@@ -120,6 +137,9 @@ const router = express.Router();
  *         description: Invalid email or password
  */
 
+
+router.post("/login", login);
+
 /**
  * @swagger
  * /auth/me:
@@ -137,20 +157,20 @@ const router = express.Router();
  *             schema:
  *               type: object
  *               properties:
- *                 id:
- *                   type: integer
- *                 name:
- *                   type: string
- *                 email:
- *                   type: string
- *                 role:
- *                   type: string
- *                   enum: [USER, ADMIN]
+ *                 user:
+ *                   $ref: '#/components/schemas/UserProfile'
  *       401:
  *         description: Unauthorized – Token missing or invalid
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
  */
 
-router.post("/register", register);
-router.post("/login", login);
+
+
+router.get("/me", protect, getProfile);
+
+router.post("/logout", protect, logout);
 
 export default router;
